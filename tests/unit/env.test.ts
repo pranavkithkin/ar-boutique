@@ -188,4 +188,11 @@ describe("TASK-005 environment validation", () => {
     expect(config).toContain("parseServerEnv(process.env)");
     expect(config).not.toContain('from "./lib/env"');
   });
+
+  it("generates route helper types before checking a clean checkout", () => {
+    const manifest = JSON.parse(readFileSync(resolve("package.json"), "utf8")) as {
+      scripts: Record<string, string>;
+    };
+    expect(manifest.scripts.typecheck).toBe("next typegen && tsc --noEmit");
+  });
 });

@@ -9,49 +9,6 @@ import { filterPreviewCards, type PreviewCard, type PreviewImage } from "../prev
 
 const focus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-// Review shell intentionally omits inactive cart/search/account controls and
-// unapproved delivery/payment claims. Other routes keep their existing shell.
-export function PreviewHeader() {
-  return (
-    <>
-      <a href="#main-content" className={`sr-only focus:not-sr-only focus:block p-3 bg-background ${focus}`}>Skip to content</a>
-      <div className="bg-primary text-primary-foreground text-center px-4 py-2 text-sm">
-        Catalogue preview · Purchases are not available
-      </div>
-      <header className="bg-background border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-4">
-          <Link href="/" className={focus} aria-label="AR Boutique home">
-            <Image src="/images/logo.png" alt="AR Boutique" width={300} height={120} unoptimized className="h-16 w-auto object-contain" />
-          </Link>
-          <nav aria-label="Main navigation" className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-            {[["/", "Home"], ["/collections", "Collections"], ["/about", "About"], ["/contact", "Contact"]].map(([href, label]) => (
-              <Link key={href} href={href} className={`py-3 underline-offset-4 hover:underline ${focus}`}>{label}</Link>
-            ))}
-          </nav>
-        </div>
-      </header>
-    </>
-  );
-}
-
-export function PreviewFooter() {
-  return (
-    <footer className="bg-secondary border-t border-border mt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-5 md:flex-row md:justify-between">
-        <div><p className="font-heading text-2xl">The AR Boutique</p><p className="text-sm text-muted-foreground mt-2">Catalogue review · Not open for orders</p></div>
-        <div className="max-w-md text-sm text-muted-foreground space-y-3">
-          <p>Product names, sizes, availability and store policies are awaiting confirmation. Display labels combine the supplied colour and garment type.</p>
-          <nav aria-label="Footer navigation" className="flex flex-wrap gap-5 text-foreground">
-            {[["/collections", "Browse styles"], ["/contact", "Contact"], ["/journal", "Journal"]].map(([href, label]) => (
-              <Link key={href} href={href} className={`underline underline-offset-4 py-2 ${focus}`}>{label}</Link>
-            ))}
-          </nav>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
 function CardImage({ image }: { image: PreviewImage }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);

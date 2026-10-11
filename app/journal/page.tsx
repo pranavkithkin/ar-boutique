@@ -1,5 +1,8 @@
-﻿import { ComingSoon } from "@/components/store/ComingSoon"
+import { ComingSoon } from "@/components/store/ComingSoon";
+import { previewPages, previewPageMetadata } from "@/features/content/preview-pages";
 
-export default function JournalPage() {
-  return <ComingSoon title="Journal" />
+export const metadata = previewPageMetadata("journal");
+
+export default function Page() {
+  return <ComingSoon page={previewPages.journal} />;
 }

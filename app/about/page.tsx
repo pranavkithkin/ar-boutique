@@ -1,5 +1,8 @@
-﻿import { ComingSoon } from "@/components/store/ComingSoon"
+import { ComingSoon } from "@/components/store/ComingSoon";
+import { previewPages, previewPageMetadata } from "@/features/content/preview-pages";
 
-export default function AboutPage() {
-  return <ComingSoon title="About Us" />
+export const metadata = previewPageMetadata("about");
+
+export default function Page() {
+  return <ComingSoon page={previewPages.about} />;
 }

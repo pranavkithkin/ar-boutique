@@ -1,59 +1,44 @@
-﻿import Link from "next/link"
-import Image from "next/image"
-import { TrustStrip } from "@/components/store/TrustStrip"
+import Link from "next/link";
+import Image from "next/image";
+import { footerNavigation } from "@/features/content/preview-pages";
+
+const focus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 export function StoreFooter() {
   return (
-    <footer className="mt-16">
-      <TrustStrip />
-      <div className="bg-secondary pt-16 pb-8 border-t border-border">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-1 md:col-span-1">
-            <Link href="/" className="mb-6 inline-block">
-              <Image src="/images/logo.png" alt="AR Boutique" width={300} height={120} unoptimized className="h-20 sm:h-24 w-auto" />
+    <footer className="mt-16 border-t border-border bg-secondary">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <Link href="/" aria-label="AR Boutique home" className={`inline-block ${focus}`}>
+              <Image src="/images/logo.png" alt="AR Boutique" width={300} height={120}
+                unoptimized className="h-20 w-auto object-contain" />
             </Link>
-            <p className="text-[14px] text-muted-foreground leading-relaxed max-w-xs mt-2">
-              Timeless style meets modern elegance. Designed for the way you live.
+            <p className="mt-4 text-base">Catalogue review · Not open for orders</p>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Product names, sizes, availability and store information are awaiting confirmation.
+              Display labels use the supplied colour and garment type.
             </p>
           </div>
-          <div>
-            <h4 className="text-[14px] font-medium mb-6 text-foreground tracking-wide">Explore</h4>
-            <ul className="flex flex-col gap-4 text-[14px] text-muted-foreground">
-              <li><Link href="/" className="hover:text-foreground transition-colors">Home</Link></li>
-              <li><Link href="/collections" className="hover:text-foreground transition-colors">Collections</Link></li>
-              <li><Link href="/about" className="hover:text-foreground transition-colors">About</Link></li>
-              <li><Link href="/contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-[14px] font-medium mb-6 text-foreground tracking-wide">Customer Care</h4>
-            <ul className="flex flex-col gap-4 text-[14px] text-muted-foreground">
-              <li><Link href="/policies/shipping" className="hover:text-foreground transition-colors">Shipping & Delivery</Link></li>
-              <li><Link href="/policies/returns" className="hover:text-foreground transition-colors">Returns</Link></li>
-              <li><Link href="/size-guide" className="hover:text-foreground transition-colors">Size Guide</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-[14px] font-medium mb-6 text-foreground tracking-wide">Legal</h4>
-            <ul className="flex flex-col gap-4 text-[14px] text-muted-foreground">
-              <li><Link href="/policies/terms" className="hover:text-foreground transition-colors">Terms & Conditions</Link></li>
-              <li><Link href="/policies/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
-            </ul>
-          </div>
+          {footerNavigation.map(({ title, links }) => (
+            <nav key={title} aria-label={`${title} footer navigation`}>
+              <h2 className="mb-3 text-base font-medium">{title}</h2>
+              <ul className="space-y-1">
+                {links.map(({ href, label }) => (
+                  <li key={href}>
+                    <Link href={href} className={`inline-flex min-h-11 items-center text-sm underline underline-offset-4 hover:text-foreground text-muted-foreground ${focus}`}>
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
-        <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-[13px] text-muted-foreground tracking-wide">
-            Â© 2026 AR BOUTIQUE. All Rights Reserved.
-          </p>
-          <div className="flex gap-6">
-            <span className="text-[11px] font-semibold tracking-wider text-muted-foreground">VISA</span>
-            <span className="text-[11px] font-semibold tracking-wider text-muted-foreground">MASTERCARD</span>
-            <span className="text-[11px] font-semibold tracking-wider text-muted-foreground">APPLE PAY</span>
-          </div>
-        </div>
-        </div>
+        <p className="mt-10 border-t border-border pt-6 text-sm text-muted-foreground">
+          © 2026 The AR Boutique · Review preview
+        </p>
       </div>
     </footer>
-  )
+  );
 }

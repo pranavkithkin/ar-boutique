@@ -1,8 +1,10 @@
+import { StoreHeader } from "@/components/store/StoreHeader";
+import { StoreFooter } from "@/components/store/StoreFooter";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { HeroSlider } from "@/components/store/HeroSlider";
 import { SectionHeading } from "@/components/store/SectionHeading";
-import { CatalogueGrid, PreviewHeader, PreviewFooter } from "@/features/catalog/components/CatalogueGrid";
+import { CatalogueGrid } from "@/features/catalog/components/CatalogueGrid";
 import { previewCards } from "@/services/media/preview";
 
 export const metadata: Metadata = {
@@ -14,8 +16,8 @@ export default function Home() {
   const cards = previewCards();
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <PreviewHeader />
-      <main id="main-content" className="flex-1">
+      <StoreHeader />
+      <main id="main-content" tabIndex={-1} className="flex-1">
         <HeroSlider />
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
           <div className="max-w-2xl mx-auto text-center mb-10">
@@ -36,7 +38,7 @@ export default function Home() {
           </div>
         </section>
       </main>
-      <PreviewFooter />
+      <StoreFooter />
     </div>
   );
 }

@@ -1,7 +1,8 @@
+import { StoreHeader } from "@/components/store/StoreHeader";
+import { StoreFooter } from "@/components/store/StoreFooter";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PreviewHeader, PreviewFooter } from "@/features/catalog/components/CatalogueGrid";
 import { findPreviewProduct, previewLabel } from "@/features/catalog/preview-catalogue";
 import { previewImages } from "@/services/media/preview";
 import { ProductGallery } from "@/components/store/ProductGallery";
@@ -20,8 +21,8 @@ export default async function ProductPage({ params }: PageProps) {
   if (!product) notFound();
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <PreviewHeader />
-      <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <StoreHeader />
+      <main id="main-content" tabIndex={-1} className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground mb-8 flex flex-wrap gap-2">
           <Link href="/" className="underline underline-offset-4">Home</Link><span aria-hidden="true">/</span>
           <Link href="/collections" className="underline underline-offset-4">Collections</Link><span aria-hidden="true">/</span>
@@ -33,7 +34,7 @@ export default async function ProductPage({ params }: PageProps) {
         </div>
         <Link href="/collections" className="inline-flex min-h-12 items-center mt-10 underline underline-offset-4">Back to all styles</Link>
       </main>
-      <PreviewFooter />
+      <StoreFooter />
     </div>
   );
 }

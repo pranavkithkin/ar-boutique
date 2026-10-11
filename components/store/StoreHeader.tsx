@@ -1,99 +1,58 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { usePathname } from "next/navigation"
-import { Search, User, ShoppingBag, Menu } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { isNavigationCurrent, mainNavigation } from "@/features/content/preview-pages";
+
+const focus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 export function StoreHeader() {
-  const pathname = usePathname()
-  const isHomePage = pathname === "/"
-  
-  const [isScrolled, setIsScrolled] = React.useState(false)
-  const [isHovered, setIsHovered] = React.useState(false)
-
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
-
-  React.useEffect(() => {
-    if (!isHomePage) return
-    
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [isHomePage])
-
-  const isActive = !isHomePage || isScrolled || isHovered
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const navigation = (mobile: boolean) => mainNavigation.map(({ href, label }) => (
+    <Link key={href} href={href} onClick={() => setOpen(false)}
+      aria-current={isNavigationCurrent(pathname, href) ? "page" : undefined}
+      className={`${mobile ? "text-xl font-heading" : "text-base"} inline-flex min-h-12 items-center underline-offset-4 hover:underline aria-[current=page]:underline ${focus}`}>
+      {label}
+    </Link>
+  ));
 
   return (
-    <header 
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className={`sticky top-0 z-50 w-full transition-colors duration-300 ${isActive ? "bg-background/95 backdrop-blur border-b border-border supports-[backdrop-filter]:bg-background/60 text-foreground" : "border-transparent text-white"}`}
-    >
-      <div className={`absolute top-0 left-0 right-0 h-32 -z-10 bg-gradient-to-b from-black/70 to-transparent transition-opacity duration-300 pointer-events-none ${isActive ? "opacity-0" : "opacity-100"}`} />
-      
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-1 items-center gap-4 lg:hidden">
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger render={<button aria-label="Menu" className="p-2 -ml-2" />}>
-              <Menu className="h-5 w-5" strokeWidth={1.5} />
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[300px]">
-              <SheetTitle className="sr-only">Mobile Navigation</SheetTitle>
-              <div className="flex flex-col gap-6 pt-12 p-6">
-                <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Home</Link>
-                <Link href="/collections" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Collections</Link>
-                <Link href="/journal" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Journal</Link>
-                <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">About</Link>
-                <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Contact Us</Link>
-                
-                <div className="mt-8 flex flex-col gap-4 border-t border-border pt-8">
-                  <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-muted-foreground hover:text-foreground">
-                    <User className="h-5 w-5" />
-                    Account
-                  </Link>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-          <button aria-label="Search" className="p-2">
-            <Search className="h-5 w-5" strokeWidth={1.5} />
-          </button>
-        </div>
-
-        <div className="flex justify-center lg:justify-start lg:flex-none">
-          <Link href="/" className="inline-block pt-1">
-            <Image src="/images/logo.png" alt="AR Boutique" width={300} height={120} unoptimized className={`h-14 sm:h-16 w-auto transition-all duration-300 ${!isActive ? "brightness-0 invert drop-shadow-md" : ""}`} />
-          </Link>
-        </div>
-
-        <nav className="hidden lg:flex flex-1 justify-center gap-8 text-[15px] font-normal">
-          <Link href="/" className="hover:opacity-70 transition-opacity">Home</Link>
-          <Link href="/collections" className="hover:opacity-70 transition-opacity">Collections</Link>
-          <Link href="/journal" className="hover:opacity-70 transition-opacity">Journal</Link>
-          <Link href="/about" className="hover:opacity-70 transition-opacity">About</Link>
-          <Link href="/contact" className="hover:opacity-70 transition-opacity">Contact Us</Link>
-        </nav>
-
-        <div className="flex flex-1 lg:flex-none items-center justify-end gap-2 sm:gap-4">
-          <button aria-label="Search" className="hidden lg:block p-2">
-            <Search className="h-5 w-5" strokeWidth={1.5} />
-          </button>
-          <Link href="/account" aria-label="Account" className="hidden sm:block p-2">
-            <User className="h-5 w-5" strokeWidth={1.5} />
-          </Link>
-          <Link href="/cart" aria-label="Cart" className="flex items-center p-2 relative">
-            <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
-            <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-              0
-            </span>
-          </Link>
-        </div>
+    <>
+      <a href="#main-content" className={`sr-only focus:not-sr-only focus:block bg-background p-3 ${focus}`}>Skip to content</a>
+      <div className="bg-primary text-primary-foreground px-4 py-2 text-center text-sm">
+        Catalogue preview · Purchases are not available
       </div>
-    </header>
-  )
+      <header className="border-b border-border bg-background text-foreground">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex flex-1 lg:hidden">
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger render={<button type="button" aria-label="Open navigation" className={`inline-flex min-h-12 min-w-12 items-center justify-center ${focus}`} />}>
+                <Menu className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+              </SheetTrigger>
+              <SheetContent side="left" className="w-80 max-w-full">
+                <SheetTitle className="px-6 pt-8 text-xl">Explore The AR Boutique</SheetTitle>
+                <nav aria-label="Mobile navigation" className="flex flex-col gap-2 px-6 pb-6">
+                  {navigation(true)}
+                </nav>
+                <p className="px-6 text-sm text-muted-foreground">Catalogue preview. Orders are not available.</p>
+              </SheetContent>
+            </Sheet>
+          </div>
+          <Link href="/" aria-label="AR Boutique home" className={`shrink-0 ${focus}`}>
+            <Image src="/images/logo.png" alt="AR Boutique" width={300} height={120}
+              unoptimized className="h-16 w-auto object-contain" />
+          </Link>
+          <nav aria-label="Main navigation" className="hidden items-center gap-6 lg:flex">
+            {navigation(false)}
+          </nav>
+          <div aria-hidden="true" className="flex-1 lg:hidden" />
+        </div>
+      </header>
+    </>
+  );
 }

@@ -3,7 +3,16 @@
 > The project's current state. Update it after every task. Permanent decisions go in `DECISIONS.md`.
 
 ## Current Status
-Phase 1 Setup and parts of Phase 11 (Home Page) are underway. Next.js scaffolded, folder structure created, and shadcn/ui installed. Design tokens, icons (Lucide), and fonts configured to match the new Sylvie mockup (Newsreader, Inter, Plum/Cream theme). The storefront layout and home page components have been built and styled. On 9 Oct 2026 the docs were updated for the client's stock sheet (their SKUs and style codes used exactly as written), the stock sheet upload and cash on delivery.
+
+11 Oct 2026 checkpoint: the next delivery priority is **Client Storefront Review**, targeted for Monday, 12 Oct, with the acceptance gates in `docs/STOREFRONT-MILESTONE.md` and the priority overlay in `TASKS.md`. The target date is not a verified delivery promise.
+
+The storefront has home, collection and PDP visual scaffolding, but it is not connected to the live catalogue. The current PDP uses one `MOCK_PRODUCT` for every slug, and real variants, stock behavior, cart, checkout and admin screens remain unimplemented. About, Contact and Journal have Coming Soon pages; several other linked routes are absent. TASK-039 and TASK-091 are historical visual-work completion, not final client acceptance.
+
+A separate approved database-foundation delivery created 14 tables with RLS, three applied migrations and an earlier receipt of 95 passing pgTAP assertions. Catalogue business tables are empty. Migrations, generated types and tests were delivered outside this repository and have not been integrated here; no app/browser/CI success is implied. The Supabase token hook exists as SQL but has not been enabled or verified in a real staff login flow.
+
+Cloudinary is connected and product photographs are being uploaded into `ar-staging/source-images/<source folder>`. The Drive inventory contains 150 indexed images across 21 folders. Upload completion and final database mapping have not been signed off. Cloudinary folder location and public ID are separate; sampled uploads have bare public IDs that do not yet satisfy the database's final media-key contract. Do not move or rename media until a reconciled target preview is approved. Never edit the client's Drive.
+
+Pranav reports the Vercel environment variables are configured and the test site redeployed. This was not independently verified through the Vercel connection, and environment variables alone do not wire the app to Supabase.
 
 ## Completed
 - Research: stack, payments, auth, media, UAE compliance
@@ -17,27 +26,42 @@ Phase 1 Setup and parts of Phase 11 (Home Page) are underway. Next.js scaffolded
 - Home page components and layout according to the new Sylvie design system (TASK-091)
 - Storefront layout including header, footer, 404 page, metadata, and placeholder pages (TASK-039)
 - Docs update (9 Oct 2026): the client's stock sheet is the source (ADR-029), style code and details per colourway, price per SKU, four product shapes, stock sheet upload and export, cash on delivery, own checkout page, new order statuses (ADR-023 and ADR-025 amended, ADR-029 to ADR-036); tasks TASK-113 to TASK-125 added; `AGENTS.md` split into `.agents/rules/`
+- External database foundation (11 Oct 2026): 13 public tables and private app configuration, RLS, catalogue/stock/publish guards, three applied migrations and 95 passing rolled-back pgTAP assertions. Repository integration and CI remain open.
+- Source image inventory and upload-planning workbook (11 Oct 2026): original filenames/links retained, provisional order and mapping flags recorded; not a completed image-quality audit or catalogue import.
 
 ## Current Task
-TASK-005 src/lib/env.ts: validate every environment variable with Zod
+
+Documentation-only roadmap reconciliation on `doc/storefront-review-milestone`: add the M0-M4 delivery overlay, correct this handoff and record the storefront milestone plan. This does not authorize implementation, product imports, schema changes or Cloudinary renames/moves.
 
 ## Waiting On
 - Client answers to Q1 to Q41 in `PRD.md`. Most urgent: Q1 guest checkout, Q2 return window, Q6 delivery fee, Q15 VAT, Q26 to Q28 (stock, product names, rows 38 to 43), Q35 to Q38 (courier and COD), Q41 categories
-- The completed stock sheet back from the client (Size, Product Name, Stock and Category filled; rows 38 to 43 fixed)
-- Product photos per colour (4:5 portrait)
-- The client's Cloudflare account, and their domain on Cloudflare DNS before launch (for `media.<client-domain>`, ADR-037)
+- The completed stock sheet back from the client (Size, Product Name, Stock and Category filled; rows 38 to 43 fixed). Never infer missing size values from SKU suffixes, invent names/stock or silently correct codes.
+- Approval of ambiguous image/catalogue mappings, including `JNE4380-TP` versus Style `JNE4380`, and any grouping of separate styles into a multi-colour product
+- Cloudinary upload completion and reconciliation against the 150-image/21-folder source inventory, reviewed cover/order/alt text, sufficient image quality, product copy and size charts
+- Cloudinary production ownership/configuration, named transformations, strict mode and usage alerts per ADR-038; no R2 or Cloudflare media setup is required by the current media decision
+- The client's domain/DNS access before launch, separately from media hosting
 - Commercial sign-off for customer accounts, returns, bilingual invoices, the stock sheet upload and cash on delivery (beyond the original proposal)
+- Approved product/policy content and milestone/payment acceptance terms; no claim that only payments remain is supported by the current implementation
 
 ## Known Issues
-- Next.js: another critical security fix is pending upstream. Upgrade as soon as it ships.
+- Storefront pages use mock catalogue data; size/quantity/Add to Cart controls are not functioning commerce. Product slugs do not identify distinct real products.
+- No admin UI, live inventory workflow, cart, checkout, reservations, order processing or payment integration exists in the audited repository.
+- Documentation describes `src/`, but the application uses root-level `app/`, `components/`, `features/` and `lib/`. Keep directory migration out of this milestone and reconcile paths explicitly.
+- `package.json` currently exposes dev/build/start/lint only; documentation-listed typecheck/unit/database/E2E commands are not proof of configured tests or CI.
+- Earlier Next.js security-upgrade note is historical and was not revalidated in this planning pass; verify current upstream advisories during implementation rather than treating the old note as a current finding.
 - Arabic PDF engine not chosen yet (TASK-062, ADR-022).
 - ExcelJS for the stock sheet is proposed (ADR-036): confirm before TASK-113.
-- Rows 38 to 43 of the client's sheet (J0395, JNE4124, J0478) have SKU and Style swapped and values in the wrong columns. The upload rejects them until the client fixes their sheet; we never fix it for them.
-- Resend Free caps at 100 emails a day. Switch to Pro before any promotion.
-- Sentry free plan: one user, email alerts only, one cron monitor and one uptime monitor, 5,000 errors a month. Upgrade to Team when a second person needs access or a limit is hit.
+- Rows 38 to 43 of the client's sheet (J0395, JNE4124, J0478) contain duplicate SKU values and size-like Style values, suggesting swapped fields, with other misplaced values. The upload must reject unresolved rows; the client must correct them, not the importer.
+- `JAA25KB02100` has one indexed source photo. Two source folders skip filename suffix numbers; this is a review flag, not proof of missing photos.
+- Draft catalogue imports, permanent media keys and published storefront data depend on approved client values and a reviewed mapping. No production-ready catalogue is implied by the completed database schema.
+- Resend Free caps at 100 emails a day. Switch to Pro before any promotion. This inherited planning note was not revalidated in this documentation pass.
+- Sentry free plan: one user, email alerts only, one cron monitor and one uptime monitor, 5,000 errors a month. Upgrade to Team when a second person needs access or a limit is hit. This inherited planning note was not revalidated in this documentation pass.
 
 ## Next Step
-Implement Zod environment variable validation (TASK-005).
+
+Start the bounded M0 foundation-reconciliation work with TASK-005 environment validation and a plan to integrate the already-applied migrations/types/tests, then the server-only catalogue/media boundaries. Work one task at a time, verify its behavior, and keep client-data resolution and upload reconciliation visible as separate blockers. No further schema rebuild is required for the existing product -> colourway -> SKU -> stock model.
+
+The milestone sequence is M0 foundation reconciliation, M1 client storefront review, M2 basic catalogue/inventory admin, M3 transactional commerce, M4 launch readiness. Detailed acceptance criteria and safe Cloudinary placement are in `docs/STOREFRONT-MILESTONE.md`.
 
 ## Log
 - 5 Oct 2026: project docs created
@@ -60,3 +84,6 @@ Implement Zod environment variable validation (TASK-005).
 - 10 Oct 2026: Implemented Product Detail Page UI (`app/collections/[slug]/page.tsx`): Built responsive sticky-scroll layout where the main product image stays pinned while details scroll. Componentized UI into `ProductGallery`, `ProductInfo`, `ProductAccordions`, and `ProductTrustStrip`. Added mobile-specific horizontal swipeable thumbnail gallery, and a responsive "You May Also Like" section (5 products on desktop, 4 on mobile).
 
 - 11 Oct 2026: Media moved from R2 + sharp to Cloudinary (ADR-038), because R2 needs a payment method.
+- 11 Oct 2026: Separate approved foundation delivery applied `20261011073916_catalogue_foundation`, `20261011074102_catalogue_guards` and `20261011074137_catalogue_policy_tuning`; 95 pgTAP assertions passed with synthetic data rolled back. No client catalogue, staff or images were imported into the database, and the delivery did not change Git.
+- 11 Oct 2026: Inventoried 150 indexed Drive images across 21 product folders, retained source filenames/links, created `ar-staging/source-images` in Cloudinary and provided manual upload directions after direct Drive transfer failed. No Drive files were edited.
+- 11 Oct 2026: Approved documentation-only update adds a client-storefront-review priority overlay, reconciles external foundation progress against actual application code, and records the Cloudinary/catalogue placement gates. Original backlog and historical log retained; no implementation tasks newly marked complete.

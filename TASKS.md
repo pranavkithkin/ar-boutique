@@ -7,6 +7,60 @@
 
 Status: `[ ]` to do, `[~]` in progress, `[x]` done
 
+## Delivery priority overlay: 11 Oct 2026
+
+The next acceptance milestone is **Client Storefront Review**, targeted for Monday, 12 Oct 2026. This is a target, not a verified delivery promise. The full implementation backlog below is retained; this overlay changes execution priority, not scope or completion criteria. See `docs/STOREFRONT-MILESTONE.md` for the detailed plan and acceptance gates.
+
+### M0: Reconcile the existing foundation
+- [ ] Bring the three already-applied Supabase migrations, generated types and 95-assertion test suite into the repository through a separate reviewed implementation change; do not reapply or rewrite migrations
+- [ ] Implement environment validation, server-only catalogue/media boundaries, money helpers and reproducible tests (TASK-005, 006, 007, 010, 020, 029)
+- [ ] Preserve the existing root-level application layout during this delivery; reconcile the docs' `src/` mismatch rather than adding an unrelated directory migration
+- [ ] Reconcile the completed Cloudinary intake against the 150-image, 21-folder source inventory before any final moves or renames
+- [ ] Resolve client catalogue inputs and preview exact draft records before import; never infer names, sizes, stock or corrected SKU/Style values
+
+### M1: Client Storefront Review (nearest milestone)
+- [ ] Home: polished responsive presentation, approved photographs/content, accurate new arrivals and working CTAs; no invented promotions or policy claims (TASK-091, 039)
+- [ ] Collection: correct product/image/price pairing, meaningful filters/sort when shown, truthful availability and empty state (TASK-040)
+- [ ] PDP: each slug resolves to its own product; invalid slugs return 404; approved colourway gallery/details, unambiguous SKU selection and correct money formatting (TASK-041)
+- [ ] Variant UX: colour before size, compatible size selection, per-colour galleries/details, `?colour=` links, unnecessary pickers hidden and verified sold-out states
+- [ ] Supporting destinations: About, Contact, Journal, Shipping, Returns, Terms, Privacy and Size Guide resolve with approved basic facts or explicit approval placeholders (TASK-094)
+- [ ] No dead purchase, account, search, category or journal controls; unimplemented commerce is clearly unavailable, not presented as a functioning purchase flow
+- [ ] Review QA at 375 / 768 / 1440, keyboard navigation, galleries, image/link integrity, different real product pages, loading/error/empty states and no runtime errors
+- [ ] Record client review outcome against the agreed milestone/payment terms; do not claim that only payments remain
+
+If required catalogue values are still unavailable, a labelled visual review may use real photos and approval placeholders without inserting fictitious values. That is design review only, not full data-backed M1 acceptance. Do not weaken draft-product RLS for a demo.
+
+### M2: Basic catalogue and inventory administration
+- [ ] Secure admin login, active-admin allowlist and TOTP MFA, including hook activation and server/database authorization (TASK-020 through 028)
+- [ ] Product/colourway/SKU editing, per-SKU prices, per-colour galleries and publish checks (TASK-030 through 037, 042)
+- [ ] On-hand/held/available stock grid, reasoned adjustments, actor/timestamp/history, low/out-of-stock filters (TASK-036)
+- [ ] Keep full transactional stock-sheet import/export separately tracked (TASK-113 through 115); existing stock functions do not mean these flows are implemented
+
+### M3: Transactional commerce
+- [ ] Cart, server revalidation, checkout, reservations, orders, Stripe test mode, idempotent webhooks, reconciliation and communications
+- [ ] Retain accounts, COD, returns, bilingual invoices and related reporting in the full backlog, subject to existing commercial/client approval gates
+
+### M4: Launch readiness
+- [ ] Approved policies, shipping/VAT settings, live provider setup, security/accessibility/performance QA, monitoring, domain setup and end-to-end purchase/refund acceptance
+
+### Evidence versus original task completion
+
+No original implementation checkbox is newly marked done by this documentation update.
+
+- TASK-006: partial external delivery; live migrations/types exist, but repository integration and local reproducibility remain.
+- TASK-009: deployment and variables are user-reported; preview pipeline not independently verified.
+- TASK-012 through 016: applied foundation and earlier pgTAP evidence exist; repository/CI acceptance remains outstanding.
+- TASK-017: ledger/function foundation exists; import/COD callers are not implemented.
+- TASK-018: rolled-back test fixtures are not a persistent local seed/admin.
+- TASK-019: database tests are not wired to CI.
+- TASK-023: SQL hook exists; activation and login flow remain.
+- TASK-029: Cloudinary connection/intake only; no application media adapter.
+- TASK-037: SQL guards exist; no admin publishing form.
+- TASK-039 and 091: historical visual-scaffolding completion is retained; client-review/link/content/data QA remains open above.
+- TASK-040 and 041: UI prototypes exist; real data and behavior remain incomplete.
+
+The live foundation has 14 tables and three applied migrations; the earlier test receipt records 95 passing pgTAP assertions, not app/browser/CI acceptance. Catalogue business tables remain empty at this checkpoint. The current PDP still uses `MOCK_PRODUCT`. Do not convert checkbox counts into a project-completion percentage.
+
 ## Phase 0: Client and Design (no code)
 - [ ] Get answers to Q1 to Q41 in `docs/PRD.md` and record them in `docs/DECISIONS.md`
 - [ ] Confirm budget and timeline for the additions (accounts, returns, admin 2FA, bilingual invoices, stock sheet upload, cash on delivery)

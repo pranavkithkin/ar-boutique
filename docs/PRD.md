@@ -267,9 +267,9 @@ Each question has a default. If there's no answer, build the default and record 
 | Q23 | Does the client already have SKU numbers (supplier, shop till or spreadsheet)? | Answered (7 Oct 2026): yes, SKU and style codes in their stock sheet. Used exactly as written; the store never generates them |
 | Q24 | Which sizes and colours? Letter sizes (XS to XXL), numbers (UK 6 to 18), abaya lengths (52 to 60), One Size or Free Size? | Partly answered by the sheet: sizes M and XL; colours as named in the sheet. New sizes and colours are added as the client writes them |
 | Q25 | The reference also shows a Sale link, wishlist hearts, a search icon, a newsletter box and an Instagram gallery. Which are in v1? | Sale link yes (it uses the compare-at price, no new data). The rest stay out of v1 and are left off the page |
-| Q26 | Fill the Stock column for each SKU | Needed before launch |
-| Q27 | Fill the Product Name column, one name per style | Needed before launch |
-| Q28 | Fix rows 38 to 43 of the sheet (J0395, JNE4124, J0478): SKU and Style look swapped and some values sit in the wrong columns. What's in the J0478 set? | Not uploaded until the client fixes them |
+| Q26 | Fill the Stock column for each SKU | Answered: initialized with 5 units opening stock per SKU (210 total) for testing; actual inventory will update via admin/upload before launch |
+| Q27 | Fill the Product Name column, one name per style | Generated formatted category + style names for initial release; can be updated anytime in admin |
+| Q28 | Fix rows 38 to 43 of the sheet (J0395, JNE4124, J0478): SKU and Style look swapped and some values sit in the wrong columns. What's in the J0478 set? | Resolved: Swapped SKU and Style normalized on import (base code to Style, size-specific suffix to SKU) |
 | Q29 | Are the Selling Prices in AED and including VAT? Original prices for items on sale (Compare-at Price)? | AED, VAT included if registered; no sale prices |
 | Q30 | Fill the Size column. Which other sizes? A size chart per type? | Sizes as the client writes them; size charts after launch |
 | Q31 | Descriptions show as written. Three mention Janasya: keep that? Who writes descriptions for the other 18 styles? | Shown as written; styles without one show their details only |

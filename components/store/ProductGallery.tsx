@@ -1,51 +1,111 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { PreviewImage } from "@/features/catalog/preview-catalogue";
+import * as React from "react"
+import Image from "next/image"
+import { cn } from "@/lib/utils"
+import { ChevronUp, ChevronDown } from "lucide-react"
 
-function GalleryImage({ image, priority = false }: { image: PreviewImage; priority?: boolean }) {
-  const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const [attempt, setAttempt] = useState(0);
+export function ProductGallery({ images }: { images: string[] }) {
+  const [selectedIndex, setSelectedIndex] = React.useState(0)
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+
+  const scrollUp = () => {
+    scrollRef.current?.scrollBy({ top: -120, behavior: "smooth" })
+  }
+
+  const scrollDown = () => {
+    scrollRef.current?.scrollBy({ top: 120, behavior: "smooth" })
+  }
+
   return (
-    <div className="relative aspect-[4/5] bg-muted">
-      {!loaded && !failed && <div className="absolute inset-0 motion-safe:animate-pulse bg-muted" aria-hidden="true" />}
-      {failed ? <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
-        <p role="status" className="text-base text-muted-foreground">This photograph could not load.</p>
-        <Button type="button" variant="outline" className="min-h-12" onClick={() => { setFailed(false); setLoaded(false); setAttempt(attempt + 1); }}>Retry photograph</Button>
-      </div> : <Image key={attempt} src={image.src} alt={image.alt} fill unoptimized priority={priority}
-        sizes="(min-width: 1024px) 50vw, 100vw" className="object-contain"
-        onLoad={() => setLoaded(true)} onError={() => setFailed(true)} />}
-    </div>
-  );
-}
+    <div className="flex flex-col sm:flex-row gap-4 sm:items-start relative w-full">
+      {/* Desktop Thumbnails (Left side) */}
+      <div className="hidden sm:flex flex-col w-14 xl:w-16 shrink-0 sticky top-24 h-[calc(100vh-8rem)] py-0">
+        {/* Up Arrow */}
+        <button
+          onClick={scrollUp}
+          className="flex items-center justify-center w-full h-8 mb-3 rounded-sm bg-secondary/80 hover:bg-secondary transition-colors shrink-0"
+        >
+          <ChevronUp className="w-4 h-4" />
+        </button>
 
-export function ProductGallery({ images }: { images: readonly PreviewImage[] }) {
-  const [index, setIndex] = useState(0);
-  const current = images[index] ?? images[0];
-  if (!current) return <div className="aspect-[4/5] bg-muted grid place-items-center text-base text-muted-foreground">Photographs awaiting upload</div>;
-  const selected = images.indexOf(current);
-  const previous = () => setIndex((selected - 1 + images.length) % images.length);
-  const next = () => setIndex((selected + 1) % images.length);
-  return (
-    <section aria-label="Product photographs">
-      <GalleryImage key={current.src} image={current} priority />
-      <div className="flex items-center justify-between gap-3 my-3">
-        <Button type="button" variant="outline" onClick={previous} disabled={images.length < 2} aria-label="Previous photograph" className="min-h-12 min-w-12"><ChevronLeft aria-hidden="true" /></Button>
-        <p className="text-sm text-muted-foreground" role="status" aria-live="polite">Photograph {selected + 1} of {images.length}</p>
-        <Button type="button" variant="outline" onClick={next} disabled={images.length < 2} aria-label="Next photograph" className="min-h-12 min-w-12"><ChevronRight aria-hidden="true" /></Button>
+        {/* Desktop Thumbnail List */}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto flex flex-col gap-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
+        >
+          {images.map((img, i) => (
+            <button
+              key={i}
+              onClick={() => setSelectedIndex(i)}
+              className={cn(
+                "relative aspect-[3/4] w-full overflow-hidden rounded-sm border-2 shrink-0 transition-colors",
+                selectedIndex === i
+                  ? "border-foreground"
+                  : "border-transparent hover:border-border"
+              )}
+            >
+              <Image
+                src={img}
+                alt={`Thumbnail ${i + 1}`}
+                fill
+                className="object-cover"
+                unoptimized={true}
+                sizes="100px"
+              />
+            </button>
+          ))}
+        </div>
+
+        {/* Down Arrow */}
+        <button
+          onClick={scrollDown}
+          className="flex items-center justify-center w-full h-8 mt-3 rounded-sm bg-secondary/80 hover:bg-secondary transition-colors shrink-0"
+        >
+          <ChevronDown className="w-4 h-4" />
+        </button>
       </div>
-      {images.length > 1 && <div className="flex gap-3 overflow-x-auto pb-3" aria-label="Choose a photograph">
-        {images.map((image, i) => <button key={image.src} type="button" onClick={() => setIndex(i)}
-          aria-label={`Show photograph ${i + 1}`} aria-pressed={i === selected}
-          className={`relative w-20 aspect-[4/5] shrink-0 border-2 bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${i === selected ? "border-foreground" : "border-transparent"}`}>
-          <Image src={image.src} alt="" fill unoptimized sizes="80px" className="object-contain" />
-          <span className="absolute bottom-0 right-0 bg-background px-1 text-sm">{i + 1}</span>
-        </button>)}
-      </div>}
-    </section>
-  );
+
+      {/* Main Content Area */}
+      <div className="flex-1 w-full flex flex-col gap-4 min-w-0">
+        {/* Main Image */}
+        <div className="relative w-full rounded-md overflow-hidden bg-transparent">
+          <Image
+            src={images[selectedIndex]}
+            alt="Product image"
+            width={1000}
+            height={1500}
+            className="w-full h-auto transition-opacity duration-300"
+            priority
+            unoptimized={true}
+          />
+        </div>
+
+        {/* Mobile Thumbnails (Horizontal Bottom slider) */}
+        <div className="flex sm:hidden overflow-x-auto gap-3 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full">
+          {images.map((img, i) => (
+            <button
+              key={i}
+              onClick={() => setSelectedIndex(i)}
+              className={cn(
+                "relative aspect-[3/4] w-20 shrink-0 overflow-hidden rounded-sm border-2 transition-colors",
+                selectedIndex === i
+                  ? "border-foreground"
+                  : "border-transparent hover:border-border"
+              )}
+            >
+              <Image
+                src={img}
+                alt={`Thumbnail ${i + 1}`}
+                fill
+                className="object-cover"
+                unoptimized={true}
+                sizes="100px"
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }

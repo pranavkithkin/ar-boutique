@@ -1,39 +1,96 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { PreviewHeader, PreviewFooter } from "@/features/catalog/components/CatalogueGrid";
-import { findPreviewProduct, previewLabel } from "@/features/catalog/preview-catalogue";
-import { previewImages } from "@/services/media/preview";
-import { ProductGallery } from "@/components/store/ProductGallery";
-import { ProductInfo } from "@/components/store/ProductInfo";
+import * as React from "react"
+import { notFound } from "next/navigation"
+import { StoreHeader } from "@/components/store/StoreHeader"
+import { StoreFooter } from "@/components/store/StoreFooter"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { ProductGallery } from "@/components/store/ProductGallery"
+import { SyncScrollLayout } from "@/components/store/SyncScrollLayout"
+import { ProductInfo } from "@/components/store/ProductInfo"
+import { ProductCard } from "@/components/store/ProductCard"
+import { getProductBySlug } from "@/lib/product-detail"
+import { getProductsPage } from "@/lib/products"
 
-type PageProps = { params: Promise<{ slug: string }> };
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const { slug } = await params
+  const product = await getProductBySlug(slug)
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const product = findPreviewProduct((await params).slug);
-  if (!product) notFound();
-  return { title: `${previewLabel(product)} | ${product.styleCode} | AR Boutique Preview`, robots: { index: false, follow: false } };
-}
+  if (!product) {
+    notFound()
+  }
 
-export default async function ProductPage({ params }: PageProps) {
-  const product = findPreviewProduct((await params).slug);
-  if (!product) notFound();
+  // Recommended products: fetch next 5 items from the database
+  const { products: recommended } = await getProductsPage({ limit: 5 })
+  const filteredRecommended = recommended.filter((p) => p.slug !== slug).slice(0, 4)
+
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <PreviewHeader />
-      <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground mb-8 flex flex-wrap gap-2">
-          <Link href="/" className="underline underline-offset-4">Home</Link><span aria-hidden="true">/</span>
-          <Link href="/collections" className="underline underline-offset-4">Collections</Link><span aria-hidden="true">/</span>
-          <span aria-current="page">{product.styleCode}</span>
-        </nav>
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-          <div className="lg:sticky lg:top-6"><ProductGallery key={product.slug} images={previewImages(product)} /></div>
-          <ProductInfo product={product} />
+    <div className="flex min-h-screen flex-col bg-background">
+      <StoreHeader />
+
+      <main className="flex-1">
+        {/* Breadcrumb */}
+        <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <Breadcrumb>
+            <BreadcrumbList className="text-xs sm:text-sm">
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/" className="text-primary hover:text-primary/80">
+                  Home
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/collections" className="text-primary hover:text-primary/80">
+                  Collections
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="text-muted-foreground">{product.name}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
-        <Link href="/collections" className="inline-flex min-h-12 items-center mt-10 underline underline-offset-4">Back to all styles</Link>
+
+        <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 pb-24">
+          <SyncScrollLayout
+            left={<ProductGallery images={product.images} />}
+            right={<ProductInfo product={product} title={product.name} />}
+          />
+
+          {/* Recommended Products */}
+          {filteredRecommended.length > 0 && (
+            <div className="mt-24 pt-16 border-t border-border">
+              <h2 className="font-heading text-2xl sm:text-3xl text-foreground text-center mb-10">
+                You May Also Like
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+                {filteredRecommended.map((item) => (
+                  <ProductCard
+                    key={item.id}
+                    brand={item.brand}
+                    name={item.name}
+                    price={item.price}
+                    imageSrc={item.imageSrc}
+                    href={`/collections/${item.slug}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </main>
-      <PreviewFooter />
+
+      <StoreFooter />
     </div>
-  );
+  )
 }

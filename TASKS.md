@@ -80,7 +80,7 @@ Done when: an empty app builds, CI is green, a Vercel preview deploys and a test
 - [x] TASK-002 Strict TypeScript, Prettier, `@/` path alias and the npm scripts listed in `README.md`
 - [x] TASK-003 Create the folder structure from `docs/ARCHITECTURE.md`
 - [x] TASK-004 shadcn/ui: `npx shadcn@latest init` with a preset close to `docs/DESIGN.md` (square corners), then set the exact tokens, radius and fonts from `docs/DESIGN.md`; fonts in `src/lib/fonts.ts`; `success` and `warning` in `src/styles/brand.css`; record the preset code in `docs/DESIGN.md`; try one `apply --only theme,font` to prove a re-theme needs no code changes
-- [ ] TASK-005 `src/lib/env.ts`: validate every environment variable with Zod; keep `.env.example` in sync
+- [~] TASK-005 Environment validation in root-level `lib/env.ts`, `lib/env.public.ts` and `lib/env.schema.ts`; `.env.example` synchronized. Implementation prepared for the six current Supabase/Cloudinary variables, with redacted errors, server-only boundary, startup validation and focused tests. Pending dependency installation, lockfile regeneration, typecheck, lint, test:env and build; NOT complete. Future integrations add their schemas when implemented.
 - [ ] TASK-006 Supabase CLI: local project, first migration, generated types (`npm run db:types`)
 - [ ] TASK-007 Vitest and Playwright set up with one passing test each
 - [ ] TASK-008 GitHub repo, protected `main`, GitHub Actions for typecheck, lint, unit tests, build and `npm run check:tokens` (no hard-coded colours or font names in components)

@@ -31,7 +31,11 @@ Pranav reports the Vercel environment variables are configured and the test site
 
 ## Current Task
 
-Documentation-only roadmap reconciliation on `doc/storefront-review-milestone`: add the M0-M4 delivery overlay, correct this handoff and record the storefront milestone plan. This does not authorize implementation, product imports, schema changes or Cloudinary renames/moves.
+TASK-005 environment validation: implementation applied to `doc/storefront-review-milestone` for the existing root-level `lib/` layout. Zod checks the six configured Supabase/Cloudinary variables; browser exports contain only the two public Supabase fields, server exports use `server-only`, and `next.config.ts` validates with the pure schema before startup/build. Errors name invalid variables without exposing their values. Current staging media root remains valid even when Next uses NODE_ENV=production.
+
+Validation is restricted to currently implemented configuration. Future payment/auth/email integrations must add their required schemas before use; no missing future-service secrets block this milestone. Modern Supabase publishable keys are required; legacy anon JWTs are not accepted. Loopback HTTP is permitted only for development/test server validation.
+
+Status: in progress, NOT verified complete. Dependency installation, package-lock regeneration and `npm run typecheck`, `npm run lint`, `npm run test:env`, `npm run build` must run in the development environment. The preparation sandbox has no npm or internet access. Focused tests are authored, not reported passing. Full TASK-007 test setup and browser boundary verification remain open. The ten-file patch was committed to the roadmap branch by explicit approval; no merge, deployment, remote environment change, database write or media change is included.
 
 ## Waiting On
 - Client answers to Q1 to Q41 in `PRD.md`. Most urgent: Q1 guest checkout, Q2 return window, Q6 delivery fee, Q15 VAT, Q26 to Q28 (stock, product names, rows 38 to 43), Q35 to Q38 (courier and COD), Q41 categories
@@ -47,7 +51,7 @@ Documentation-only roadmap reconciliation on `doc/storefront-review-milestone`: 
 - Storefront pages use mock catalogue data; size/quantity/Add to Cart controls are not functioning commerce. Product slugs do not identify distinct real products.
 - No admin UI, live inventory workflow, cart, checkout, reservations, order processing or payment integration exists in the audited repository.
 - Documentation describes `src/`, but the application uses root-level `app/`, `components/`, `features/` and `lib/`. Keep directory migration out of this milestone and reconcile paths explicitly.
-- `package.json` currently exposes dev/build/start/lint only; documentation-listed typecheck/unit/database/E2E commands are not proof of configured tests or CI.
+- TASK-005 adds typecheck and focused test:env scripts alongside dev/build/start/lint; dependency installation and the lockfile are still pending. Broader documentation-listed unit/database/E2E commands are not proof of configured tests or CI.
 - Earlier Next.js security-upgrade note is historical and was not revalidated in this planning pass; verify current upstream advisories during implementation rather than treating the old note as a current finding.
 - Arabic PDF engine not chosen yet (TASK-062, ADR-022).
 - ExcelJS for the stock sheet is proposed (ADR-036): confirm before TASK-113.
@@ -59,7 +63,7 @@ Documentation-only roadmap reconciliation on `doc/storefront-review-milestone`: 
 
 ## Next Step
 
-Start the bounded M0 foundation-reconciliation work with TASK-005 environment validation and a plan to integrate the already-applied migrations/types/tests, then the server-only catalogue/media boundaries. Work one task at a time, verify its behavior, and keep client-data resolution and upload reconciliation visible as separate blockers. No further schema rebuild is required for the existing product -> colourway -> SKU -> stock model.
+Verify the applied TASK-005 patch in the development environment: install the declared dependencies to regenerate the lockfile, fill `.env.local` securely, then run the focused environment tests, typecheck, lint and build. Verify that a client import of `lib/env.ts` fails and that missing/invalid settings produce redacted startup errors. Do not mark TASK-005 complete until these checks pass. Then integrate the already-applied migrations/types/tests and server-only catalogue/media boundaries in separate tasks; keep client-data and upload blockers visible. The existing product -> colourway -> SKU -> stock model does not need rebuilding.
 
 The milestone sequence is M0 foundation reconciliation, M1 client storefront review, M2 basic catalogue/inventory admin, M3 transactional commerce, M4 launch readiness. Detailed acceptance criteria and safe Cloudinary placement are in `docs/STOREFRONT-MILESTONE.md`.
 

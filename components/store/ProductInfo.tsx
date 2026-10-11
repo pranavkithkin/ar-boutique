@@ -9,12 +9,15 @@ export interface ProductType {
   name: string
   brand?: string
   sku: string
+  colour?: string
   price: string
   compareAtPrice?: string
-  description: string
+  description?: string
+  details?: Record<string, string>
   images: string[]
   sizes: { id: string; name: string }[]
 }
+
 
 interface ProductInfoProps {
   product: ProductType
@@ -100,7 +103,7 @@ export function ProductInfo({ product, title }: ProductInfoProps) {
         Tax included. <Link href="#" className="text-primary underline">Shipping</Link> calculated at checkout.
       </div>
 
-      {/* Features Grid */}
+      {/* Features Grid (Commented out per user request)
       <div className="grid grid-cols-3 gap-y-6 gap-x-2 border-t border-border pt-6 mb-6">
         <div className="flex flex-col items-center text-center gap-1.5">
           <Wind className="w-5 h-5 stroke-[1.5] text-foreground" />
@@ -127,6 +130,8 @@ export function ProductInfo({ product, title }: ProductInfoProps) {
           <span className="text-xs text-foreground font-medium">Dedicated support</span>
         </div>
       </div>
+      */}
+
 
       <div className="mt-6">
         <ProductAccordions product={product} />

@@ -42,7 +42,7 @@ Done when: core tables exist with RLS and the RLS tests run in CI.
 - [ ] TASK-015 Migration: `products` (no price, no style code; `product_group`), `product_colours` (`style_code` required, `details` JSON), `product_images` (per product colour), `product_variants` (one row per SKU: the client's SKU as written, unique ignoring letter case; `size_id` nullable, unique colourway + size with nulls not distinct, no mixing of sized and unsized SKUs; `price_fils`, `compare_at_fils`; composite key to the product colour) with checks and RLS (public read of published products, visible colours and active SKUs) + pgTAP
 - [ ] TASK-016 Migration: `stock_levels` (no visitor or customer access) + `variant_availability()` (status only) + pgTAP: visitors and customers can't read counts
 - [ ] TASK-017 Migration: `inventory_adjustments` ledger + `adjust_stock()` (reason required, can't drop below held stock); reasons include "stock sheet upload" and "COD refused"
-- [ ] TASK-018 Seed per `docs/TEST_PLAN.md`: products in all four shapes (sizes only, colours and sizes, colours only, no choice) with SKUs and style codes in the client's format; one product with different prices per size; SKUs with stock 0, 1 and 5; one final-sale product; one local admin. Once TASK-114 is done, the client's corrected sheet can be loaded through the upload
+- [x] TASK-018 Seed per `docs/TEST_PLAN.md`: imported client's 21 styles, 42 SKUs, 5 categories, 17 colours, 150 Cloudinary images, 5 units opening stock per SKU in stock_levels with inventory_adjustments ledger rows.
 - [ ] TASK-019 Run `supabase test db` in CI
 
 ## Phase 3: Admin Access

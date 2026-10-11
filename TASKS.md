@@ -9,71 +9,63 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done
 
 ## Delivery priority overlay: 11 Oct 2026
 
-The next acceptance milestone is **Client Storefront Review**, targeted for Monday, 12 Oct 2026. This is a target, not a verified delivery promise. The full implementation backlog below is retained; this overlay changes execution priority, not scope or completion criteria. See `docs/STOREFRONT-MILESTONE.md` for the detailed plan and acceptance gates.
+The next acceptance milestone is **Client Storefront Review**, targeted for Monday, 12 Oct 2026. This is a target, not a verified delivery promise. The original backlog below is retained. See `docs/STOREFRONT-MILESTONE.md` for acceptance gates; static design review is not full data-backed M1 acceptance.
 
-### Approved real-catalogue preview checkpoint
+### Verified baseline and deployment report
 
-The first visual-first pass is implemented on `doc/storefront-review-milestone`, not merged or accepted. Home, collection and PDP now read a static review fixture of 17 approved styles, 34 unchanged SKU references and 124 explicit Cloudinary image keys. Temporary display labels combine supplied colour and Package Contains values; supplied Selling Price values are displayed as AED by explicit approval. No canonical names, size values, stock or discounts were invented.
+PR #10 merged seven commits across 22 files into main at `5f1bbd137cce4fffcb77e3f27babd5c06f1b0489`. The lockfile was generated locally through npm and committed at `70695d29ca32269e016fffba0202396fdf867f1c`: manifest/lockfile specifications match, Vitest is 5.0.3 and Node typings resolve to 24.19.2. It was not hand-edited. Pranav supplied local output showing typecheck (including Next type generation), 55 environment tests, 17 catalogue tests, ESLint and production build passing. These 72 passing tests are local user-provided evidence, not an assistant-executed CI run.
 
-J0395-DR, J0478-KR-NP, JNE4124-KR and JNE4380-TP remain withheld. Purchases are disabled; sizes and availability say awaiting confirmation. These three routes use a preview header/footer without inactive purchase controls or unapproved delivery claims; existing shared components and other routes are unchanged. The existing hero is retained, and unrelated mock category/promo/journal sections are omitted from the preview home.
+The complete supplied audit has nine high-severity package entries tracing to the single unpatched `braces` advisory GHSA-vfj7-8cjw-p6xm, and no critical entries. `shadcn` is listed in production dependencies and its CSS is imported, so runtime exploitability is not established or dismissed as dev-only. No force audit fix, transitive override or install-script permission was applied. `unrs-resolver@1.12.2` script review remains open. A clean `npm ci` reproduction remains pending.
 
-Implemented: exact slug lookup with notFound, search/garment/colour filters, numeric price sorting, accessible gallery buttons, image loading/error states and noindex metadata. Source values and pure catalogue behavior were checked by executing the TypeScript catalogue module with Node type stripping and comparing against the XLSX. At the initial preview checkpoint, Vitest, semantic typecheck, lint, Next build, live image delivery and viewport/browser QA had not run; the subsequent local typecheck evidence is recorded below. TASK-005 lockfile synchronization remains blocking. Run `npm exec -- vitest run tests/unit/env.test.ts tests/unit/preview-catalogue.test.ts` after installation. This does not complete TASK-029, 040, 041 or M1, and does not create a Supabase-backed catalogue or working size/colour SKU selection. Full TASK-010 money helpers and TASK-029 media adapter remain separate; preview delivery uses original untransformed staging images.
+The Vercel Preview build failed with six missing/invalid required variables. Pranav's screenshot confirmed that all six are Production-only; validation was not weakened. The user approved proceeding, PR #10 merged normally without bypassing required checks, and Pranav subsequently reported production deployment complete. The assistant has not independently verified that production deployment or browser behavior. Preview environment configuration remains open under TASK-009.
 
-### Validation follow-up: 11 Oct 2026
+### Real-catalogue preview
 
-Pranav's local output shows `next typegen` followed by `tsc --noEmit` passing after a targeted Vitest 5.0.3 / Node 24 typings upgrade. The same output reports nine high-severity audit findings and an unreviewed `unrs-resolver@1.12.2` install script. This is user-provided local evidence, not an independently executed branch/CI validation or a clean security audit; the full audit report and regenerated lockfile have not been supplied or committed.
+Home, collection and PDP use a static review fixture with 17 approved styles, 34 unchanged SKU references and 124 explicit image keys. Temporary labels combine supplied colour and Package Contains values; Selling Price is displayed as AED by approval. No canonical names, sizes, stock, category assignments or discounts were invented. J0395-DR, J0478-KR-NP, JNE4124-KR and JNE4380-TP remain withheld. Purchases are disabled and sizes/availability await confirmation.
 
-The GitHub manifest now pins Vitest 5.0.3, uses `@types/node` within the 24.x major, and runs `next typegen && tsc --noEmit` for `typecheck`. A focused regression assertion guards that command. The exact locally resolved Node typing patch is unknown, so no matching lockfile version is claimed. No force audit fix, transitive override or install-script permission change is included. Dependency synchronization, the remaining audit findings, lint, Vitest, build and browser QA still block merge acceptance; main stays unchanged.
+Exact product slug lookup, unknown-slug 404, search/garment/colour filtering, numerical price sorting and galleries with loading/error controls are implemented. Source values were compared with the XLSX, pure catalogue behavior was checked and the two focused test suites later passed locally as above. Original untransformed images use a read-only server-only allowlisted adapter. TASK-010 money helpers and TASK-029 production media integration remain separate. The database business catalogue remains empty; this is not a Supabase-backed catalogue or working variant/stock selection.
+
+### Current batch: TASK-094 supporting-page preview
+
+Approved scope: exactly 22 paths on `feature/TASK-094-supporting-pages` from the merged main baseline. Nineteen source/test files and three documentation files. Eight supporting destinations now have distinct content-awaiting-approval states: About, Contact, Journal, Shipping, Returns, Terms, Privacy and Size Guide. Existing StoreHeader, StoreFooter and ComingSoon are reused; navigation is shared with home/collection/PDP and 404. Inactive search/account/cart controls and unapproved trust/payment claims are removed from the displayed shell. Existing Sheet and StoreButton primitives, brand tokens, logo and hero are retained. No dependencies, provider data or credentials change.
+
+Main navigation has mobile Sheet links, current-page indicators and a skip target. Supporting pages use an h1, breadcrumbs, contextual pending-content lists and a real collection link rendered through the existing button primitive. Root and page metadata keep the review noindex. No invented contact details, policy promises, articles, measurement tables or privacy guarantees are included.
+
+Executed for this batch: Node checks for eight content/route contracts, navigation destinations, footer coverage and current-link behavior; TypeScript syntax transpilation of 19 TS/TSX files; source checks for shared shell/skip targets; exact preservation of the catalogue grid's card/filter implementation. These are NOT full semantic typecheck, lint, Vitest, Next build or browser QA. A focused `tests/unit/storefront-content.test.ts` is committed but not executed with Vitest here. The sandbox has no npm or internet access. TASK-094 remains partial, not accepted. No PR, main merge or explicit deployment action is authorized for this batch.
 
 ### M0: Reconcile the existing foundation
-- [ ] Bring the three already-applied Supabase migrations, generated types and 95-assertion test suite into the repository through a separate reviewed implementation change; do not reapply or rewrite migrations
-- [ ] Implement environment validation, server-only catalogue/media boundaries, money helpers and reproducible tests (TASK-005, 006, 007, 010, 020, 029)
-- [ ] Preserve the existing root-level application layout during this delivery; reconcile the docs' `src/` mismatch rather than adding an unrelated directory migration
-- [ ] Reconcile the completed Cloudinary intake against the 150-image, 21-folder source inventory before any final moves or renames
-- [ ] Resolve client catalogue inputs and preview exact draft records before import; never infer names, sizes, stock or corrected SKU/Style values
+- [ ] Bring the three already-applied Supabase migrations, generated types and 95-assertion test suite into the repository; do not reapply or rewrite migrations
+- [ ] Complete server-only Supabase/catalogue/media boundaries, money helpers and reproducible tests (TASK-005, 006, 007, 010, 020, 029)
+- [ ] Keep root-level app/components/features/services/lib paths; no unrelated directory migration
+- [ ] Reconcile intake against 150 images across 21 source folders before permanent media placement
+- [ ] Resolve missing client values and preview exact draft records before any import
 
-### M1: Client Storefront Review (nearest milestone)
-- [ ] Home: polished responsive presentation, approved photographs/content, accurate new arrivals and working CTAs; no invented promotions or policy claims (TASK-091, 039)
-- [ ] Collection: correct product/image/price pairing, meaningful filters/sort when shown, truthful availability and empty state (TASK-040)
-- [ ] PDP: each slug resolves to its own product; invalid slugs return 404; approved colourway gallery/details, unambiguous SKU selection and correct money formatting (TASK-041)
-- [ ] Variant UX: colour before size, compatible size selection, per-colour galleries/details, `?colour=` links, unnecessary pickers hidden and verified sold-out states
-- [ ] Supporting destinations: About, Contact, Journal, Shipping, Returns, Terms, Privacy and Size Guide resolve with approved basic facts or explicit approval placeholders (TASK-094)
-- [ ] No dead purchase, account, search, category or journal controls; unimplemented commerce is clearly unavailable, not presented as a functioning purchase flow
-- [ ] Review QA at 375 / 768 / 1440, keyboard navigation, galleries, image/link integrity, different real product pages, loading/error/empty states and no runtime errors
-- [ ] Record client review outcome against the agreed milestone/payment terms; do not claim that only payments remain
-
-If required catalogue values are still unavailable, a labelled visual review may use real photos and approval placeholders without inserting fictitious values. That is design review only, not full data-backed M1 acceptance. Do not weaken draft-product RLS for a demo.
+### M1: Client Storefront Review
+- [ ] Home: responsive review QA, approved photographs and meaningful CTAs without invented claims
+- [ ] Collection: correct image/price pairing, meaningful filters/sort, truthful availability and empty state
+- [ ] PDP: distinct product identity, unknown-slug 404, approved gallery/details and verified variant UX
+- [ ] Variant UX: colour before size, compatible selection, per-colour data and verified sold-out states
+- [~] Supporting destinations: eight contextual placeholders and consistent navigation implemented on the TASK-094 branch; runtime/browser verification and approved final content remain
+- [~] Preview shell omits dead commerce controls; browser/link checks remain
+- [ ] Review QA at 375 / 768 / 1440, keyboard and Sheet focus, gallery/image/link integrity, loading/error/empty states and runtime errors
+- [ ] Record client acceptance against agreed milestone/payment terms; do not claim only payments remain
 
 ### M2: Basic catalogue and inventory administration
-- [ ] Secure admin login, active-admin allowlist and TOTP MFA, including hook activation and server/database authorization (TASK-020 through 028)
-- [ ] Product/colourway/SKU editing, per-SKU prices, per-colour galleries and publish checks (TASK-030 through 037, 042)
-- [ ] On-hand/held/available stock grid, reasoned adjustments, actor/timestamp/history, low/out-of-stock filters (TASK-036)
-- [ ] Keep full transactional stock-sheet import/export separately tracked (TASK-113 through 115); existing stock functions do not mean these flows are implemented
+- [ ] Supabase admin login, active-admin allowlist, TOTP, hook activation and server/database authorization (TASK-020 through 028)
+- [ ] Product/colourway/SKU editing, prices, galleries and publish checks (TASK-030 through 037, 042)
+- [ ] On-hand/held/available grid, reasoned adjustments, actor/timestamp/history and stock filters (TASK-036)
+- [ ] Keep transactional sheet import/export separate (TASK-113 through 115)
 
 ### M3: Transactional commerce
-- [ ] Cart, server revalidation, checkout, reservations, orders, Stripe test mode, idempotent webhooks, reconciliation and communications
-- [ ] Retain accounts, COD, returns, bilingual invoices and related reporting in the full backlog, subject to existing commercial/client approval gates
+- [ ] Cart, server validation, checkout, reservations, orders, Stripe test mode, idempotent webhooks, reconciliation and communications
+- [ ] Accounts, COD, returns, invoices and reports remain in the full backlog, subject to client/commercial approvals
 
 ### M4: Launch readiness
-- [ ] Approved policies, shipping/VAT settings, live provider setup, security/accessibility/performance QA, monitoring, domain setup and end-to-end purchase/refund acceptance
+- [ ] Approved policies, shipping/VAT, live provider setup, security/accessibility/performance QA, monitoring, domain and end-to-end purchase/refund acceptance
 
 ### Evidence versus original task completion
 
-No original implementation checkbox is newly marked done by this documentation update.
-
-- TASK-006: partial external delivery; live migrations/types exist, but repository integration and local reproducibility remain.
-- TASK-009: deployment and variables are user-reported; preview pipeline not independently verified.
-- TASK-012 through 016: applied foundation and earlier pgTAP evidence exist; repository/CI acceptance remains outstanding.
-- TASK-017: ledger/function foundation exists; import/COD callers are not implemented.
-- TASK-018: rolled-back test fixtures are not a persistent local seed/admin.
-- TASK-019: database tests are not wired to CI.
-- TASK-023: SQL hook exists; activation and login flow remain.
-- TASK-029: connection/intake plus a temporary read-only preview delivery adapter; production media adapter, upload validation and named transformations remain open.
-- TASK-037: SQL guards exist; no admin publishing form.
-- TASK-039 and 091: historical visual-scaffolding completion is retained; client-review/link/content/data QA remains open above.
-- TASK-040 and 041: approved static real-catalogue preview is implemented; Supabase integration, true variant selection and full acceptance remain open.
-
-The live foundation has 14 tables and three applied migrations; the earlier test receipt records 95 passing pgTAP assertions, not app/browser/CI acceptance. Catalogue business tables remain empty at this checkpoint. The preview does not write to them. Do not convert checkbox counts into a project-completion percentage.
+No original implementation task is newly marked complete by this batch. Historical checked tasks below describe their original scaffold work, not new client acceptance. TASK-006 and TASK-012 through 019 have external database evidence, not repository/CI acceptance. TASK-023's SQL hook is not activated. TASK-029 has an intake and temporary read-only preview adapter, not full production media integration. TASK-037 has SQL guards but no admin publishing UI. TASK-040/041 have a static preview, not live variants/inventory. The 14-table database and 95 passing rolled-back pgTAP assertions are not application or launch acceptance. Never use checkbox counts as a project-completion percentage.
 
 ## Phase 0: Client and Design (no code)
 - [ ] Get answers to Q1 to Q41 in `docs/PRD.md` and record them in `docs/DECISIONS.md`
@@ -91,10 +83,10 @@ The live foundation has 14 tables and three applied migrations; the earlier test
 ## Phase 1: Setup
 Done when: an empty app builds, CI is green, a Vercel preview deploys and a test error reaches Sentry.
 - [x] TASK-001 Scaffold Next.js 16 (>= 16.3.8) with TypeScript, Tailwind, ESLint, App Router and `src/`. Do this before copying in these docs: `create-next-app` refuses a folder that already has a `README.md`
-- [x] TASK-002 Strict TypeScript, Prettier, `@/` path alias and the npm scripts listed in `README.md`
+- [x] TASK-002 Strict TypeScript, Prettier, path alias and the npm scripts listed in `README.md`
 - [x] TASK-003 Create the folder structure from `docs/ARCHITECTURE.md`
 - [x] TASK-004 shadcn/ui: `npx shadcn@latest init` with a preset close to `docs/DESIGN.md` (square corners), then set the exact tokens, radius and fonts from `docs/DESIGN.md`; fonts in `src/lib/fonts.ts`; `success` and `warning` in `src/styles/brand.css`; record the preset code in `docs/DESIGN.md`; try one `apply --only theme,font` to prove a re-theme needs no code changes
-- [~] TASK-005 Environment validation in root-level `lib/env.ts`, `lib/env.public.ts` and `lib/env.schema.ts`; `.env.example` synchronized. Six-variable validation, redacted errors, server-only boundary and focused tests implemented. Follow-up: typecheck generates Next route types first; manifest upgraded to Vitest 5.0.3 and Node 24 typings. User-reported local typecheck passes, but synchronized lockfile, audit triage, lint, focused test execution and build remain pending; NOT complete. Future integrations add their schemas when implemented.
+- [~] TASK-005 Environment validation in root-level `lib/env.ts`, `lib/env.public.ts` and `lib/env.schema.ts`; `.env.example` synchronized. Six-variable Zod validation, browser/server boundary, redacted startup errors and focused tests implemented. Typecheck generates route types; manifest/lockfile synchronized. Pranav's local typecheck, 55 environment tests, 17 catalogue tests, lint and build passed before TASK-094. Clean-install reproduction, install-script review, security triage and browser acceptance remain; NOT marked complete.
 - [ ] TASK-006 Supabase CLI: local project, first migration, generated types (`npm run db:types`)
 - [ ] TASK-007 Vitest and Playwright set up with one passing test each
 - [ ] TASK-008 GitHub repo, protected `main`, GitHub Actions for typecheck, lint, unit tests, build and `npm run check:tokens` (no hard-coded colours or font names in components)
@@ -138,8 +130,8 @@ Done when: an admin creates a product with colours, photos and sizes, and it's l
 - [ ] TASK-037 Publish checks: at least one visible colourway with a photo, at least one active SKU, and a price on every active SKU; clear errors in the form
 - [ ] TASK-038 Enable `cacheComponents`; `'use cache'` + `cacheTag` on catalogue reads; `updateTag()` in admin actions
 - [x] TASK-039 Storefront layout per `docs/DESIGN.md`: announcement bar, header (logo, menu, account, cart), footer, 404 and error pages
-- [~] TASK-040 Shop all and category pages: grid with colour swatches (only for products with more than one colour), "From AED" when SKU prices differ, size and colour filters (in-stock SKUs only), Sale filter from SKU compare-at prices (Q25), sort by lowest price, sold-out products last, empty state. Partial: approved static preview now supports text/garment/colour filters and price sort; live availability, categories, sale and size behavior plus runtime acceptance remain open.
-- [~] TASK-041 Product page: colour picker (only with more than one colour) swaps the photos and Details, sizes for that colour with live availability (no picker with one SKU; it's selected automatically), `?colour=` links rendered on the server, Only N left, Final sale label, Description and Details sections with the client's values as written, sticky Add to cart on mobile. Partial: distinct preview slugs, original photographs/details and disabled purchases implemented; genuine variant/availability/cart behavior and runtime acceptance remain open.
+- [~] TASK-040 Shop all and category pages: grid with colour swatches (only for products with more than one colour), "From AED" when SKU prices differ, size and colour filters (in-stock SKUs only), Sale filter from SKU compare-at prices (Q25), sort by lowest price, sold-out products last, empty state. Partial: static preview supports text/garment/colour filters and price sort; prior local tests/build passed. Live availability, categories, sale, sizes and browser acceptance remain open.
+- [~] TASK-041 Product page: colour picker (only with more than one colour) swaps the photos and Details, sizes for that colour with live availability (no picker with one SKU; it's selected automatically), `?colour=` links rendered on the server, Only N left, Final sale label, Description and Details sections with the client's values as written, sticky Add to cart on mobile. Partial: distinct preview slugs, photographs/details and disabled purchases; prior local tests/build passed. Genuine variant/availability/cart behavior and browser acceptance remain open.
 - [ ] TASK-042 E2E: admin creates a category, colours, sizes, a product with two colours, photos, SKUs and stock; the product shows on the storefront; switching colour swaps the photos; a sold-out size can't be added; a duplicate SKU is rejected; a sizes-only product shows only a size picker
 - [ ] TASK-113 Stock sheet upload: `src/services/sheets` (read .xlsx and .csv, headers matched by name, values as written), row checks (errors and warnings, `features/catalog/import/validate.ts`, unit tested against the fixtures), `catalogue_imports`, upload page with preview (ADR-036 confirmed first)
 - [ ] TASK-114 Stock sheet apply: `apply_catalogue_import()` in one transaction (re-checks, creates and updates, ledger rows with the import ID, audit log, `updateTag()`), upload history, pgTAP tests (all or nothing, same file twice is a no-op, empty cells change nothing, sold SKUs keep Style, colour and size)
@@ -175,7 +167,7 @@ Done when: a shopper pays in Stripe test mode and the order is Confirmed and Pai
 ## Phase 7: Emails and Invoices
 Done when: each paid order (card at payment, COD when the cash is collected) sends one customer email with a correct English/Arabic invoice and one admin email.
 - [ ] TASK-060 Resend service + React Email base layout; `email_log` with unique (template, entity)
-- [ ] TASK-061 Order confirmation (customer) and new order (admin) emails sent once from the webhook; lines show the colour's photo, colour, size and SKU. COD emails: order received (customer), order to confirm (admin), order cancelled (customer); the invoice email after the cash is collected
+- [ ] TASK-061 Order confirmation (customer) and new order (admin) emails sent once from the webhook; lines show the colour's photo, colour, size and SKU. COD emails: order received (customer), order to confirm (admin); order cancelled (customer); the invoice email after the cash is collected
 - [ ] TASK-062 Spike: English/Arabic PDF (Arabic shaping, right-to-left); pick the engine and record it in ADR-022
 - [ ] TASK-063 Gapless invoice numbers (locked counter row) assigned in `mark_order_paid()`, and in `record_cod_delivery()` when COD cash is collected
 - [ ] TASK-064 Invoice PDF (lines show colour, size and SKU; VAT lines only when VAT is on), `/api/invoices/[orderId]` with an auth check, attached to the confirmation email
@@ -226,7 +218,7 @@ Done when: the admin changes banners, publishes posts, and policy pages are live
 - [x] TASK-091 Home page per `docs/DESIGN.md`: hero, shop by category, new arrivals, trust strip, promo banner, latest posts
 - [ ] TASK-092 Blog admin: Tiptap editor, cover image, SEO fields, Draft/Published
 - [ ] TASK-093 Blog list and post pages
-- [ ] TASK-094 Pages: About, Contact, Terms, Privacy, Returns & Refunds, Shipping & Delivery
+- [~] TASK-094 Pages: About, Contact, Terms, Privacy, Returns & Refunds, Shipping & Delivery. Review placeholders implemented, plus Journal empty state and Size Guide, on feature/TASK-094-supporting-pages with one shared preview shell, metadata and focused tests. Final client-approved content, full runtime tests and browser acceptance remain pending; NOT complete.
 
 ## Phase 12: Dashboard and Settings
 Done when: the admin sees today's numbers and can change store settings without a developer.

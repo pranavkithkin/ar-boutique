@@ -1,201 +1,138 @@
 # AR Boutique: storefront review first, operations next
 
-Planning checkpoint: 11 October 2026. Requested client review: Monday, 12 October 2026.
+Planning checkpoint: 11 October 2026. Target client review: Monday, 12 October 2026. Updated after PR #10 and the approved TASK-094 supporting-page implementation. The date remains a target, not a delivery promise.
 
-## Decision
+## Decision and current evidence
 
-Make the next acceptance milestone **Client Storefront Review**, not "ecommerce complete except payments".
+The next milestone is **Client Storefront Review**, not ecommerce complete except payments. A coherent visual review can demonstrate progress, but it is not full data-backed M1 acceptance, working admin or a commerce launch. Never invent client values or weaken RLS to make a demo look complete.
 
-The home, collection and product pages should demonstrate the boutique convincingly, using the client's photographs and approved catalogue values. Supporting pages must resolve cleanly, with approved basic content or explicit placeholders. Checkout remains unavailable until the transactional backend is tested.
+PR #10 merged seven commits/22 files into main at `5f1bbd137cce4fffcb77e3f27babd5c06f1b0489`. It includes environment validation, a static real-catalogue preview and the npm-regenerated lockfile. Pranav supplied local passing typecheck, 55 environment tests plus 17 catalogue tests, lint and Next production build. Those 72 passes are user-provided local evidence, not independent CI or browser certification. Main and the source branch were preserved using a normal merge commit.
 
-The existing database model is suitable for colour/size variants and basic stock management. Do not rebuild it. The immediate engineering gap is connecting that foundation to the repository and storefront, then delivering a secure inventory interface.
+Preview failed because the six required variables were scoped only to Production, as confirmed by Pranav's screenshot. Validation and credentials were not changed. After approval and merge, Pranav reported production deployment complete. Deployment success and browser behavior have not been independently verified by the assistant. TASK-009 Preview configuration remains open.
 
-The requested Monday date is a target, not a validated delivery promise. Catalogue inputs and code-level QA remain blocking acceptance conditions.
+The exact audit reports nine high-severity package entries propagated from one unpatched braces advisory (GHSA-vfj7-8cjw-p6xm), no critical entries. Runtime reachability remains unverified; shadcn is a production dependency and supplies imported CSS. Do not force downgrade Next tooling/shadcn, invent overrides or blanket-approve scripts. unrs-resolver install-script review and clean npm-ci reproduction remain pending.
 
-## What is actually ready
+## What exists versus what remains
 
-| Area | Verified state | What this does not mean |
+| Area | Evidence | Still open |
 |---|---|---|
-| Storefront | Home, collection and PDP visual components exist | Product routes still use mocks; selectors and purchase controls are not working commerce |
-| Database | 14 foundation tables, RLS, three applied migrations | No business catalogue has been imported; no complete ecommerce database |
-| Database testing | Earlier foundation receipt records 95 passing pgTAP assertions, rolled back | Not application tests, CI, browser tests, payment tests or a new test run today |
-| Cloudinary | Connected cloud; uploads arriving in `ar-staging/source-images/<source folder>` | Upload completion, duplicate checking and product mapping are not yet signed off |
-| Vercel | Founder reports variables added and redeployment completed | Adding variables does not connect the application; deployment was not independently checked through Vercel |
-| Inventory admin | Detailed roadmap plus database stock functions | No login, product editor or stock screen in the current app |
+| Main storefront | 17 approved styles, 34 source SKUs, 124 explicit image keys; distinct slugs, filters, sort, galleries and disabled purchases | Browser QA, approved canonical names/sizes/stock/categories and live Supabase integration |
+| Supporting pages | TASK-094 branch implements eight contextual approval placeholders and a shared shell | Full branch runtime checks, browser acceptance, final client-approved content and separate merge |
+| Database | 14 tables, three applied migrations, RLS and guards; earlier 95 passing rolled-back pgTAP assertions | Repository/CI integration, real auth flow and live catalogue; business catalogue tables remain empty |
+| Media | Client photographs uploaded to Cloudinary; preview uses original allowlisted keys | Binary/visual reconciliation, reviewed cover/order/alt text, final UUID-based keys and production adapter |
+| Admin/commerce | Documented roadmap and database primitives | No secure admin UI, operational inventory, cart, checkout, reservations, orders or payments |
 
-Source audit: repository commit `6b461b9a0312d543eafda9ac0efc41c5d2d2d9d2`. There are six checked numbered tasks in the existing roadmap. This is not an effort percentage. In particular, TASK-039 and TASK-091 describe visual scaffolding, not final client acceptance.
+Source counts from the original workbook roadmap were historical planning counts, not a clean import count. The sheet contains 42 rows and 39 literal distinct SKUs, including duplicate/misplaced tail rows. Never present it as 42 unique valid SKUs or use checkbox counts as a completion percentage.
 
-## Reordered milestones
+## Current approved TASK-094 scope
 
-### M0. Reconcile the existing foundation
+Branch: `feature/TASK-094-supporting-pages`, from the merged main baseline. Exactly 22 paths: 15 updates and 7 additions. This scope does not include a PR, main merge or explicit deployment action. Push-triggered Preview behavior is not certified.
 
-Do this before treating the catalogue as live.
+Updated source: StoreHeader, StoreFooter, ComingSoon, CatalogueGrid, home, collections, PDP, About, Contact, Journal, 404 and root layout. Added source: typed `features/content/preview-pages.ts`, four policy routes, Size Guide and `tests/unit/storefront-content.test.ts`. Updated docs: TASKS, MEMORY and this milestone record.
 
-1. Add the already-applied migrations, test suite and generated types to the repository through a separately reviewed change. Preserve their actual applied versions; do not reapply or rewrite them.
-2. Implement TASK-005 environment validation and server-only Supabase/catalogue/media boundaries. Keep secrets out of public modules.
-3. Add money helpers, relevant test scripts and a reproducible database-test command. Do not claim that commands listed in documentation already exist: `package.json` currently has only dev, build, start and lint.
-4. Keep the current root-level `app/`, `components/`, `features/`, `lib/` layout for this delivery. Resolve the documents' `src/` mismatch explicitly rather than mixing in a large directory migration.
-5. Reconcile the finished Cloudinary upload against the 150-image, 21-folder Drive inventory.
+Reuse existing components and brand: Sheet navigation and StoreButton link rendering, existing logo/hero/theme tokens. No new packages or hand-edited UI primitives. One header/footer across storefront routes; remove duplicate shell definitions and inactive purchase/account/search controls. Footer destinations are real routes, not dead links. Contextual pending-approval content replaces generic broken-encoding placeholders. No fabricated phone, email, address, legal policy, refund/delivery promise, article or size chart. Privacy placeholder makes no data-handling guarantee. Keep review noindex, while recognizing that noindex is not access control.
 
-Existing task references: TASK-005, 006, 007, 009, 010, 012 through 019, 020 and 029. Some have partial external evidence, not full repository/CI completion.
+Executed for TASK-094: Node checks for eight content/route contracts, navigation route existence/footer coverage and current-link matching; syntax-only TypeScript transpilation of 19 TS/TSX files; shared-shell/skip-target source checks; exact unchanged catalogue card/filter implementation. New Vitest regression suite is committed but unexecuted here. Full semantic typecheck, lint, Vitest, Next build and browser QA are pending. Earlier 72 passing tests apply only to the preceding baseline.
 
-### M1. Client Storefront Review: nearest milestone
+## Milestones and acceptance gates
 
-**Acceptance is a coherent client walkthrough, not a production checkout.**
+### M0. Reconcile the foundation
 
-- **Home:** preserve the established brand/design baseline; inspect existing baked-in hero text before adding overlays; make every displayed CTA meaningful; use the correct products and approved photos in new arrivals. No invented promotions, stock assertions, delivery promises or testimonials.
-- **Collection:** real product-to-page identity, accurate image/price pairing, truthful availability, useful filters/sort when shown, clear empty state. Remove decorative controls if their behavior is not ready.
-- **PDP:** distinct products for distinct slugs, unknown slugs return 404, matching colourway photos and garment details, unambiguous SKU selection, exact client values and correct price formatting. Never render the same mock item under every slug.
-- **Variant UX:** select colour before size; hide unnecessary pickers; colour changes reset incompatible size selection and switch gallery/details; preserve `?colour=`. Disabled sold-out states require verified availability, not guessed stock.
-- **Supporting routes:** About, Contact, Journal, Shipping, Returns, Terms, Privacy and Size Guide resolve with approved facts or a clear "content awaiting approval" state. Header search/account/cart are either implemented or explicitly unavailable, never dead controls. Fix or remove the nonexistent category and journal-post destinations.
-- **Preview controls:** cart/checkout must not imply a successful purchase. Until implemented, show a clear catalogue-preview state rather than a clickable dead Add to Cart.
-- **Review QA:** check 375, 768 and 1440 widths; keyboard navigation; gallery behavior; no broken images or accidental 404s; no console/runtime errors; two different real product pages; loading/error/empty states.
+1. Bring the three already-applied migrations, generated types and pgTAP suite into Git without reapplying or rewriting them.
+2. Complete server-only Supabase/catalogue/media boundaries and money helpers. Browser exports must contain only public configuration. Future integration secrets should be required only when their features are implemented.
+3. Add reproducible database and application test setup. Do not claim scripts in planning docs already exist in package.json.
+4. Retain root-level app/components/features/services/lib; do not fold in a directory migration to match old src documentation.
+5. Reconcile all expected Cloudinary intake assets against source identity, not just counts.
 
-TASK references: 039, 040, 041, 091, 094, relevant parts of 029, 037, 097 and 106. Track this milestone separately from the original full acceptance criteria.
+References: TASK-005, 006, 007, 009, 010, 012 through 020 and 029.
 
-**Data gate:** Product Name, Size, Stock and Category are incomplete in the workbook, and rows 38 to 43 need client correction. Do not guess them. If the data is still unavailable, a clearly labelled visual review can use the real photographs and supplied details with visible approval placeholders, without inserting fictitious catalogue values or claiming live inventory. That is design review only, not M1's full data-backed acceptance.
+### M1. Client Storefront Review
 
-### M2. Basic catalogue and inventory administration
+- Home: preserve established brand and inspect baked-in hero text before overlays; approved photographs/content, correct product pairing and meaningful CTAs; no invented promotions, availability, delivery claims or testimonials.
+- Collection: distinct products, correct image/price pairing, meaningful filters/sort, truthful availability and empty state. Remove decorative controls whose behavior is not implemented.
+- PDP: slug resolves to its own product, unknown slug returns 404, correct colourway gallery/details and integer-fils formatting. No mock item repeated under unrelated slugs.
+- Variant UX for the live catalogue: colour before size, reset incompatible selections, per-colour galleries/details, server-rendered colour query links, hide unnecessary pickers, verified sold-out states. Unknown size is not proof of a no-size product.
+- Supporting routes: About, Contact, Journal, Shipping, Returns, Terms, Privacy and Size Guide resolve with approved facts or explicit approval placeholders. Header/footer must not imply working cart/account/checkout or link to nonexistent categories/posts.
+- Preview controls: disabled purchase state is explicit. Static real-photo review is permitted, not fictitious inventory or published draft records.
+- Review QA: 375/768/1440; keyboard and visible focus; mobile Sheet open/close/Escape/focus return; skip targets; no overflow; gallery/image/link integrity; two different real PDPs; unknown-slug 404; search/filter/sort/reset; loading/error/empty states and no runtime errors.
+- Acceptance: record client review against actual agreed milestone/payment terms, not a claim that only payment integration remains.
 
-Keep the operational first release small but real.
+References: TASK-039, 040, 041, 091, 094, relevant 029/037/097/106. Static review does not close their full original acceptance criteria.
 
-- Supabase Auth admin login, active-admin allowlist and TOTP MFA; enforce authorization in database/functions and server actions, not just routing.
-- Product list with name/style/SKU search, draft/published status, colourways, sizes, SKU prices and per-colourway galleries.
-- Per-SKU stock grid: on hand, held and available; adjustment requires reason and records actor, timestamp, delta and history. Low/out-of-stock filters.
-- Do not let direct table edits bypass stock or publishing functions.
-- Enable and test the existing access-token hook only with the approved auth setup and staff account; it is not enabled merely because its SQL exists.
-- Validate publishing, hidden colours, inactive SKUs and every supported product shape.
-- For the initial release, manual validated editing can precede stock-sheet import/export; full transactional import remains a distinct task, not a hidden requirement of the first stock screen.
+### M2. Secure basic catalogue/inventory admin
 
-TASK references: 020 through 038, 042; later 113 through 115. Inventory ledger foundations are already built; the interface and integration are not.
+Supabase admin login, active-admin allowlist, TOTP MFA, hook activation, server and database enforcement; product/colourway/SKU editing; exact source codes and per-SKU prices; per-colour galleries and publish checks; on-hand/held/available stock; reasoned adjustments with actor/time/history and filters. Prevent direct writes bypassing stock/publish functions. Test hidden colours, inactive SKUs and all four product shapes. SQL existence is not an operational UI or activated auth hook.
+
+References: TASK-020 through 038 and 042. Manual validated editing may precede transactional sheet import/export (TASK-113 through 115), which remains separately tracked.
 
 ### M3. Transactional commerce
 
-Cart, server price/availability validation, address capture, stock reservations, order state machine, Stripe test mode, verified idempotent webhooks, expiry/reconciliation and customer communications.
-
-Customer accounts, COD, returns, bilingual invoices and related reports stay visible in the full backlog and depend on commercial/client confirmation where already noted. They are not silently dropped to justify "only payments left".
-
-TASK references: 043 through 089, 116 through 125 and relevant email/invoice tasks.
+Cart, server price/availability validation, UAE address collection, stock reservations, order state machine, Stripe test mode, signed/idempotent webhooks, expiry/reconciliation and communications. Accounts, COD, returns, bilingual invoices and reports remain in scope subject to existing commercial/client gates. References: TASK-043 through 089 and 116 through 125.
 
 ### M4. Launch readiness
 
-Approved legal/policy text, shipping/VAT settings, live provider configuration, production security and authorization review, accessibility/performance checks, monitoring, backup/recovery procedures, domain setup and a real end-to-end purchase/refund acceptance test.
+Approved policies, shipping/VAT, live providers, authorization/security review, accessibility/performance, monitoring, backup/recovery, domain/SSL and end-to-end live purchase/refund acceptance. References: TASK-090, 092, 093, 095 through 112 as applicable. Do not block visual review on a complete CMS, but do not call a placeholder a published policy.
 
-TASK references: 090, 092, 093, 095 through 112 as applicable. Content administration can follow the review storefront; do not block visual review on a full CMS.
+## Database and source-value boundaries
 
-## Database: retain the implemented model
+Retain `products -> product_colours -> product_variants -> stock_levels`. Images belong to colourways; inventory adjustments record SKU stock movements. Style codes and garment details are per colourway. Price/compare-at price are integer fils per SKU. A colourway's size SKUs share photographs. No stock on products, galleries per size, generated source codes or automatic product grouping by colour.
 
-`products -> product_colours -> product_variants -> stock_levels`
+Support sizes only, colours plus sizes, colours only and no-choice products. Preserve SKU/style/colour/size/details/description values exactly, including casing and misspellings. Case-insensitive SKU uniqueness must not mutate original values. Missing sizes cannot silently become no-size variants. Draft zero-stock defaults are not evidence of the client's inventory.
 
-`product_images` belongs to `product_colours`; `inventory_adjustments` records SKU stock movement.
+Public reads expose only published/visible/active data and constrained availability. Exact quantities remain private except the deliberately limited low-stock indicator at three or fewer. Never relax RLS for a demo. adjust_stock does not implement checkout reservations, transactional imports or COD accounting.
 
-One colourway can have several size SKUs sharing the same photographs. Price and compare-at price belong to SKUs and use integer fils. Do not copy galleries for M and XL, store stock on products, or group unrelated styles merely because their colour names match.
+## Media placement: only after approved records
 
-Supported shapes remain sizes only, colours and sizes, colours only and no choices. A product can initially have a single colourway. Additional colourways are grouped only from explicit product-group information or approved mapping.
+Current intake: `ar-staging/source-images`. Current public IDs can be bare filenames despite folder location. Media Library folder and delivery ID are separate.
 
-Case-insensitive SKU uniqueness preserves original client casing. A missing size is not permission to declare a genuinely sized product "no size". The initial zero-stock row is a safe draft default, not evidence that the client has no inventory.
+Final folder: `ar-staging/products/{productId}/{productColourId}`.
+Final public ID/database key: `ar-staging/products/{productId}/{productColourId}/{assetId}`.
+Use real database UUIDs and a safe application asset segment, no extension; Cloudinary immutable asset ID need not change.
 
-Public reads expose published/visible/active catalogue data and constrained availability. Exact stock counts remain private except the deliberately limited low-stock indicator. Draft catalogue records must not be exposed by weakening RLS for a demo.
+1. Compare each source filename with uploaded assets; retain original filename/folder/link, immutable asset ID, current public ID, bytes and dimensions. Exclude system files. Equal counts are insufficient.
+2. Review actual photographs for cover/order, defects, duplicates, resolution and rights. Do not infer quality from one sample, force crops or promise zoom detail.
+3. Resolve data/mappings and preview exact draft product/colourway/SKU records before import.
+4. Generate final IDs from real records and preview exact source/target assets and counts before any move/rename.
+5. Rename without overwriting; place media in final folders; retain original attribution and provenance. Never mutate Drive or delete originals.
+6. Validate keys/properties, attach to the correct colourway and store approved ordering/alt text. Keep incomplete catalogue records Draft.
+7. Record success/failure by immutable asset ID and resume safely. Cloudinary and Postgres are not one transaction.
 
-The stock/import/order functions are separate concerns: foundation `adjust_stock()` does not mean reservation, checkout, import or COD accounting is implemented.
+No media move/rename or catalogue import is authorized by this page batch.
 
-## Cloudinary: finish intake, then place assets once
-
-Current source folder: `ar-staging/source-images`.
-
-Final intended Media Library folder:
-
-`ar-staging/products/{productId}/{productColourId}`
-
-Final database media key / Cloudinary public ID:
-
-`ar-staging/products/{productId}/{productColourId}/{assetId}`
-
-Here `productId` and `productColourId` are real database UUIDs. The final `assetId` segment is an application-owned safe identifier, not a requirement to change Cloudinary's immutable asset ID. Do not include a filename extension in the public ID.
-
-Observed sample: `JAC25ST01935` is stored inside its source folder but currently has a bare public ID. Folder placement and delivery ID are separate in this environment; moving a folder alone will not satisfy the database key format.
-
-### Placement sequence
-
-1. Wait until uploads finish; compare every expected source filename with the Cloudinary inventory. Preserve original filename, folder, immutable asset ID, current public ID, bytes and dimensions in the reconciliation manifest. Exclude system files. Equal counts alone do not prove a match.
-2. Review actual images for cover/order, defects, duplicates, resolution and rights concerns. One sampled image is 640 x 853, not evidence all images share that resolution; do not promise large zoom detail or blindly force crops. The one-image source folder and skipped suffixes remain review flags.
-3. Resolve catalogue mappings and required fields, then preview the exact draft product/colourway/SKU records before any bulk import.
-4. Generate final target IDs from those real records; show exact file counts, source and target paths before the Cloudinary batch.
-5. Rename public IDs without overwriting; move the associated folders to their final locations. Preserve originals' attribution and original filenames in metadata/manifest. Do not mutate Drive or delete source photographs.
-6. Validate returned media properties and final keys, attach images to the correct colourway and set reviewed gallery order/alt text. Keep incomplete products in Draft.
-7. Reconcile success/failure by immutable asset ID. Cloudinary and Postgres are not one atomic transaction: record each completed operation and resume safely after failure, rather than rerunning blindly.
-
-No renames/moves are authorized by this document's preparation. A later approval must cover the exact reconciled assets and targets.
-
-## Inputs that block a clean import
-
-The client's values stay unchanged. The existing workbook is not a valid 42-unique-SKU import.
+## Inputs still blocking live catalogue and policies
 
 | Issue | Required resolution |
 |---|---|
-| Missing Product Name, Size and Stock | Client-approved values; do not derive names, infer sizes from suffixes or invent quantities |
-| Missing Category | Confirm before category merchandising; can remain unassigned in a draft |
-| Rows 38 to 43 | Client corrects duplicate SKU/size-like Style values for J0395, JNE4124 and J0478 |
-| `JNE4380-TP` folder vs `JNE4380` Style | Confirm the alias without altering the original client codes |
-| `JAA25ST01341 uploaded` | Preserve provenance; local label cleanup is not permission to alter catalogue values |
-| `JNE4207` folder vs `JNE4207-TP` filenames | Preserve both original identifiers; verify the association |
-| Product grouping | No automatic merge of separate styles into one multi-colour product |
-| Currency, VAT, shipping and policies | Confirm monetary interpretation and claims before publication |
-| JAA25KB02100 has one source photograph | Accept a one-image gallery explicitly or obtain more photographs |
+| Product Name, Size, Stock | Client-approved values; no guesses or suffix-derived sizes |
+| Category | Approved merchandising; draft may remain unassigned |
+| Rows 38 to 43 | Client corrections to duplicate/misplaced J0395, JNE4124 and J0478 values |
+| Four withheld groups | Explicit mapping for J0395-DR, J0478-KR-NP, JNE4124-KR and JNE4380-TP |
+| JNE4380-TP versus JNE4380 | Confirm alias without changing source values |
+| JAA25ST01341 uploaded | Preserve provenance; local folder cleanup is not a catalogue-code change |
+| JNE4207 folder / JNE4207-TP filename stems | Preserve identifiers and association |
+| Multi-colour grouping | Explicit product-group mapping, not inference |
+| Currency/VAT/delivery/returns/legal | AED is approved for static review; final commercial and legal claims need approval |
+| JAA25KB02100 | One photograph; accept that limitation or obtain more |
+| Filename suffix gaps | Review flags only; not proof of missing assets |
 
-The image workbook records the remaining suffix/gap flags and proposed mappings.
+## Suggested client wording after acceptance
 
-## Roadmap reconciliation
+Only after storefront checks pass and the payment milestone is confirmed:
 
-Keep every original task ID and original scope. Add a dated milestone-priority overlay rather than deleting future phases or ticking incomplete tasks.
+> The storefront review milestone is ready: the homepage, catalogue and product-page experience are available for review, with supporting page structure in place. The catalogue and inventory database foundation has been implemented. Admin workflows, checkout/payment integration and launch testing remain in progress or pending in the delivery plan.
 
-- TASK-006: partial, live migrations/types exist outside Git; local setup, repository integration and reproducibility remain.
-- TASK-009: user-reported deployment and variables; preview pipeline not verified.
-- TASK-012 through 016: implementation evidence exists in the applied foundation and test receipt; repository/CI acceptance remains outstanding.
-- TASK-017: stock ledger/function foundation exists; do not imply completed import/COD callers.
-- TASK-018: earlier rolled-back test fixtures are not the persistent local seed/admin requested by this task.
-- TASK-019: not done; database tests have not been wired to CI.
-- TASK-023: SQL hook exists; activation and login flow remain.
-- TASK-029: partial external Cloudinary setup/intake; no application media adapter.
-- TASK-037: SQL guards exist; no admin publishing form.
-- TASK-039 and 091: retain historical visual-work completion, add explicit client-review/link/content/data QA still open.
-- TASK-040 and 041: UI prototypes exist, real data and behavior remain incomplete.
+Do not say only payment integration remains. The contract and payment trigger were not verified, and client acceptance has not been recorded.
 
-Update `docs/MEMORY.md` so its current status and next task no longer imply only setup. Preserve the historical log. Replace the obsolete Cloudflare media dependency with the Cloudinary decision, retaining separate DNS requirements only where applicable.
+## Evidence and history
 
-## Proposed first repository change
+The original 11 Oct planning audit used main `6b461b9a0312d543eafda9ac0efc41c5d2d2d9d2`, when storefront pages used mocks. Its proposed three-file roadmap change was implemented before TASK-005 and the 13-file catalogue preview. Those original observations are historical; current source and verification state are above. TASKS retains the full numbered backlog; MEMORY retains the chronological log. No original task is newly marked complete by this update.
 
-Suggested branch: `doc/storefront-review-milestone`.
-
-Three files:
-
-1. `TASKS.md`: dated M0-M4 priority overlay and task-status caveats, original backlog retained.
-2. `docs/MEMORY.md`: accurate foundation/asset/code state, corrected media dependency, blockers and next task, existing history retained.
-3. `docs/STOREFRONT-MILESTONE.md`: this plan.
-
-Suggested commit: `docs(roadmap): prioritize client storefront review`.
-
-This is documentation only, on a new branch, not a push to `main` or a production deployment. It does not authorize product imports, image moves/renames, new schema changes, staff setup, payments or source-code implementation. Those proceed as bounded tasks with their own tests and any required write previews.
-
-## Client progress-payment wording
-
-Use this only after the storefront acceptance checks actually pass:
-
-> The storefront review milestone is ready: the homepage, catalogue and product-page experience are available for your review, with supporting page structure in place. The catalogue and inventory database foundation has been implemented. Admin workflows, checkout/payment integration and launch testing remain in progress or pending, as shown in the delivery plan.
-
-Do not say "only payment integration remains" or "the admin is being created" as a substitute for evidence of those exact states. A credible milestone payment request is tied to approved deliverables and the agreed payment schedule; the contract and payment trigger were not available in this review.
-
-## Evidence and limitations
-
-- [Repository working rules](https://github.com/pranavkithkin/ar-boutique/blob/6b461b9a0312d543eafda9ac0efc41c5d2d2d9d2/AGENTS.md)
-- [Original roadmap](https://github.com/pranavkithkin/ar-boutique/blob/6b461b9a0312d543eafda9ac0efc41c5d2d2d9d2/TASKS.md)
-- [Project handoff](https://github.com/pranavkithkin/ar-boutique/blob/6b461b9a0312d543eafda9ac0efc41c5d2d2d9d2/docs/MEMORY.md)
-- [Catalogue rules](https://github.com/pranavkithkin/ar-boutique/blob/6b461b9a0312d543eafda9ac0efc41c5d2d2d9d2/.agents/rules/catalogue.md)
-- [Backend rules](https://github.com/pranavkithkin/ar-boutique/blob/6b461b9a0312d543eafda9ac0efc41c5d2d2d9d2/.agents/rules/backend.md)
-- [Current PDP source](https://github.com/pranavkithkin/ar-boutique/blob/6b461b9a0312d543eafda9ac0efc41c5d2d2d9d2/app/collections/%5Bslug%5D/page.tsx)
-- [Current package scripts](https://github.com/pranavkithkin/ar-boutique/blob/6b461b9a0312d543eafda9ac0efc41c5d2d2d9d2/package.json)
-- [Applied foundation package and test receipt](https://u260612127.p.clickup-attachments.com/u260612127/850bb32a-b9c8-5320-a99e-bcc947a02475/AR-Boutique-Database-Foundation.zip?view=open)
+- [Merged preview PR #10](https://github.com/pranavkithkin/ar-boutique/pull/10)
+- [Npm-generated lockfile commit](https://github.com/pranavkithkin/ar-boutique/commit/70695d29ca32269e016fffba0202396fdf867f1c)
+- [Merged main baseline](https://github.com/pranavkithkin/ar-boutique/commit/5f1bbd137cce4fffcb77e3f27babd5c06f1b0489)
+- [Braces advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+- [Applied foundation package](https://u260612127.p.clickup-attachments.com/u260612127/850bb32a-b9c8-5320-a99e-bcc947a02475/AR-Boutique-Database-Foundation.zip?view=open)
 - [Database handoff](https://u260612127.p.clickup-attachments.com/u260612127/0ed4fcf9-3251-53f5-b813-3880e4b41aa6/AR-Boutique-Database-Handoff.md?view=open)
-- [Image inventory and mapping workbook](https://u260612127.p.clickup-attachments.com/u260612127/1b02a45b-4fd5-5b89-a95c-33444b3d7110/AR-Boutique-Image-Upload-Plan.xlsx?view=open)
+- [Image inventory workbook](https://u260612127.p.clickup-attachments.com/u260612127/1b02a45b-4fd5-5b89-a95c-33444b3d7110/AR-Boutique-Image-Upload-Plan.xlsx?view=open)
 
-Live Supabase table and migration reads reconfirmed the existing foundation. Cloudinary was inspected while uploads were still progressing; no final upload count or image-quality audit is claimed. The repository route audit was read-only, and no build, lint, browser or application test was run in this planning pass. No Git, database or Cloudinary changes were made during this review.
+This batch modifies repository source/documentation only. No database, Cloudinary, Drive, credentials, main merge, PR creation or explicit deployment action occurs. Runtime and browser verification of the new branch remain outstanding.

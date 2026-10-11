@@ -11,6 +11,14 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done
 
 The next acceptance milestone is **Client Storefront Review**, targeted for Monday, 12 Oct 2026. This is a target, not a verified delivery promise. The full implementation backlog below is retained; this overlay changes execution priority, not scope or completion criteria. See `docs/STOREFRONT-MILESTONE.md` for the detailed plan and acceptance gates.
 
+### Approved real-catalogue preview checkpoint
+
+The first visual-first pass is implemented on `doc/storefront-review-milestone`, not merged or accepted. Home, collection and PDP now read a static review fixture of 17 approved styles, 34 unchanged SKU references and 124 explicit Cloudinary image keys. Temporary display labels combine supplied colour and Package Contains values; supplied Selling Price values are displayed as AED by explicit approval. No canonical names, size values, stock or discounts were invented.
+
+J0395-DR, J0478-KR-NP, JNE4124-KR and JNE4380-TP remain withheld. Purchases are disabled; sizes and availability say awaiting confirmation. These three routes use a preview header/footer without inactive purchase controls or unapproved delivery claims; existing shared components and other routes are unchanged. The existing hero is retained, and unrelated mock category/promo/journal sections are omitted from the preview home.
+
+Implemented: exact slug lookup with notFound, search/garment/colour filters, numeric price sorting, accessible gallery buttons, image loading/error states and noindex metadata. Source values and pure catalogue behavior were checked by executing the TypeScript catalogue module with Node type stripping and comparing against the XLSX. Vitest, semantic typecheck, lint, Next build, live image delivery and viewport/browser QA have NOT run. TASK-005 lockfile regeneration remains blocking. Run `npm exec -- vitest run tests/unit/env.test.ts tests/unit/preview-catalogue.test.ts` after installation. This does not complete TASK-029, 040, 041 or M1, and does not create a Supabase-backed catalogue or working size/colour SKU selection. Full TASK-010 money helpers and TASK-029 media adapter remain separate; preview delivery uses original untransformed staging images.
+
 ### M0: Reconcile the existing foundation
 - [ ] Bring the three already-applied Supabase migrations, generated types and 95-assertion test suite into the repository through a separate reviewed implementation change; do not reapply or rewrite migrations
 - [ ] Implement environment validation, server-only catalogue/media boundaries, money helpers and reproducible tests (TASK-005, 006, 007, 010, 020, 029)
@@ -54,12 +62,12 @@ No original implementation checkbox is newly marked done by this documentation u
 - TASK-018: rolled-back test fixtures are not a persistent local seed/admin.
 - TASK-019: database tests are not wired to CI.
 - TASK-023: SQL hook exists; activation and login flow remain.
-- TASK-029: Cloudinary connection/intake only; no application media adapter.
+- TASK-029: connection/intake plus a temporary read-only preview delivery adapter; production media adapter, upload validation and named transformations remain open.
 - TASK-037: SQL guards exist; no admin publishing form.
 - TASK-039 and 091: historical visual-scaffolding completion is retained; client-review/link/content/data QA remains open above.
-- TASK-040 and 041: UI prototypes exist; real data and behavior remain incomplete.
+- TASK-040 and 041: approved static real-catalogue preview is implemented; Supabase integration, true variant selection and full acceptance remain open.
 
-The live foundation has 14 tables and three applied migrations; the earlier test receipt records 95 passing pgTAP assertions, not app/browser/CI acceptance. Catalogue business tables remain empty at this checkpoint. The current PDP still uses `MOCK_PRODUCT`. Do not convert checkbox counts into a project-completion percentage.
+The live foundation has 14 tables and three applied migrations; the earlier test receipt records 95 passing pgTAP assertions, not app/browser/CI acceptance. Catalogue business tables remain empty at this checkpoint. The preview does not write to them. Do not convert checkbox counts into a project-completion percentage.
 
 ## Phase 0: Client and Design (no code)
 - [ ] Get answers to Q1 to Q41 in `docs/PRD.md` and record them in `docs/DECISIONS.md`
@@ -124,8 +132,8 @@ Done when: an admin creates a product with colours, photos and sizes, and it's l
 - [ ] TASK-037 Publish checks: at least one visible colourway with a photo, at least one active SKU, and a price on every active SKU; clear errors in the form
 - [ ] TASK-038 Enable `cacheComponents`; `'use cache'` + `cacheTag` on catalogue reads; `updateTag()` in admin actions
 - [x] TASK-039 Storefront layout per `docs/DESIGN.md`: announcement bar, header (logo, menu, account, cart), footer, 404 and error pages
-- [ ] TASK-040 Shop all and category pages: grid with colour swatches (only for products with more than one colour), "From AED" when SKU prices differ, size and colour filters (in-stock SKUs only), Sale filter from SKU compare-at prices (Q25), sort by lowest price, sold-out products last, empty state
-- [ ] TASK-041 Product page: colour picker (only with more than one colour) swaps the photos and Details, sizes for that colour with live availability (no picker with one SKU; it's selected automatically), `?colour=` links rendered on the server, Only N left, Final sale label, Description and Details sections with the client's values as written, sticky Add to cart on mobile
+- [~] TASK-040 Shop all and category pages: grid with colour swatches (only for products with more than one colour), "From AED" when SKU prices differ, size and colour filters (in-stock SKUs only), Sale filter from SKU compare-at prices (Q25), sort by lowest price, sold-out products last, empty state. Partial: approved static preview now supports text/garment/colour filters and price sort; live availability, categories, sale and size behavior plus runtime acceptance remain open.
+- [~] TASK-041 Product page: colour picker (only with more than one colour) swaps the photos and Details, sizes for that colour with live availability (no picker with one SKU; it's selected automatically), `?colour=` links rendered on the server, Only N left, Final sale label, Description and Details sections with the client's values as written, sticky Add to cart on mobile. Partial: distinct preview slugs, original photographs/details and disabled purchases implemented; genuine variant/availability/cart behavior and runtime acceptance remain open.
 - [ ] TASK-042 E2E: admin creates a category, colours, sizes, a product with two colours, photos, SKUs and stock; the product shows on the storefront; switching colour swaps the photos; a sold-out size can't be added; a duplicate SKU is rejected; a sizes-only product shows only a size picker
 - [ ] TASK-113 Stock sheet upload: `src/services/sheets` (read .xlsx and .csv, headers matched by name, values as written), row checks (errors and warnings, `features/catalog/import/validate.ts`, unit tested against the fixtures), `catalogue_imports`, upload page with preview (ADR-036 confirmed first)
 - [ ] TASK-114 Stock sheet apply: `apply_catalogue_import()` in one transaction (re-checks, creates and updates, ledger rows with the import ID, audit log, `updateTag()`), upload history, pgTAP tests (all or nothing, same file twice is a no-op, empty cells change nothing, sold SKUs keep Style, colour and size)

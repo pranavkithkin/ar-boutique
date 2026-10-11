@@ -1,13 +1,18 @@
 import type { NextConfig } from "next";
 import { parseServerEnv } from "./lib/env.schema";
 
-// Next loads .env* before evaluating config. Validate startup/build config here.
-// Use the pure schema, not lib/env.ts: server-only cannot run in this loader.
-// Never attach the parsed object to NextConfig.env; that would expose secrets.
+// Never attach validated secrets to NextConfig.env.
 parseServerEnv(process.env);
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [{
+      protocol: "https",
+      hostname: "res.cloudinary.com",
+      pathname: "/q8qdyl3f/image/upload/**",
+      search: "",
+    }],
+  },
 };
 
 export default nextConfig;

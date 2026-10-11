@@ -1,45 +1,42 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { ProductType } from "./ProductInfo"
+"use client";
 
-export function ProductAccordions({ product }: { product: ProductType }) {
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import type { PreviewProduct } from "@/features/catalog/preview-catalogue";
+
+// Labels are presentation copy; source values are never rewritten.
+const labels: Record<string, string> = {
+  "Package Contains": "Package contains", "Top Portal Fabric": "Top fabric",
+  "Top Primary Color": "Top colour", "Top Pattern Type": "Top pattern",
+  "Top Neck Details": "Neck", "Top Sleeve Details": "Sleeves",
+  "Top Category": "Top type", "BTM Style Type": "Bottom style",
+  "BTM Fabric Type": "Bottom fabric", "BTM Primary Color": "Bottom colour",
+  "DPT Fabric Type": "Dupatta fabric", "DPT Primary Color": "Dupatta colour",
+  "DPT Pattern Type": "Dupatta pattern",
+};
+
+export function ProductAccordions({ product }: { product: PreviewProduct }) {
+  const details = product.details.filter(([, value]) => value !== "" && value !== "-");
   return (
-    <Accordion defaultValue={[]} className="w-full flex flex-col gap-0 border-b border-border mb-8">
-      <AccordionItem value="specifications" className="border-t border-border">
-        <AccordionTrigger className="text-[15px] font-medium hover:no-underline py-4">Specifications</AccordionTrigger>
-        <AccordionContent className="text-[14px] text-muted-foreground pb-4">
-          Material: 100% Cotton. Fit: Regular. Pattern: Floral Print.
+    <Accordion defaultValue={["details"]} className="border-t border-border">
+      <AccordionItem value="details">
+        <AccordionTrigger className="text-base py-4">Garment details</AccordionTrigger>
+        <AccordionContent className="text-base pb-5">
+          <dl className="space-y-3">
+            {details.map(([key, value]) => <div key={key} className="grid grid-cols-2 gap-4"><dt className="text-muted-foreground">{labels[key] ?? key}</dt><dd className="whitespace-pre-wrap break-words">{value}</dd></div>)}
+          </dl>
         </AccordionContent>
       </AccordionItem>
-      <AccordionItem value="description" className="border-t border-border">
-        <AccordionTrigger className="text-[15px] font-medium hover:no-underline py-4">Description</AccordionTrigger>
-        <AccordionContent className="text-[14px] leading-relaxed text-muted-foreground pb-4">
-          {product.description}
-        </AccordionContent>
-      </AccordionItem>
-      <AccordionItem value="feeding" className="border-t border-border">
-        <AccordionTrigger className="text-[15px] font-medium hover:no-underline py-4">Feeding Friendly</AccordionTrigger>
-        <AccordionContent className="text-[14px] text-muted-foreground pb-4">
-          Yes, features concealed zippers for easy access.
-        </AccordionContent>
-      </AccordionItem>
-      <AccordionItem value="wash" className="border-t border-border">
-        <AccordionTrigger className="text-[15px] font-medium hover:no-underline py-4">Wash Care</AccordionTrigger>
-        <AccordionContent className="text-[14px] text-muted-foreground pb-4">
-          Machine wash cold with like colors. Do not bleach. Line dry.
-        </AccordionContent>
-      </AccordionItem>
-      <AccordionItem value="shipping" className="border-t border-border">
-        <AccordionTrigger className="text-[15px] font-medium hover:no-underline py-4">Shipping Information</AccordionTrigger>
-        <AccordionContent className="text-[14px] text-muted-foreground pb-4">
-          Usually dispatches within 24 hours. Delivery within 2-3 business days.
-        </AccordionContent>
-      </AccordionItem>
-      <AccordionItem value="color" className="border-t border-border border-b-0">
-        <AccordionTrigger className="text-[15px] font-medium hover:no-underline py-4">Color Disclaimer</AccordionTrigger>
-        <AccordionContent className="text-[14px] text-muted-foreground pb-4">
-          Actual colors may vary slightly due to photographic lighting sources or your monitor settings.
+      {product.description && <AccordionItem value="description">
+        <AccordionTrigger className="text-base py-4">Description</AccordionTrigger>
+        <AccordionContent className="text-base pb-5 whitespace-pre-wrap leading-relaxed">{product.description}</AccordionContent>
+      </AccordionItem>}
+      <AccordionItem value="reference">
+        <AccordionTrigger className="text-base py-4">Catalogue references</AccordionTrigger>
+        <AccordionContent className="text-base pb-5">
+          <p className="text-muted-foreground mb-3">Supplied SKU references only. Sizes have not been confirmed from these codes.</p>
+          <ul className="space-y-2">{product.variants.map((variant) => <li key={variant.sku} className="break-all">{variant.sku}</li>)}</ul>
         </AccordionContent>
       </AccordionItem>
     </Accordion>
-  )
+  );
 }

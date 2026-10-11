@@ -6,13 +6,15 @@
 
 11 Oct 2026 checkpoint: the next delivery priority is **Client Storefront Review**, targeted for Monday, 12 Oct, with the acceptance gates in `docs/STOREFRONT-MILESTONE.md` and the priority overlay in `TASKS.md`. The target date is not a verified delivery promise.
 
-The storefront has home, collection and PDP visual scaffolding, but it is not connected to the live catalogue. The current PDP uses one `MOCK_PRODUCT` for every slug, and real variants, stock behavior, cart, checkout and admin screens remain unimplemented. About, Contact and Journal have Coming Soon pages; several other linked routes are absent. TASK-039 and TASK-091 are historical visual-work completion, not final client acceptance.
+On `doc/storefront-review-milestone`, the approved first real-catalogue preview replaces mock home, collection and PDP displays with 17 source-matched styles, 34 unchanged SKU references and 124 explicit Cloudinary image keys. This is a static review fixture, NOT a Supabase-backed live catalogue. Each style has a distinct slug and unknown slugs call notFound. Search, garment/colour filters and numeric price sorting are implemented. Galleries include selection controls, loading/error states and neutral photograph-number alt text. No semantic image-role or final cover review is claimed.
+
+Temporary display labels use the supplied colour and Package Contains text, and Selling Price values are displayed as AED by explicit approval. Product names are not invented. Sizes and availability remain awaiting confirmation, purchase controls are disabled, and four ambiguous groups are withheld. The preview routes use the existing theme/logo/hero and a simplified preview shell without inactive account/cart controls or unapproved delivery/payment claims. Mock occasion/promotion/journal sections are omitted from the preview home. Other routes and existing shared header/footer files are unchanged, so supporting-page consistency and old links remain later work.
 
 A separate approved database-foundation delivery created 14 tables with RLS, three applied migrations and an earlier receipt of 95 passing pgTAP assertions. Catalogue business tables are empty. Migrations, generated types and tests were delivered outside this repository and have not been integrated here; no app/browser/CI success is implied. The Supabase token hook exists as SQL but has not been enabled or verified in a real staff login flow.
 
-Cloudinary is connected and product photographs are being uploaded into `ar-staging/source-images/<source folder>`. The Drive inventory contains 150 indexed images across 21 folders. Upload completion and final database mapping have not been signed off. Cloudinary folder location and public ID are separate; sampled uploads have bare public IDs that do not yet satisfy the database's final media-key contract. Do not move or rename media until a reconciled target preview is approved. Never edit the client's Drive.
+Cloudinary is connected, with product photographs in `ar-staging/source-images/<source folder>`. The Drive inventory contains 150 indexed images across 21 folders. The preview uses 124 explicit keys associated with the 17 approved styles and does not rename or move them. Full binary/visual quality reconciliation and permanent database mapping remain open. Cloudinary folder location and public ID are separate; current bare public IDs do not satisfy the database's final media-key contract. No database import or media mutation was performed. Never edit the client's Drive.
 
-Pranav reports the Vercel environment variables are configured and the test site redeployed. This was not independently verified through the Vercel connection, and environment variables alone do not wire the app to Supabase.
+Pranav reports the Vercel environment variables are configured and the test site redeployed. The new branch changes have not been merged or deployed by this work. Browser, live delivery and full build checks have not run, so a functioning deployed preview is not claimed.
 
 ## Completed
 - Research: stack, payments, auth, media, UAE compliance
@@ -31,41 +33,44 @@ Pranav reports the Vercel environment variables are configured and the test site
 
 ## Current Task
 
-TASK-005 environment validation: implementation applied to `doc/storefront-review-milestone` for the existing root-level `lib/` layout. Zod checks the six configured Supabase/Cloudinary variables; browser exports contain only the two public Supabase fields, server exports use `server-only`, and `next.config.ts` validates with the pure schema before startup/build. Errors name invalid variables without exposing their values. Current staging media root remains valid even when Next uses NODE_ENV=production.
+Approved real-catalogue preview implementation on the roadmap branch, partial TASK-040/041. Exactly 13 files changed: review dataset, CatalogueGrid/preview shell, read-only preview media adapter, three storefront pages, ProductInfo/Accordions/Gallery, next.config.ts, focused tests and TASKS/MEMORY. Reused HeroSlider, SectionHeading and existing Card/Button/Accordion primitives; preview cards replace the old card's dead quick-add control. Native labelled filter controls introduce no dependencies. Original untransformed images are delivered through an allowlisted server-only adapter; production media-loader/transformations remain TASK-029. Preview prices use an isolated formatter pending TASK-010.
 
-Validation is restricted to currently implemented configuration. Future payment/auth/email integrations must add their required schemas before use; no missing future-service secrets block this milestone. Modern Supabase publishable keys are required; legacy anon JWTs are not accepted. Loopback HTTP is permitted only for development/test server validation.
+Executed checks: generated data compared against the actual XLSX; pure TypeScript catalogue module executed through Node type stripping; style/SKU/image counts, lookup identity and exclusions, null sizes, AED formatting, invalid amounts, filtering, sorting/nonmutation, original filename gaps and supplier attribution verified. Static TSX scan found no dead hash links or hard-coded colour literals in the changed files. These are not TypeScript semantic, React render or browser tests.
 
-Status: in progress, NOT verified complete. Dependency installation, package-lock regeneration and `npm run typecheck`, `npm run lint`, `npm run test:env`, `npm run build` must run in the development environment. The preparation sandbox has no npm or internet access. Focused tests are authored, not reported passing. Full TASK-007 test setup and browser boundary verification remain open. The ten-file patch was committed to the roadmap branch by explicit approval; no merge, deployment, remote environment change, database write or media change is included.
+Not run: npm install, lockfile regeneration, TypeScript semantic typecheck, ESLint, Vitest suite, Next build, responsive/accessibility browser checks and live image delivery. The sandbox has no npm or internet access. TASK-005 and the storefront milestone remain in progress. No main merge, deployment action, database writes, Cloudinary changes or Drive changes occurred.
+
+TASK-005 is already committed with six-variable Zod validation, explicit browser/server exports and redacted startup errors. Its package-lock is still stale relative to new dependency declarations. Do not claim a deploy-ready branch until installation regenerates it and the checks pass.
 
 ## Waiting On
 - Client answers to Q1 to Q41 in `PRD.md`. Most urgent: Q1 guest checkout, Q2 return window, Q6 delivery fee, Q15 VAT, Q26 to Q28 (stock, product names, rows 38 to 43), Q35 to Q38 (courier and COD), Q41 categories
 - The completed stock sheet back from the client (Size, Product Name, Stock and Category filled; rows 38 to 43 fixed). Never infer missing size values from SKU suffixes, invent names/stock or silently correct codes.
-- Approval of ambiguous image/catalogue mappings, including `JNE4380-TP` versus Style `JNE4380`, and any grouping of separate styles into a multi-colour product
-- Cloudinary upload completion and reconciliation against the 150-image/21-folder source inventory, reviewed cover/order/alt text, sufficient image quality, product copy and size charts
+- Approval of ambiguous image/catalogue mappings: J0395-DR, J0478-KR-NP, JNE4124-KR and JNE4380-TP remain withheld; no automatic grouping of separate styles into a multi-colour product
+- Reviewed cover/order/alt text, sufficient image quality, final product copy and size charts; current gallery order follows filenames only
 - Cloudinary production ownership/configuration, named transformations, strict mode and usage alerts per ADR-038; no R2 or Cloudflare media setup is required by the current media decision
 - The client's domain/DNS access before launch, separately from media hosting
 - Commercial sign-off for customer accounts, returns, bilingual invoices, the stock sheet upload and cash on delivery (beyond the original proposal)
 - Approved product/policy content and milestone/payment acceptance terms; no claim that only payments remain is supported by the current implementation
 
 ## Known Issues
-- Storefront pages use mock catalogue data; size/quantity/Add to Cart controls are not functioning commerce. Product slugs do not identify distinct real products.
-- No admin UI, live inventory workflow, cart, checkout, reservations, order processing or payment integration exists in the audited repository.
-- Documentation describes `src/`, but the application uses root-level `app/`, `components/`, `features/` and `lib/`. Keep directory migration out of this milestone and reconcile paths explicitly.
-- TASK-005 adds typecheck and focused test:env scripts alongside dev/build/start/lint; dependency installation and the lockfile are still pending. Broader documentation-listed unit/database/E2E commands are not proof of configured tests or CI.
+- No admin UI, live inventory workflow, cart, checkout, reservations, order processing or payment integration exists in the audited repository. Static preview content does not replace these workflows.
+- Size and multi-colour SKU selection remain unimplemented. All approved fixture styles represent a single source colour; size labels and quantities are explicitly unknown.
+- About, Contact and Journal still use their previous placeholder shell. Policy/size-guide pages and old shared navigation links need the separate supporting-page pass.
+- Documentation describes `src/`, but the application uses root-level `app/`, `components/`, `features/`, `services/` and `lib/`. Keep directory migration out of this milestone and reconcile paths explicitly.
+- TASK-005 adds typecheck and focused test:env scripts alongside dev/build/start/lint; dependency installation and the lockfile are still pending. Run both focused test files explicitly through Vitest; full test/CI setup remains separate.
 - Earlier Next.js security-upgrade note is historical and was not revalidated in this planning pass; verify current upstream advisories during implementation rather than treating the old note as a current finding.
 - Arabic PDF engine not chosen yet (TASK-062, ADR-022).
 - ExcelJS for the stock sheet is proposed (ADR-036): confirm before TASK-113.
 - Rows 38 to 43 of the client's sheet (J0395, JNE4124, J0478) contain duplicate SKU values and size-like Style values, suggesting swapped fields, with other misplaced values. The upload must reject unresolved rows; the client must correct them, not the importer.
-- `JAA25KB02100` has one indexed source photo. Two source folders skip filename suffix numbers; this is a review flag, not proof of missing photos.
+- `JAA25KB02100` has one indexed source photo. Two source folders skip filename suffix numbers; this is a review flag, not proof of missing photos. The preview preserves those gaps.
 - Draft catalogue imports, permanent media keys and published storefront data depend on approved client values and a reviewed mapping. No production-ready catalogue is implied by the completed database schema.
 - Resend Free caps at 100 emails a day. Switch to Pro before any promotion. This inherited planning note was not revalidated in this documentation pass.
 - Sentry free plan: one user, email alerts only, one cron monitor and one uptime monitor, 5,000 errors a month. Upgrade to Team when a second person needs access or a limit is hit. This inherited planning note was not revalidated in this documentation pass.
 
 ## Next Step
 
-Verify the applied TASK-005 patch in the development environment: install the declared dependencies to regenerate the lockfile, fill `.env.local` securely, then run the focused environment tests, typecheck, lint and build. Verify that a client import of `lib/env.ts` fails and that missing/invalid settings produce redacted startup errors. Do not mark TASK-005 complete until these checks pass. Then integrate the already-applied migrations/types/tests and server-only catalogue/media boundaries in separate tasks; keep client-data and upload blockers visible. The existing product -> colourway -> SKU -> stock model does not need rebuilding.
+In a development environment, install dependencies to regenerate package-lock.json, then run `npm run typecheck`, `npm run lint`, `npm exec -- vitest run tests/unit/env.test.ts tests/unit/preview-catalogue.test.ts` and `npm run build` using the configured staging variables. Verify the server-only client boundary and original Cloudinary delivery. Inspect home/collection/PDP at 375, 768 and 1440, search/filter/sort/reset, two different slugs, unknown-slug 404, single-image gallery, image errors, keyboard focus and disabled purchases. Do not mark these tasks complete until those checks pass. Supporting-page polish and consistency are the next separately scoped UI pass.
 
-The milestone sequence is M0 foundation reconciliation, M1 client storefront review, M2 basic catalogue/inventory admin, M3 transactional commerce, M4 launch readiness. Detailed acceptance criteria and safe Cloudinary placement are in `docs/STOREFRONT-MILESTONE.md`.
+The milestone sequence is M0 foundation reconciliation, M1 client storefront review, M2 basic catalogue/inventory admin, M3 transactional commerce, M4 launch readiness. The approved static preview advances visual review only; it does not satisfy M1's full data-backed acceptance. Detailed acceptance criteria and safe permanent Cloudinary placement are in `docs/STOREFRONT-MILESTONE.md`.
 
 ## Log
 - 5 Oct 2026: project docs created
@@ -91,3 +96,5 @@ The milestone sequence is M0 foundation reconciliation, M1 client storefront rev
 - 11 Oct 2026: Separate approved foundation delivery applied `20261011073916_catalogue_foundation`, `20261011074102_catalogue_guards` and `20261011074137_catalogue_policy_tuning`; 95 pgTAP assertions passed with synthetic data rolled back. No client catalogue, staff or images were imported into the database, and the delivery did not change Git.
 - 11 Oct 2026: Inventoried 150 indexed Drive images across 21 product folders, retained source filenames/links, created `ar-staging/source-images` in Cloudinary and provided manual upload directions after direct Drive transfer failed. No Drive files were edited.
 - 11 Oct 2026: Approved documentation-only update adds a client-storefront-review priority overlay, reconciles external foundation progress against actual application code, and records the Cloudinary/catalogue placement gates. Original backlog and historical log retained; no implementation tasks newly marked complete.
+- 11 Oct 2026: TASK-005 ten-file environment-validation patch committed to the roadmap branch by explicit approval. Lockfile regeneration and runtime acceptance remain pending; no main merge or deployment action.
+- 11 Oct 2026: Approved 13-file real-catalogue preview implemented and committed on the roadmap branch. Exact source-value and pure catalogue behavior checks passed; full build/browser tests remain pending. Four ambiguous groups withheld, purchases disabled, unknown sizes/stock explicit. Database, Cloudinary assets and Drive unchanged.

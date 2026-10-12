@@ -46,3 +46,27 @@ export function formatAED(fils: number): string {
 export function calculateVatPortion(totalFils: number): number {
   return Math.round((totalFils * 5) / 105)
 }
+
+// Feedback #10/#11 approved 2026-10-13. The stored threshold is also 20000.
+// These shared storefront values do not replace server-side checkout pricing.
+export const FREE_DELIVERY_THRESHOLD_FILS = 20000
+export const STANDARD_DELIVERY_FEE_FILS = 2500
+export const FREE_DELIVERY_MINIMUM_LABEL = `${formatAED(FREE_DELIVERY_THRESHOLD_FILS)} or more`
+export const FREE_DELIVERY_MESSAGE = `Complimentary delivery on orders of ${FREE_DELIVERY_MINIMUM_LABEL} across the UAE`
+
+/** Cart estimate only. Keep empty bags fee-free; qualify at exactly AED 200. */
+export function calculateDeliveryEstimate(subtotalFils: number, hasItems: boolean) {
+  if (!Number.isSafeInteger(subtotalFils) || subtotalFils < 0) {
+    throw new RangeError("Delivery subtotal must be non-negative integer fils")
+  }
+
+  const isFreeShipping = hasItems && subtotalFils >= FREE_DELIVERY_THRESHOLD_FILS
+  const deliveryFeeFils = !hasItems || isFreeShipping ? 0 : STANDARD_DELIVERY_FEE_FILS
+  const remainingFils = Math.max(0, FREE_DELIVERY_THRESHOLD_FILS - subtotalFils)
+  // Never show 100% before the exact threshold (e.g. AED 199.99).
+  const progressPercent = isFreeShipping ? 100 : hasItems
+    ? Math.min(99, Math.floor((subtotalFils / FREE_DELIVERY_THRESHOLD_FILS) * 100))
+    : 0
+
+  return { isFreeShipping, deliveryFeeFils, remainingFils, progressPercent }
+}

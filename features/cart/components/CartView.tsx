@@ -14,12 +14,13 @@ import {
   RotateCcw,
 } from "lucide-react"
 import { useCartStore } from "@/features/cart/store"
-import { formatAED, calculateVatPortion } from "@/lib/money"
+import {
+  formatAED,
+  calculateVatPortion,
+  calculateDeliveryEstimate,
+  FREE_DELIVERY_MINIMUM_LABEL,
+} from "@/lib/money"
 import { StoreButton } from "@/components/store/StoreButton"
-
-// UAE delivery constants per docs/PRD.md & ARCHITECTURE.md
-const FREE_SHIPPING_THRESHOLD_FILS = 50000 // Free delivery over AED 500
-const STANDARD_DELIVERY_FEE_FILS = 2500 // AED 25 flat rate
 
 export function CartView() {
   const {
@@ -49,8 +50,8 @@ export function CartView() {
 
   const subtotalFils = getSubtotalFils()
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-  const isFreeShipping = subtotalFils >= FREE_SHIPPING_THRESHOLD_FILS
-  const deliveryFeeFils = items.length === 0 ? 0 : isFreeShipping ? 0 : STANDARD_DELIVERY_FEE_FILS
+  const { isFreeShipping, deliveryFeeFils, remainingFils, progressPercent } =
+    calculateDeliveryEstimate(subtotalFils, items.length > 0)
   const estimatedTotalFils = subtotalFils + deliveryFeeFils
   const vatPortionFils = calculateVatPortion(estimatedTotalFils)
 
@@ -187,7 +188,7 @@ export function CartView() {
             <Truck className="w-4 h-4 text-primary shrink-0" />
             <div className="text-xs">
               <span className="font-medium text-foreground block">Free UAE Delivery</span>
-              <span className="text-muted-foreground text-[11px]">On orders over AED 500</span>
+              <span className="text-muted-foreground text-[11px]">On orders of {FREE_DELIVERY_MINIMUM_LABEL}</span>
             </div>
           </div>
           <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xs">
@@ -222,18 +223,18 @@ export function CartView() {
               </span>
             ) : (
               <span className="text-muted-foreground">
-                Add <span className="font-semibold text-foreground">{formatAED(FREE_SHIPPING_THRESHOLD_FILS - subtotalFils)}</span> more for Free Delivery
+                Add <span className="font-semibold text-foreground">{formatAED(remainingFils)}</span> more for Free Delivery
               </span>
             )}
             <span className="font-medium text-foreground">
-              {Math.min(100, Math.round((subtotalFils / FREE_SHIPPING_THRESHOLD_FILS) * 100))}%
+              {progressPercent}%
             </span>
           </div>
           <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
             <div
               className="bg-primary h-full transition-all duration-300"
               style={{
-                width: `${Math.min(100, Math.round((subtotalFils / FREE_SHIPPING_THRESHOLD_FILS) * 100))}%`,
+                width: `${progressPercent}%`,
               }}
             />
           </div>

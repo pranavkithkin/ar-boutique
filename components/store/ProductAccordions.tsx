@@ -1,5 +1,6 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { ProductType } from "./ProductInfo"
+import { FREE_DELIVERY_MINIMUM_LABEL } from "@/lib/money"
 
 function isValidValue(val?: string | null): boolean {
   if (!val) return false
@@ -197,7 +198,7 @@ export function ProductAccordions({ product }: { product: ProductType }) {
           <p className="flex items-start gap-2">
             <span className="text-primary font-bold">•</span>
             <span>
-              <strong className="text-foreground font-medium">Free Shipping:</strong> Complimentary delivery on all orders over AED 150.
+              <strong className="text-foreground font-medium">Free Shipping:</strong> Complimentary delivery on all orders of {FREE_DELIVERY_MINIMUM_LABEL}.
             </span>
           </p>
           <p className="flex items-start gap-2">

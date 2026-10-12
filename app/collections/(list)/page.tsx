@@ -106,7 +106,7 @@ export default async function CollectionPage({ searchParams }: CollectionPagePro
 
       <div className="flex-1 pb-16">
         {/* Page Header */}
-        <div className="bg-muted py-6 md:py-10">
+        <div className="bg-muted/50 py-8 md:py-12 border-b border-border/40">
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
             <Breadcrumb className="mb-4 md:mb-6">
               <BreadcrumbList>
@@ -120,8 +120,8 @@ export default async function CollectionPage({ searchParams }: CollectionPagePro
               </BreadcrumbList>
             </Breadcrumb>
             <div className="text-center">
-              <h1 className="text-3xl md:text-4xl font-heading text-foreground mb-3">All Collections</h1>
-              <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base">
+              <h1 className="text-3xl sm:text-4xl font-heading text-foreground font-normal tracking-tight mb-3">All Collections</h1>
+              <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
                 Discover our complete range of timeless designs, crafted to bring elegance and heritage to your everyday wardrobe.
               </p>
             </div>

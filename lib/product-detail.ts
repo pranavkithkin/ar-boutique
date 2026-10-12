@@ -10,7 +10,7 @@ export interface ProductDetail {
   description?: string
   details: Record<string, string>
   images: string[]
-  sizes: Array<{ id: string; name: string; sku: string }>
+  sizes: Array<{ id: string; name: string; sku: string; priceFils: number; stock?: number }>
 }
 
 export async function getProductBySlug(slug: string): Promise<ProductDetail | null> {
@@ -71,6 +71,8 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | nu
     id: v.id,
     name: v.sizes?.label || "One Size",
     sku: v.sku,
+    priceFils: v.price_fils || lowestPriceFils,
+    stock: 5,
   }))
 
   const primarySku = variants[0]?.sku || colourway?.style_code || ""

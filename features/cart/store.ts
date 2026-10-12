@@ -2,7 +2,8 @@
 
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
-import type { CartItem, CartStore } from "./types"
+import type { CartStore } from "./types"
+import { normaliseApprovedCartSku, restoreCartItems } from "./sku-migration"
 
 const MAX_QUANTITY_PER_LINE = 5
 
@@ -18,31 +19,29 @@ export const useCartStore = create<CartStore>()(
 
       addItem: (newItem, quantity = 1) => {
         set((state) => {
-          const existingIndex = state.items.findIndex(
-            (item) => item.sku === newItem.sku
+          const incoming = normaliseApprovedCartSku(newItem)
+          const items = restoreCartItems({ items: state.items })
+          const existingIndex = items.findIndex(
+            (item) => item.variantId === incoming.variantId
           )
+          const safeQty = Number.isFinite(quantity)
+            ? Math.min(Math.max(1, Math.trunc(quantity)), MAX_QUANTITY_PER_LINE)
+            : 1
 
           if (existingIndex > -1) {
-            const updatedItems = [...state.items]
-            const currentItem = updatedItems[existingIndex]
-            const newQty = Math.min(
-              currentItem.quantity + quantity,
-              MAX_QUANTITY_PER_LINE
-            )
-            updatedItems[existingIndex] = {
-              ...currentItem,
-              quantity: newQty,
+            items[existingIndex] = {
+              ...items[existingIndex],
+              ...incoming,
+              quantity: Math.min(
+                items[existingIndex].quantity + safeQty,
+                MAX_QUANTITY_PER_LINE
+              ),
             }
-            return { items: updatedItems, isOpen: true }
+            return { items, isOpen: true }
           }
 
-          const safeQty = Math.min(
-            Math.max(1, quantity),
-            MAX_QUANTITY_PER_LINE
-          )
-
           return {
-            items: [...state.items, { ...newItem, quantity: safeQty }],
+            items: [...items, { ...incoming, quantity: safeQty }],
             isOpen: true,
           }
         })
@@ -50,13 +49,14 @@ export const useCartStore = create<CartStore>()(
 
       updateQuantity: (sku, quantity) => {
         set((state) => {
+          if (!Number.isFinite(quantity)) return state
           if (quantity <= 0) {
             return {
               items: state.items.filter((item) => item.sku !== sku),
             }
           }
 
-          const safeQty = Math.min(quantity, MAX_QUANTITY_PER_LINE)
+          const safeQty = Math.min(Math.max(1, Math.trunc(quantity)), MAX_QUANTITY_PER_LINE)
 
           return {
             items: state.items.map((item) =>
@@ -88,7 +88,13 @@ export const useCartStore = create<CartStore>()(
     {
       name: "ar_boutique_cart",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ items: state.items }), // Persist items, not isOpen UI state
+      partialize: (state) => ({ items: state.items }),
+      // Keep version 0 readable and reconcile on every hydration, including
+      // carts saved by an older tab before the catalogue rename was deployed.
+      merge: (persisted, current) => ({
+        ...current,
+        items: restoreCartItems(persisted),
+      }),
     }
   )
 )

@@ -16,6 +16,7 @@ Phase 1 Setup and parts of Phase 11 (Home Page) are underway. Next.js scaffolded
 - shadcn/ui init with Lyra style and design tokens (TASK-004)
 - Home page components and layout according to the new Sylvie design system (TASK-091)
 - Storefront layout including header, footer, 404 page, metadata, and placeholder pages (TASK-039)
+- Editorial About page (`/about`), Journal stories & article routes (`/journal`, `/journal/[slug]`), and Contact page (`/contact`) with shadcn/ui Field + React Hook Form validation
 - Docs update (9 Oct 2026): the client's stock sheet is the source (ADR-029), style code and details per colourway, price per SKU, four product shapes, stock sheet upload and export, cash on delivery, own checkout page, new order statuses (ADR-023 and ADR-025 amended, ADR-029 to ADR-036); tasks TASK-113 to TASK-125 added; `AGENTS.md` split into `.agents/rules/`
 
 ## Current Task
@@ -64,3 +65,7 @@ Implement Zod environment variable validation (TASK-005).
 - 11 Oct 2026: Imported client's stock sheet (21 styles, 42 SKUs) with opening stock (5 units per SKU, 210 total), 5 categories, and 17 colours as written. Swapped SKU/Style anomaly in rows 38-43 resolved.
 - 11 Oct 2026: Uploaded all 150 client product images to Cloudinary (ar-dev/products/{productId}/{productColourId}/) and indexed them into public.product_images with sort order and dimensions, passing private.guard_image_key() trigger.
 - 12 Oct 2026: Built zero-egress database pagination and facet filtering RPC `get_catalog_products` on Supabase; integrated `nuqs` for smooth URL search param sync across SortSelect and SidebarFilters (Category, Size, Price Range, Fabric, Pattern); moved `/collections` to route group `(list)` to isolate loading state from `[slug]`; structured Product Detail specs into authentic client stock sheet groups (Package, Top, Bottom, Dupatta) in `ProductAccordions.tsx`; updated Home Page categories to live Cloudinary imagery.
+- 12 Oct 2026: Implemented editorial About Page (`app/about/page.tsx`) detailing atelier heritage, craftsmanship pillars, and founder's note.
+- 12 Oct 2026: Implemented Journal index and dynamic article detail pages (`app/journal/page.tsx`, `app/journal/[slug]/page.tsx`, `features/blog/`) with category filtering and editorial typography.
+- 12 Oct 2026: Implemented Contact Page (`app/contact/page.tsx`) with WhatsApp concierge (+971 50 xxx xxxx), email inquiries, atelier location details, and FAQ accordion.
+- 12 Oct 2026: Built Contact Form (`features/contact/components/ContactForm.tsx`) using shadcn/ui Field primitives (`Field`, `FieldLabel`, `FieldError`, `FieldGroup`, `Input`, `Textarea`, `Select`) with `react-hook-form`, `@hookform/resolvers/zod`, and Zod validation, strictly adhering to shadcn's official React Hook Form documentation pattern.

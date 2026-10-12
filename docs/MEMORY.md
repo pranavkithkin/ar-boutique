@@ -79,3 +79,4 @@ Build dedicated `/cart` page with server re-validation (TASK-049) or setup check
 - 12 Oct 2026: Configured website favicon, Apple touch icon, and app icons (`app/icon.png`, `public/favicon.png`, `app/layout.tsx`) using client's Elegant White AR Boutique logo.
 - 12 Oct 2026: Linked Hero Slider slides and Hero Banner call-to-action buttons directly to `/collections` with accessible labels.
 - 12 Oct 2026: Triggered CI/CD deployment pipeline check.
+- 12 Oct 2026: Fixed production build typecheck by excluding volatile `.next/dev/types` from `tsconfig.json`. Added Coming Soon page for `/account` reusing `ComingSoon` component.

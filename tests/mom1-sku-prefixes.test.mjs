@@ -87,8 +87,8 @@ test("JNE is replaced completely", () => {
 test("unapproved products, future SKUs and unapproved sizes are untouched", () => {
   for (const item of [
     { ...legacy, productId: "different-product" },
-    { ...legacy, sku: "ABCD123-M" },
-    { ...legacy, sku: "JAA25CD01945-S" },
+    { ...legacy, productName: "Future title", sku: "ABCD123-M" },
+    { ...legacy, productName: "Future title", sku: "JAA25CD01945-S" },
   ]) {
     assert.strictEqual(helper.normaliseApprovedCartSku(item), item)
   }
@@ -101,9 +101,12 @@ test("migration is idempotent and preserves stable line identifiers", () => {
   assert.strictEqual(helper.normaliseApprovedCartSku(once), once)
 })
 
-test("prices, quantities, names, photos and product links are preserved", () => {
+test("only approved SKU and name change; prices, quantities, photos and links are preserved", () => {
   const result = plain(helper.normaliseApprovedCartSku(legacy))
-  assert.deepEqual(result, { ...legacy, id: "AR25CD01945-M", sku: "AR25CD01945-M" })
+  assert.deepEqual(result, {
+    ...legacy, id: "AR25CD01945-M", sku: "AR25CD01945-M",
+    productName: "Co-ord set AR25CD01945",
+  })
 })
 
 test("old and new lines for one variant merge, capped at five", () => {
@@ -179,4 +182,61 @@ test("fresh carts and quantity limits work", () => {
   assert.equal(store.getState().getItemCount(), 5)
   store.getState().updateQuantity("AR25CD01945-M", 0)
   assert.equal(store.getState().items.length, 0)
+})
+
+test("all 21 approved titles keep category words and every digit", () => {
+  const names = [...helperSource.matchAll(/"([0-9a-f-]{36})": "((?:Dress|Set|Co-ord set|Kurta|Top) [A-Z0-9]+)"/g)]
+  assert.equal(names.length, 21)
+  for (const [, productId, productName] of names) {
+    const item = { ...legacy, productId, productName, id: "stable-line", sku: "AR-unchanged" }
+    const result = helper.normaliseApprovedCartSku(item)
+    assert.equal(result.productName, productName.replace(/ [A-Za-z]+(?=\d)/, " AR"))
+    assert.equal(result.productName.replace(/.*?([0-9])/, "$1"), productName.replace(/.*?([0-9])/, "$1"))
+    assert.equal(result.sku, item.sku)
+    assert.equal(result.id, item.id)
+  }
+})
+
+test("names update even when the cart already has the renamed AR SKU", () => {
+  const item = { ...legacy, id: "AR25CD01945-M", sku: "AR25CD01945-M" }
+  const { store } = storeWith([item])
+  assert.equal(store.getState().items[0].productName, "Co-ord set AR25CD01945")
+  assert.equal(store.getState().items[0].sku, item.sku)
+  assert.equal(store.getState().getSubtotalFils(), 19800)
+})
+
+test("one-letter and three-letter title prefixes preserve zeroes and numbers", () => {
+  for (const [productId, productName, expected] of [
+    ["e541ddf1-53c2-417a-877e-b06763d2199d", "Dress J0395", "Dress AR0395"],
+    ["5395c50a-43aa-47ca-be0a-9f1fc97a1c4d", "Kurta JNE4124", "Kurta AR4124"],
+  ]) {
+    assert.equal(helper.normaliseApprovedCartSku({ ...legacy, productId, productName }).productName, expected)
+  }
+})
+
+test("future merchandising names and names on unknown products stay untouched", () => {
+  for (const item of [
+    { ...legacy, sku: "AR25CD01945-M", productName: "New collection JAA25CD01945" },
+    { ...legacy, sku: "AR25CD01945-M", productName: "Co-ord set AR25CD01945" },
+    { ...legacy, productId: "unknown-product" },
+  ]) {
+    assert.strictEqual(helper.normaliseApprovedCartSku(item), item)
+  }
+})
+
+test("stale-page additions cannot restore the old title", () => {
+  const { store, data } = storeWith([helper.normaliseApprovedCartSku(legacy)])
+  store.getState().addItem(legacy, 1)
+  assert.equal(store.getState().items.length, 1)
+  assert.equal(store.getState().items[0].productName, "Co-ord set AR25CD01945")
+  assert.equal(JSON.parse(data.get("ar_boutique_cart")).state.items[0].productName, "Co-ord set AR25CD01945")
+})
+
+test("name-only migration is idempotent and keeps URLs and variant identities", () => {
+  const item = { ...legacy, sku: "AR25CD01945-M", id: legacy.variantId }
+  const once = helper.normaliseApprovedCartSku(item)
+  assert.strictEqual(helper.normaliseApprovedCartSku(once), once)
+  assert.equal(once.productSlug, legacy.productSlug)
+  assert.equal(once.variantId, legacy.variantId)
+  assert.equal(once.id, legacy.variantId)
 })

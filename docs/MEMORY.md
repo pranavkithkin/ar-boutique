@@ -77,3 +77,4 @@ Build dedicated `/cart` page with server re-validation (TASK-049) or setup check
 - 12 Oct 2026: Created dedicated Shopping Bag page (`app/cart/page.tsx` & `features/cart/components/CartView.tsx`) with quantity steppers, item removal, free shipping progress indicator (AED 500 threshold), and order summary breakdown with 5% UAE VAT.
 - 12 Oct 2026: Implemented Quick Add Modal dialog (`components/store/QuickAddModal.tsx`) using shadcn Dialog primitive on ProductCard (+) button with live variant size selection, quantity stepper, and direct bag integration.
 - 12 Oct 2026: Configured website favicon, Apple touch icon, and app icons (`app/icon.png`, `public/favicon.png`, `app/layout.tsx`) using client's Elegant White AR Boutique logo.
+- 12 Oct 2026: Linked Hero Slider slides and Hero Banner call-to-action buttons directly to `/collections` with accessible labels.

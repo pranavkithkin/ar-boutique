@@ -18,9 +18,10 @@ Phase 1 Setup and parts of Phase 11 (Home Page) are underway. Next.js scaffolded
 - Storefront layout including header, footer, 404 page, metadata, and placeholder pages (TASK-039)
 - Editorial About page (`/about`), Journal stories & article routes (`/journal`, `/journal/[slug]`), and Contact page (`/contact`) with shadcn/ui Field + React Hook Form validation
 - Docs update (9 Oct 2026): the client's stock sheet is the source (ADR-029), style code and details per colourway, price per SKU, four product shapes, stock sheet upload and export, cash on delivery, own checkout page, new order statuses (ADR-023 and ADR-025 amended, ADR-029 to ADR-036); tasks TASK-113 to TASK-125 added; `AGENTS.md` split into `.agents/rules/`
+- Validated environment variables with Zod schemas for client and server (TASK-005)
 
 ## Current Task
-TASK-005 src/lib/env.ts: validate every environment variable with Zod
+TASK-006 Supabase CLI: local project, first migration, generated types (or TASK-048 Cart store & mini-cart drawer)
 
 ## Waiting On
 - Client answers to Q1 to Q41 in `PRD.md`. Most urgent: Q1 guest checkout, Q2 return window, Q6 delivery fee, Q15 VAT, Q26 to Q28 (stock, product names, rows 38 to 43), Q35 to Q38 (courier and COD), Q41 categories
@@ -38,7 +39,7 @@ TASK-005 src/lib/env.ts: validate every environment variable with Zod
 - Sentry free plan: one user, email alerts only, one cron monitor and one uptime monitor, 5,000 errors a month. Upgrade to Team when a second person needs access or a limit is hit.
 
 ## Next Step
-Implement Zod environment variable validation (TASK-005).
+Setup Cart store (TASK-048) or Supabase CLI local database setup (TASK-006).
 
 ## Log
 - 5 Oct 2026: project docs created
@@ -69,3 +70,4 @@ Implement Zod environment variable validation (TASK-005).
 - 12 Oct 2026: Implemented Journal index and dynamic article detail pages (`app/journal/page.tsx`, `app/journal/[slug]/page.tsx`, `features/blog/`) with category filtering and editorial typography.
 - 12 Oct 2026: Implemented Contact Page (`app/contact/page.tsx`) with WhatsApp concierge (+971 50 xxx xxxx), email inquiries, atelier location details, and FAQ accordion.
 - 12 Oct 2026: Built Contact Form (`features/contact/components/ContactForm.tsx`) using shadcn/ui Field primitives (`Field`, `FieldLabel`, `FieldError`, `FieldGroup`, `Input`, `Textarea`, `Select`) with `react-hook-form`, `@hookform/resolvers/zod`, and Zod validation, strictly adhering to shadcn's official React Hook Form documentation pattern.
+- 12 Oct 2026: Implemented environment variable validation (`lib/env.ts`) using Zod schemas for client and server variables; verified against Cloudinary and Supabase configurations with strict client leak prevention (TASK-005).

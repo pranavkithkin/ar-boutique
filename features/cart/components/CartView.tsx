@@ -240,23 +240,29 @@ export function CartView() {
         </div>
 
         {/* Pricing breakdown */}
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between text-muted-foreground">
-            <span>Bag Subtotal</span>
-            <span className="font-medium text-foreground tabular-nums">
+        <div className="space-y-3.5">
+          <div className="flex justify-between items-baseline text-xs">
+            <span className="font-medium uppercase tracking-[0.08em] text-muted-foreground">
+              Bag Subtotal
+            </span>
+            <span className="font-medium text-foreground tabular-nums text-sm">
               {formatAED(subtotalFils)}
             </span>
           </div>
 
-          <div className="flex justify-between text-muted-foreground">
-            <span>Estimated Delivery</span>
-            <span className="font-medium text-foreground tabular-nums">
+          <div className="flex justify-between items-baseline text-xs">
+            <span className="font-medium uppercase tracking-[0.08em] text-muted-foreground">
+              Estimated Delivery
+            </span>
+            <span className="font-medium text-foreground tabular-nums text-sm">
               {isFreeShipping ? "FREE" : formatAED(deliveryFeeFils)}
             </span>
           </div>
 
-          <div className="flex justify-between text-muted-foreground text-xs">
-            <span>Included 5% UAE VAT</span>
+          <div className="flex justify-between items-baseline text-[11px]">
+            <span className="uppercase tracking-[0.08em] text-muted-foreground/80">
+              Included 5% UAE VAT
+            </span>
             <span className="text-muted-foreground tabular-nums">
               {formatAED(vatPortionFils)}
             </span>

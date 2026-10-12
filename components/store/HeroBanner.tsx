@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import { StoreButton } from "./StoreButton"
 
 interface HeroBannerProps {
@@ -8,9 +9,18 @@ interface HeroBannerProps {
   title?: React.ReactNode
   description?: React.ReactNode
   buttonText?: string
+  buttonHref?: string
 }
 
-export function HeroBanner({ imageSrc, mobileImageSrc, eyebrow, title, description, buttonText }: HeroBannerProps) {
+export function HeroBanner({
+  imageSrc,
+  mobileImageSrc,
+  eyebrow,
+  title,
+  description,
+  buttonText,
+  buttonHref = "/collections",
+}: HeroBannerProps) {
   const hasText = Boolean(eyebrow || title || description || buttonText)
 
   return (
@@ -54,7 +64,9 @@ export function HeroBanner({ imageSrc, mobileImageSrc, eyebrow, title, descripti
                   </p>
                 )}
                 {buttonText && (
-                  <StoreButton className="px-8">{buttonText}</StoreButton>
+                  <Link href={buttonHref}>
+                    <StoreButton className="px-8">{buttonText}</StoreButton>
+                  </Link>
                 )}
               </div>
             </div>

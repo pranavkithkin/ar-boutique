@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image"
+import Link from "next/link"
 import Autoplay from "embla-carousel-autoplay"
 import {
   Carousel,
@@ -20,6 +21,7 @@ export function HeroSlider() {
     imageSrc: string
     alt: string
     mobileImageSrc?: string
+    href: string
   }
 
   const slides: Slide[] = [
@@ -28,19 +30,21 @@ export function HeroSlider() {
       imageSrc: "/images/hero_3_desktop_v5.png",
       mobileImageSrc: "/images/hero_3_mobile_v5.png",
       alt: "Timeless Traditions Heritage Elegance",
+      href: "/collections",
     },
     {
       id: 2,
       imageSrc: "/images/hero_2_desktop_v5.png",
       mobileImageSrc: "/images/hero_2_mobile_v4.jpg",
       alt: "Burgundy Boutique Elegance",
+      href: "/collections",
     },
     {
       id: 3,
       imageSrc: "/images/hero_1_desktop_v5.png",
       mobileImageSrc: "/images/hero_1_mobile_v4.jpg",
       alt: "Timeless Indian Boutique Elegance",
-
+      href: "/collections",
     }
   ]
 
@@ -54,26 +58,32 @@ export function HeroSlider() {
         <CarouselContent>
           {slides.map((slide) => (
             <CarouselItem key={slide.id}>
-              <div className={`relative w-full md:aspect-[2.13/1] ${slide.mobileImageSrc ? 'aspect-[2/3]' : 'aspect-[2.13/1]'}`}>
-                {/* Desktop Image */}
-                <Image
-                  src={slide.imageSrc}
-                  alt={slide.alt}
-                  fill
-                  className={`object-cover object-center ${slide.mobileImageSrc ? 'hidden md:block' : 'block'}`}
-                  priority={slide.id === 1}
-                />
-                {/* Mobile Image (Optional) */}
-                {slide.mobileImageSrc && (
+              <Link
+                href={slide.href}
+                className="block relative w-full group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`View collection: ${slide.alt}`}
+              >
+                <div className={`relative w-full md:aspect-[2.13/1] ${slide.mobileImageSrc ? 'aspect-[2/3]' : 'aspect-[2.13/1]'}`}>
+                  {/* Desktop Image */}
                   <Image
-                    src={slide.mobileImageSrc}
-                    alt={`${slide.alt} mobile`}
+                    src={slide.imageSrc}
+                    alt={slide.alt}
                     fill
-                    className="object-cover object-center block md:hidden"
+                    className={`object-cover object-center ${slide.mobileImageSrc ? 'hidden md:block' : 'block'}`}
                     priority={slide.id === 1}
                   />
-                )}
-              </div>
+                  {/* Mobile Image (Optional) */}
+                  {slide.mobileImageSrc && (
+                    <Image
+                      src={slide.mobileImageSrc}
+                      alt={`${slide.alt} mobile`}
+                      fill
+                      className="object-cover object-center block md:hidden"
+                      priority={slide.id === 1}
+                    />
+                  )}
+                </div>
+              </Link>
             </CarouselItem>
           ))}
         </CarouselContent>

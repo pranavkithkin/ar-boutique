@@ -10,6 +10,13 @@ import { PromoBanner } from "@/components/store/PromoBanner"
 import { BlogCard } from "@/features/blog/components/BlogCard"
 import { StoreFooter } from "@/components/store/StoreFooter"
 import { getProductsPage } from "@/lib/products"
+import {
+  AnimatedSection,
+  AnimatedDiv,
+  StaggerContainer,
+  StaggerItem,
+  FadeIn,
+} from "@/components/store/AnimatedSection"
 
 import {
   Carousel,
@@ -53,40 +60,43 @@ const CATEGORIES = [
 ]
 
 export default async function Home() {
-  // Fetch real latest products for New Arrivals (limit 8, sorted newest)
+  // Fetch real latest products for New Arrivals (limit 10, sorted newest)
   const { products: newArrivals } = await getProductsPage({
-    limit: 8,
+    limit: 10,
     sort: "newest",
   })
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <AnnouncementBar text="FREE SHIPPING ON ORDERS OVER 150 AED | EASY RETURNS WITHIN 14 DAYS" />
+    <div className="flex min-h-screen flex-col bg-background">
+      <AnnouncementBar />
       <StoreHeader />
 
       <main className="flex-1 -mt-20">
-        <HeroSlider />
+        <FadeIn delay={0.05}>
+          <HeroSlider />
+        </FadeIn>
 
         {/* Shop by Category Section */}
-        <section className="pt-8 md:pt-12 pb-6 md:pb-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <AnimatedSection className="pt-8 md:pt-12 pb-6 md:pb-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading className="mb-8 md:mb-12">Shop by Category</SectionHeading>
-          <div
+          <StaggerContainer
+            staggerDelay={0.07}
             className="flex gap-6 sm:gap-8 md:gap-10 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar justify-start md:justify-center"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {CATEGORIES.map((cat, i) => (
-              <CategoryCircle
-                key={i}
-                name={cat.name}
-                imageSrc={cat.imageSrc}
-                href={`/collections?category=${cat.slug}`}
-              />
+              <StaggerItem key={i}>
+                <CategoryCircle
+                  name={cat.name}
+                  imageSrc={cat.imageSrc}
+                  href={`/collections?category=${cat.slug}`}
+                />
+              </StaggerItem>
             ))}
-          </div>
-        </section>
+          </StaggerContainer>
+        </AnimatedSection>
 
         {/* New Arrivals Section */}
-        <section className="py-6 md:py-8 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+        <AnimatedSection delay={0.05} className="py-6 md:py-8 mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
           <SectionHeading className="mb-8 md:mb-12">New Arrivals</SectionHeading>
           
           {newArrivals.length === 0 ? (
@@ -94,43 +104,45 @@ export default async function Home() {
               <p>Check back soon for new arrivals.</p>
             </div>
           ) : (
-            <Carousel
-              opts={{
-                align: "start",
-              }}
-              className="w-full relative mb-8 md:mb-12"
-            >
-              <CarouselContent className="-ml-2 md:-ml-3">
-                {newArrivals.map((prod) => (
-                  <CarouselItem key={prod.id} className="pl-2 md:pl-3 basis-[60%] sm:basis-[45%] md:basis-1/3 xl:basis-1/4">
-                    <ProductCard
-                      brand={prod.brand}
-                      name={prod.name}
-                      price={prod.price}
-                      imageSrc={prod.imageSrc}
-                      href={`/collections/${prod.slug}`}
-                    />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <div className="hidden md:block">
-                <CarouselPrevious className="-left-4 lg:-left-12 bg-background/90 hover:bg-background border-border" />
-                <CarouselNext className="-right-4 lg:-right-12 bg-background/90 hover:bg-background border-border" />
-              </div>
-            </Carousel>
+            <AnimatedDiv delay={0.08}>
+              <Carousel
+                opts={{
+                  align: "start",
+                }}
+                className="w-full relative mb-8 md:mb-12"
+              >
+                <CarouselContent className="-ml-2 md:-ml-3">
+                  {newArrivals.map((prod) => (
+                    <CarouselItem key={prod.id} className="pl-2 md:pl-3 basis-[60%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+                      <ProductCard
+                        brand={prod.brand}
+                        name={prod.name}
+                        price={prod.price}
+                        imageSrc={prod.imageSrc}
+                        href={`/collections/${prod.slug}`}
+                      />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <div className="hidden md:block">
+                  <CarouselPrevious className="-left-4 lg:-left-12 bg-background/90 hover:bg-background border-border" />
+                  <CarouselNext className="-right-4 lg:-right-12 bg-background/90 hover:bg-background border-border" />
+                </div>
+              </Carousel>
+            </AnimatedDiv>
           )}
 
-          <div className="flex justify-center">
+          <AnimatedDiv delay={0.12} className="flex justify-center">
             <Link href="/collections">
-              <StoreButton variant="outline" className="px-8 border-input text-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer">
+              <StoreButton variant="outline" className="px-8 border-input text-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]">
                 View All New Arrivals
               </StoreButton>
             </Link>
-          </div>
-        </section>
+          </AnimatedDiv>
+        </AnimatedSection>
 
         {/* Promo Banner Section */}
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 mb-6 md:mt-10 md:mb-8">
+        <AnimatedSection delay={0.08} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 mb-6 md:mt-10 md:mb-8">
           <div className="flex flex-col w-full gap-4 md:gap-6">
             <PromoBanner
               imageSrc="/images/promo_banner_new.jpg"
@@ -140,28 +152,52 @@ export default async function Home() {
               buttonText="SHOP THE SALE"
             />
           </div>
-        </section>
+        </AnimatedSection>
 
         {/* Journal Section */}
-        <section className="pt-6 pb-10 md:pt-8 md:pb-16 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+        <AnimatedSection delay={0.1} className="pt-6 pb-10 md:pt-8 md:pb-16 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
           <SectionHeading className="mb-2">From the Journal</SectionHeading>
           <p className="text-[13px] text-muted-foreground mb-8 md:mb-12">Discover the latest trends, styling tips, and brand news.</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-left mb-10">
              {[
-               { title: "How to transition your wardrobe for the new season", category: "Style Guide", img: "/images/journal_style.jpg" },
-               { title: "Behind the scenes: The making of our latest collection", category: "Brand News", img: "/images/journal_bts_2.jpg" },
-               { title: "5 effortless looks for your next summer getaway", category: "Inspiration", img: "/images/journal_inspiration.jpg" }
+               {
+                 title: "How to transition your wardrobe for the new season",
+                 category: "Style Guide",
+                 img: "/images/journal_style.jpg",
+                 slug: "how-to-transition-your-wardrobe-for-the-new-season",
+               },
+               {
+                 title: "Behind the scenes: The making of our latest collection",
+                 category: "Brand Story",
+                 img: "/images/journal_bts_2.jpg",
+                 slug: "the-making-of-our-latest-collection",
+               },
+               {
+                 title: "5 effortless looks for your next festive getaway",
+                 category: "Inspiration",
+                 img: "/images/journal_inspiration.jpg",
+                 slug: "effortless-looks-for-your-festive-getaway",
+               },
              ].map((post, i) => (
-                <BlogCard
-                  key={i}
-                  title={post.title}
-                  category={post.category}
-                  imageSrc={post.img}
-                  href="/journal"
-                />
+                <StaggerItem key={i}>
+                  <BlogCard
+                    title={post.title}
+                    category={post.category}
+                    imageSrc={post.img}
+                    href={`/journal/${post.slug}`}
+                  />
+                </StaggerItem>
              ))}
-          </div>
-        </section>
+          </StaggerContainer>
+
+          <AnimatedDiv delay={0.15} className="flex justify-center">
+            <Link href="/journal">
+              <StoreButton variant="outline" className="px-8 border-input text-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]">
+                View All Journal Stories
+              </StoreButton>
+            </Link>
+          </AnimatedDiv>
+        </AnimatedSection>
       </main>
 
       <StoreFooter />

@@ -1,3 +1,11 @@
+export interface ProductVariantSize {
+  id: string
+  name: string
+  sku: string
+  priceFils: number
+  stock?: number
+}
+
 export interface ProductListItem {
   id: string
   name: string
@@ -8,6 +16,7 @@ export interface ProductListItem {
   compareAtPrice?: string
   mediaKey: string
   imageSrc: string
+  sizes?: ProductVariantSize[]
 }
 
 export interface ProductsPageResult {
@@ -108,6 +117,47 @@ export async function getProductsPage({
   const total = data.length > 0 ? Number(data[0].total_count) : 0
   const totalPages = Math.max(1, Math.ceil(total / safeLimit))
 
+  const productIds = data.map((item) => item.id)
+  let variantsMap: Record<string, ProductVariantSize[]> = {}
+
+  if (productIds.length > 0) {
+    try {
+      const variantsUrl = `${supabaseUrl}/rest/v1/products?select=id,product_variants(id,sku,price_fils,is_active,sizes(id,label))&id=in.(${productIds.join(",")})`
+      const vRes = await fetch(variantsUrl, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        next: { revalidate: 60 },
+      })
+      if (vRes.ok) {
+        const vData: Array<{
+          id: string
+          product_variants: Array<{
+            id: string
+            sku: string
+            price_fils: number
+            is_active: boolean
+            sizes: { id: string; label: string } | null
+          }>
+        }> = await vRes.json()
+
+        for (const row of vData) {
+          const activeVariants = (row.product_variants || []).filter((v) => v.is_active)
+          variantsMap[row.id] = activeVariants.map((v) => ({
+            id: v.id,
+            name: v.sizes?.label || "One Size",
+            sku: v.sku,
+            priceFils: v.price_fils,
+            stock: 5,
+          }))
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching variant details in getProductsPage:", err)
+    }
+  }
+
   const products: ProductListItem[] = data.map((item) => {
     const primaryMediaKey = item.primary_media_key || ""
     const imageSrc = primaryMediaKey
@@ -125,6 +175,7 @@ export async function getProductsPage({
       price: `AED ${priceAed}`,
       mediaKey: primaryMediaKey,
       imageSrc,
+      sizes: variantsMap[item.id] || [],
     }
   })
 

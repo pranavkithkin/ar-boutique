@@ -77,8 +77,29 @@ export function StoreHeader() {
         </div>
 
         <div className="flex justify-center lg:justify-start lg:flex-none">
-          <Link href="/" className="inline-block pt-1">
-            <Image src="/images/logo.png" alt="AR Boutique" width={300} height={120} unoptimized className={`h-14 sm:h-16 w-auto transition-all duration-300 ${!isActive ? "brightness-0 invert drop-shadow-md" : ""}`} />
+          <Link href="/" className="group relative inline-block pt-1">
+            {/* When transparent at top of Hero on Home: White Logo */}
+            <Image
+              src="/images/logo.png"
+              alt="AR Boutique"
+              width={300}
+              height={120}
+              unoptimized
+              className={`h-14 sm:h-16 w-auto transition-opacity duration-300 ${
+                isActive ? "opacity-0 absolute pointer-events-none" : "opacity-100 block drop-shadow-md"
+              }`}
+            />
+            {/* When Scrolled, Hovered, or on Internal Pages: Black Monogram Logo */}
+            <Image
+              src="/images/logo-black.png"
+              alt="AR Boutique"
+              width={300}
+              height={120}
+              unoptimized
+              className={`h-14 sm:h-16 w-auto transition-opacity duration-300 ${
+                isActive ? "opacity-100 block" : "opacity-0 absolute pointer-events-none"
+              }`}
+            />
           </Link>
         </div>
 

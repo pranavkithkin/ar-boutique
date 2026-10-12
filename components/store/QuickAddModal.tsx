@@ -22,6 +22,8 @@ interface QuickAddModalProps {
   initialName?: string
   initialPrice?: string
   initialImageSrc?: string
+  initialSizes?: Array<{ id: string; name: string; sku: string; priceFils: number; stock?: number }>
+  initialSku?: string
 }
 
 export function QuickAddModal({
@@ -31,23 +33,38 @@ export function QuickAddModal({
   initialName,
   initialPrice,
   initialImageSrc,
+  initialSizes,
+  initialSku,
 }: QuickAddModalProps) {
   const [product, setProduct] = React.useState<ProductDetail | null>(null)
   const [loading, setLoading] = React.useState(false)
-  const [selectedSizeId, setSelectedSizeId] = React.useState<string>("")
+  const [selectedSizeId, setSelectedSizeId] = React.useState<string>(
+    initialSizes && initialSizes.length > 0 ? initialSizes[0].id : ""
+  )
   const [quantity, setQuantity] = React.useState(1)
   const [added, setAdded] = React.useState(false)
 
   const addItem = useCartStore((state) => state.addItem)
 
-  // Fetch full details when modal opens
+  // Initialize selected size when initialSizes are supplied
+  React.useEffect(() => {
+    if (initialSizes && initialSizes.length > 0 && !selectedSizeId) {
+      setSelectedSizeId(initialSizes[0].id)
+    }
+  }, [initialSizes, selectedSizeId])
+
+  // Fetch full details only if initialSizes are not provided or for extra details
   React.useEffect(() => {
     if (!isOpen || !slug) return
 
     let cancelled = false
-    setLoading(true)
     setAdded(false)
     setQuantity(1)
+
+    // If initial sizes already exist, we don't block the UI with loading
+    if (!initialSizes || initialSizes.length === 0) {
+      setLoading(true)
+    }
 
     fetch(`/api/products/${slug}`)
       .then((res) => {
@@ -57,7 +74,7 @@ export function QuickAddModal({
       .then((data: ProductDetail) => {
         if (!cancelled && data) {
           setProduct(data)
-          if (data.sizes && data.sizes.length > 0) {
+          if (!selectedSizeId && data.sizes && data.sizes.length > 0) {
             setSelectedSizeId(data.sizes[0].id)
           }
         }
@@ -72,13 +89,21 @@ export function QuickAddModal({
     return () => {
       cancelled = true
     }
-  }, [isOpen, slug])
+  }, [isOpen, slug, initialSizes, selectedSizeId])
+
+  // Available sizes from either full product or initial preloaded sizes
+  const availableSizes =
+    product?.sizes && product.sizes.length > 0
+      ? product.sizes
+      : initialSizes && initialSizes.length > 0
+      ? initialSizes
+      : []
 
   // Selected variant details
   const selectedSize =
-    product?.sizes?.find((s) => s.id === selectedSizeId) || product?.sizes?.[0]
-  const currentSku = selectedSize?.sku || product?.sku || ""
-  const priceFils = selectedSize?.priceFils || 9000
+    availableSizes.find((s) => s.id === selectedSizeId) || availableSizes[0]
+  const currentSku = selectedSize?.sku || product?.sku || initialSku || ""
+  const priceFils = selectedSize?.priceFils || (initialSizes?.[0]?.priceFils ?? 9000)
 
   const handleAddToCart = () => {
     const itemSku = currentSku || slug
@@ -197,9 +222,9 @@ export function QuickAddModal({
                   ) : null}
                 </div>
 
-                {product?.sizes && product.sizes.length > 0 && product.sizes[0].name !== "One Size" ? (
+                {availableSizes.length > 0 && availableSizes[0].name !== "One Size" ? (
                   <div className="flex flex-wrap gap-2">
-                    {product.sizes.map((s) => {
+                    {availableSizes.map((s) => {
                       const isSelected = s.id === selectedSizeId
                       return (
                         <button

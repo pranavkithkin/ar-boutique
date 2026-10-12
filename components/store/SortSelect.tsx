@@ -54,7 +54,7 @@ export function SortSelect({ currentSort }: SortSelectProps) {
         value={activeSort}
         onValueChange={handleValueChange}
       >
-        <SelectTrigger className="w-[190px]">
+        <SelectTrigger className="w-full sm:w-[190px] h-9 text-xs sm:text-sm">
           <SelectValue placeholder="Sort by">
             {formatSortLabel(activeSort)}
           </SelectValue>

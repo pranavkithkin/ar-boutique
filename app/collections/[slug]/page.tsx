@@ -82,6 +82,7 @@ export default async function ProductPage({
                     price={item.price}
                     imageSrc={item.imageSrc}
                     href={`/collections/${item.slug}`}
+                    sizes={item.sizes}
                   />
                 ))}
               </div>

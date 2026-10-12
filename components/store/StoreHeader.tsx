@@ -7,11 +7,17 @@ import { Search, User, ShoppingBag, Menu } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { CartDrawer } from "@/features/cart/components/CartDrawer"
 import { useCartStore } from "@/features/cart/store"
+import { CategoryMenu, useMenuCategories } from "@/components/store/CategoryMenu"
 
 const subscribeToHydration = () => () => {}
 
 export function StoreHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
+  const categories = useMenuCategories()
+  const handleMobileMenu = (open: boolean) => {
+    setIsMobileMenuOpen(open)
+    if (open) void categories.refresh()
+  }
   const openCart = useCartStore((state) => state.openCart)
   const cartItems = useCartStore((state) => state.items)
   const totalItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0)
@@ -22,15 +28,16 @@ export function StoreHeader() {
       {/* An opaque surface keeps the unaltered black logo readable on every slide. */}
       <div className="mx-auto grid h-20 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 lg:grid-cols-[auto_1fr_auto] lg:px-8">
         <div className="flex min-w-0 items-center -ml-2 lg:hidden">
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <Sheet open={isMobileMenuOpen} onOpenChange={handleMobileMenu}>
             <SheetTrigger render={<button aria-label="Menu" className="flex h-11 w-11 shrink-0 items-center justify-center" />}>
               <Menu className="h-5 w-5" strokeWidth={1.5} />
             </SheetTrigger>
-            <SheetContent side="left" className="w-[300px]">
+            <SheetContent side="left" className="w-[300px] overflow-y-auto">
               <SheetTitle className="sr-only">Mobile Navigation</SheetTitle>
               <div className="flex flex-col gap-6 pt-12 p-6">
                 <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Home</Link>
                 <Link href="/collections" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Collections</Link>
+                <CategoryMenu {...categories} mobile onNavigate={() => setIsMobileMenuOpen(false)} />
                 <Link href="/journal" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Journal</Link>
                 <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">About</Link>
                 <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Contact Us</Link>
@@ -61,9 +68,9 @@ export function StoreHeader() {
           <span className="whitespace-nowrap font-heading text-lg leading-none text-foreground sm:text-2xl">AR Boutique</span>
         </Link>
 
-        <nav aria-label="Main navigation" className="hidden lg:flex justify-center gap-6 xl:gap-8 text-[15px] font-normal">
+        <nav aria-label="Main navigation" className="hidden lg:flex items-center justify-center gap-4 xl:gap-8 text-[15px] font-normal">
           <Link href="/" className="hover:opacity-70 transition-opacity">Home</Link>
-          <Link href="/collections" className="hover:opacity-70 transition-opacity">Collections</Link>
+          <CategoryMenu {...categories} />
           <Link href="/journal" className="hover:opacity-70 transition-opacity">Journal</Link>
           <Link href="/about" className="hover:opacity-70 transition-opacity">About</Link>
           <Link href="/contact" className="hover:opacity-70 transition-opacity">Contact Us</Link>

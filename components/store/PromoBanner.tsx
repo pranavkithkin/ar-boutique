@@ -3,21 +3,27 @@ import { StoreButton } from "./StoreButton"
 
 interface PromoBannerProps {
   imageSrc: string
+  imageAlt?: string
+  imageFit?: "cover" | "contain"
   eyebrow: string
   title: string
   description: string
   buttonText: string
 }
 
-export function PromoBanner({ imageSrc, eyebrow, title, description, buttonText }: PromoBannerProps) {
+export function PromoBanner({ imageSrc, imageAlt, imageFit = "cover", eyebrow, title, description, buttonText }: PromoBannerProps) {
+  const preservePortrait = imageFit === "contain"
   return (
     <div className="group flex flex-col md:flex-row w-full h-auto md:h-[380px] bg-accent overflow-hidden rounded-xs shadow-xs hover:shadow-md transition-shadow duration-500">
-      <div className="relative w-full md:w-[60%] h-[300px] md:h-full overflow-hidden">
+      <div className="relative w-full md:w-[60%] h-[300px] md:h-full overflow-hidden bg-muted">
         <Image
           src={imageSrc}
-          alt={title}
+          alt={imageAlt ?? title}
           fill
-          className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+          sizes="(min-width: 1280px) 730px, (min-width: 768px) 60vw, 100vw"
+          className={preservePortrait
+            ? "object-contain object-center"
+            : "object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"}
         />
       </div>
       <div className="w-full md:w-[40%] h-auto md:h-full py-12 px-6 md:p-12 flex flex-col items-center justify-center text-center">

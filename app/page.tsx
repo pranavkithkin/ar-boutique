@@ -142,11 +142,13 @@ export default async function Home() {
           </AnimatedDiv>
         </AnimatedSection>
 
-        {/* Promo Banner Section */}
+        {/* Promo Banner Section: reuse the client's existing collection photo. */}
         <AnimatedSection delay={0.08} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 mb-6 md:mt-10 md:mb-8">
           <div className="flex flex-col w-full gap-4 md:gap-6">
             <PromoBanner
-              imageSrc="/images/promo_banner_new.jpg"
+              imageSrc="https://res.cloudinary.com/q8qdyl3f/image/upload/f_auto,q_auto,c_limit,w_640/ar-dev/products/8a7f570c-eb0e-4395-b076-dceea35f2591/0d318751-ff56-4a96-a2f8-bcb885c1cf20/jab24cd00489"
+              imageAlt="Co-ord set JAB24CD00489 - View 1"
+              imageFit="contain"
               eyebrow="LIMITED TIME ONLY"
               title="Summer Refresh"
               description="Enjoy up to 30% off selected styles."
@@ -164,19 +166,22 @@ export default async function Home() {
                {
                  title: "How to transition your wardrobe for the new season",
                  category: "Style Guide",
-                 img: "/images/journal_style.jpg",
+                 img: "https://res.cloudinary.com/q8qdyl3f/image/upload/f_auto,q_auto,c_limit,w_640/ar-dev/products/55b382e9-331d-490e-88c1-e02bc891a4b9/85a48544-58c4-46d8-aba0-98ad9bcd54fe/jaa25dr01202",
+                 imageAlt: "Dress JAA25DR01202 - View 1",
                  slug: "how-to-transition-your-wardrobe-for-the-new-season",
                },
                {
                  title: "Behind the scenes: The making of our latest collection",
                  category: "Brand Story",
-                 img: "/images/journal_bts_2.jpg",
+                 img: "https://res.cloudinary.com/q8qdyl3f/image/upload/f_auto,q_auto,c_limit,w_640/ar-dev/products/8c3a236f-6172-47fe-a9cd-45b18ff9a7f9/37b3c5e3-63c4-4920-b372-57c10adb0afd/jaa25cd01945",
+                 imageAlt: "Co-ord set JAA25CD01945 - View 1",
                  slug: "the-making-of-our-latest-collection",
                },
                {
                  title: "5 effortless looks for your next festive getaway",
                  category: "Inspiration",
-                 img: "/images/journal_inspiration.jpg",
+                 img: "https://res.cloudinary.com/q8qdyl3f/image/upload/f_auto,q_auto,c_limit,w_640/ar-dev/products/c8dd1b6b-4f84-4c50-a5be-dbfc783e2d0b/e6c009b4-87b8-4cb0-985a-4c39fe825fc8/jab24st00577",
+                 imageAlt: "Set JAB24ST00577 - View 1",
                  slug: "effortless-looks-for-your-festive-getaway",
                },
              ].map((post, i) => (
@@ -185,6 +190,8 @@ export default async function Home() {
                     title={post.title}
                     category={post.category}
                     imageSrc={post.img}
+                    imageAlt={post.imageAlt}
+                    imageFit="contain"
                     href={`/journal/${post.slug}`}
                   />
                 </StaggerItem>

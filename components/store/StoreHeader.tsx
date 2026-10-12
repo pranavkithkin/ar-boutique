@@ -6,6 +6,8 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { Search, User, ShoppingBag, Menu } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
+import { CartDrawer } from "@/features/cart/components/CartDrawer"
+import { useCartStore } from "@/features/cart/store"
 
 export function StoreHeader() {
   const pathname = usePathname()
@@ -13,8 +15,17 @@ export function StoreHeader() {
   
   const [isScrolled, setIsScrolled] = React.useState(false)
   const [isHovered, setIsHovered] = React.useState(false)
-
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
+
+  // Cart state
+  const openCart = useCartStore((state) => state.openCart)
+  const cartItems = useCartStore((state) => state.items)
+  const totalItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0)
+
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   React.useEffect(() => {
     if (!isHomePage) return
@@ -86,14 +97,23 @@ export function StoreHeader() {
           <Link href="/account" aria-label="Account" className="hidden sm:block p-2">
             <User className="h-5 w-5" strokeWidth={1.5} />
           </Link>
-          <Link href="/cart" aria-label="Cart" className="flex items-center p-2 relative">
+          <button
+            onClick={openCart}
+            aria-label="Open Shopping Bag"
+            className="flex items-center p-2 relative hover:opacity-75 transition-opacity"
+          >
             <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
-            <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-              0
-            </span>
-          </Link>
+            {mounted && totalItemCount > 0 && (
+              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground font-semibold tabular-nums animate-in zoom-in-75">
+                {totalItemCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Cart Drawer */}
+      <CartDrawer />
     </header>
   )
 }

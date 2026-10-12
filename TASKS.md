@@ -87,8 +87,8 @@ Done when: customers sign up and can only ever see their own data.
 
 ## Phase 6: Cart and Checkout
 Done when: a shopper pays in Stripe test mode and the order is Confirmed and Paid with stock deducted exactly once, and a signed-in shopper places a COD order that holds stock.
-- [ ] TASK-048 Cart store (Zustand + localStorage): one line per SKU showing the colour's photo, the colour and the size; add, update, remove, 5 per line max; mini-cart drawer
-- [ ] TASK-049 Cart page with server re-validation (prices, availability, SKU active, colour visible, product published) and clear messages
+- [x] TASK-048 Cart store (Zustand + localStorage): one line per SKU showing the colour's photo, the colour and the size; add, update, remove, 5 per line max; mini-cart drawer
+- [x] TASK-049 Cart page with server re-validation (prices, availability, SKU active, colour visible, product published) and clear messages
 - [ ] TASK-050 Delivery fee from settings in the cart (flat fee + free-over threshold)
 - [ ] TASK-116 Checkout page `/checkout`: delivery details form (UAE address, `+971` mobile, prefilled for signed-in customers from their last order) and payment choice, per `docs/DESIGN.md`
 - [ ] TASK-051 Migration: `orders` (payment method, structured address, COD fee, idempotency key, `confirm_by`, confirmed, shipped, courier, tracking, cash collected, cancelled and returned columns; statuses from ADR-035), `order_items`, `order_events`, `stock_reservations`, `stripe_events`, `cod_payouts` + RLS

@@ -8,7 +8,10 @@ export const metadata: Metadata = {
   title: "AR Boutique",
   description: "Timeless style meets modern elegance. Designed for the way you live.",
   icons: {
-    icon: "/images/logo.png",
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    apple: "/favicon.png",
   },
 };
 

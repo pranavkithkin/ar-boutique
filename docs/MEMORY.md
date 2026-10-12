@@ -19,9 +19,11 @@ Phase 1 Setup and parts of Phase 11 (Home Page) are underway. Next.js scaffolded
 - Editorial About page (`/about`), Journal stories & article routes (`/journal`, `/journal/[slug]`), and Contact page (`/contact`) with shadcn/ui Field + React Hook Form validation
 - Docs update (9 Oct 2026): the client's stock sheet is the source (ADR-029), style code and details per colourway, price per SKU, four product shapes, stock sheet upload and export, cash on delivery, own checkout page, new order statuses (ADR-023 and ADR-025 amended, ADR-029 to ADR-036); tasks TASK-113 to TASK-125 added; `AGENTS.md` split into `.agents/rules/`
 - Validated environment variables with Zod schemas for client and server (TASK-005)
+- Cart store (Zustand + localStorage) with mini-cart drawer and PDP Add to Cart integration (TASK-048)
+- Shopping bag page (`/cart`) with line items, free shipping threshold, and fils arithmetic (TASK-049)
 
 ## Current Task
-TASK-006 Supabase CLI: local project, first migration, generated types (or TASK-048 Cart store & mini-cart drawer)
+TASK-116 Checkout page `/checkout` delivery form & payment method selection (or TASK-050 Delivery fee settings)
 
 ## Waiting On
 - Client answers to Q1 to Q41 in `PRD.md`. Most urgent: Q1 guest checkout, Q2 return window, Q6 delivery fee, Q15 VAT, Q26 to Q28 (stock, product names, rows 38 to 43), Q35 to Q38 (courier and COD), Q41 categories
@@ -39,7 +41,7 @@ TASK-006 Supabase CLI: local project, first migration, generated types (or TASK-
 - Sentry free plan: one user, email alerts only, one cron monitor and one uptime monitor, 5,000 errors a month. Upgrade to Team when a second person needs access or a limit is hit.
 
 ## Next Step
-Setup Cart store (TASK-048) or Supabase CLI local database setup (TASK-006).
+Build dedicated `/cart` page with server re-validation (TASK-049) or setup checkout delivery form (TASK-116).
 
 ## Log
 - 5 Oct 2026: project docs created
@@ -71,3 +73,7 @@ Setup Cart store (TASK-048) or Supabase CLI local database setup (TASK-006).
 - 12 Oct 2026: Implemented Contact Page (`app/contact/page.tsx`) with WhatsApp concierge (+971 50 xxx xxxx), email inquiries, atelier location details, and FAQ accordion.
 - 12 Oct 2026: Built Contact Form (`features/contact/components/ContactForm.tsx`) using shadcn/ui Field primitives (`Field`, `FieldLabel`, `FieldError`, `FieldGroup`, `Input`, `Textarea`, `Select`) with `react-hook-form`, `@hookform/resolvers/zod`, and Zod validation, strictly adhering to shadcn's official React Hook Form documentation pattern.
 - 12 Oct 2026: Implemented environment variable validation (`lib/env.ts`) using Zod schemas for client and server variables; verified against Cloudinary and Supabase configurations with strict client leak prevention (TASK-005).
+- 12 Oct 2026: Built persistent Zustand cart store (`features/cart/store.ts`) with localStorage sync, 5 items per line cap, integer fils arithmetic (`lib/money.ts`), slide-out Cart Drawer (`features/cart/components/CartDrawer.tsx`), dynamic header badge count, and integrated Add to Cart with live size selection on Product Detail Pages (TASK-048).
+- 12 Oct 2026: Created dedicated Shopping Bag page (`app/cart/page.tsx` & `features/cart/components/CartView.tsx`) with quantity steppers, item removal, free shipping progress indicator (AED 500 threshold), and order summary breakdown with 5% UAE VAT.
+- 12 Oct 2026: Implemented Quick Add Modal dialog (`components/store/QuickAddModal.tsx`) using shadcn Dialog primitive on ProductCard (+) button with live variant size selection, quantity stepper, and direct bag integration.
+- 12 Oct 2026: Configured website favicon, Apple touch icon, and app icons (`app/icon.png`, `public/favicon.png`, `app/layout.tsx`) using client's Elegant White AR Boutique logo.

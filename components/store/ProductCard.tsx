@@ -6,6 +6,8 @@ import Image from "next/image"
 import { Plus } from "lucide-react"
 import { QuickAddModal } from "./QuickAddModal"
 
+import type { ProductVariantSize } from "@/lib/products"
+
 export interface ProductCardProps {
   name: string
   price: string
@@ -13,6 +15,8 @@ export interface ProductCardProps {
   href: string
   brand?: string
   compareAtPrice?: string
+  sizes?: ProductVariantSize[]
+  sku?: string
 }
 
 export function ProductCard({
@@ -22,6 +26,8 @@ export function ProductCard({
   href,
   brand,
   compareAtPrice,
+  sizes,
+  sku,
 }: ProductCardProps) {
   const [isModalOpen, setIsModalOpen] = React.useState(false)
 
@@ -104,6 +110,8 @@ export function ProductCard({
         initialName={name}
         initialPrice={price}
         initialImageSrc={imageSrc}
+        initialSizes={sizes}
+        initialSku={sku}
       />
     </>
   )

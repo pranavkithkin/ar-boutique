@@ -1,4 +1,4 @@
-﻿import Link from "next/link"
+import Link from "next/link"
 import Image from "next/image"
 import { TrustStrip } from "@/components/store/TrustStrip"
 
@@ -11,7 +11,7 @@ export function StoreFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="col-span-1 md:col-span-1">
             <Link href="/" className="mb-6 inline-block">
-              <Image src="/images/logo.png" alt="AR Boutique" width={300} height={120} unoptimized className="h-20 sm:h-24 w-auto" />
+              <Image src="/images/logo-black.png" alt="AR Boutique" width={300} height={120} unoptimized className="h-20 sm:h-24 w-auto" />
             </Link>
             <p className="text-[14px] text-muted-foreground leading-relaxed max-w-xs mt-2">
               Timeless style meets modern elegance. Designed for the way you live.
@@ -44,7 +44,7 @@ export function StoreFooter() {
         </div>
         <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[13px] text-muted-foreground tracking-wide">
-            Â© 2026 AR BOUTIQUE. All Rights Reserved.
+            © 2026 AR BOUTIQUE. All Rights Reserved.
           </p>
           <div className="flex gap-6">
             <span className="text-[11px] font-semibold tracking-wider text-muted-foreground">VISA</span>

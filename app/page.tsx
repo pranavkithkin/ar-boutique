@@ -120,6 +120,7 @@ export default async function Home() {
                         price={prod.price}
                         imageSrc={prod.imageSrc}
                         href={`/collections/${prod.slug}`}
+                        sizes={prod.sizes}
                       />
                     </CarouselItem>
                   ))}

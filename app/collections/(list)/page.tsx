@@ -143,11 +143,11 @@ export default async function CollectionPage({ searchParams }: CollectionPagePro
             {/* Main Content */}
             <div className="flex-1">
               {/* Toolbar */}
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
-                <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-border/50">
+                <div className="flex items-center justify-between sm:justify-start gap-4">
                   <Sheet>
-                    <SheetTrigger render={<button className="md:hidden flex items-center gap-2 text-sm font-medium border border-border px-3 py-1.5 bg-background cursor-pointer" />}>
-                      <Filter className="w-4 h-4" />
+                    <SheetTrigger render={<button className="md:hidden flex items-center gap-2 text-xs sm:text-sm font-medium border border-border px-3.5 py-2 bg-background hover:bg-muted/30 transition-colors cursor-pointer" />}>
+                      <Filter className="w-3.5 h-3.5" />
                       Filter
                     </SheetTrigger>
                     <SheetContent side="left" className="w-[300px] sm:w-[350px]">
@@ -159,15 +159,17 @@ export default async function CollectionPage({ searchParams }: CollectionPagePro
                       </div>
                     </SheetContent>
                   </Sheet>
-                  <span className="text-sm text-muted-foreground">
-                    Showing {products.length} of {total} products
+                  <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                    Showing <span className="font-medium text-foreground">{products.length}</span> of <span className="font-medium text-foreground">{total}</span> products
                   </span>
                 </div>
 
                 {/* Sort Dropdown */}
-                <Suspense fallback={<div className="w-[190px] h-8 animate-pulse bg-muted/40" />}>
-                  <SortSelect currentSort={sort} />
-                </Suspense>
+                <div className="flex items-center justify-end">
+                  <Suspense fallback={<div className="w-full sm:w-[190px] h-9 animate-pulse bg-muted/40" />}>
+                    <SortSelect currentSort={sort} />
+                  </Suspense>
+                </div>
               </div>
 
               {/* Active Filter Badges */}
@@ -250,6 +252,7 @@ export default async function CollectionPage({ searchParams }: CollectionPagePro
                       price={prod.price}
                       imageSrc={prod.imageSrc}
                       href={`/collections/${prod.slug}`}
+                      sizes={prod.sizes}
                     />
                   ))}
                 </div>

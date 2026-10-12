@@ -80,3 +80,6 @@ Build dedicated `/cart` page with server re-validation (TASK-049) or setup check
 - 12 Oct 2026: Linked Hero Slider slides and Hero Banner call-to-action buttons directly to `/collections` with accessible labels.
 - 12 Oct 2026: Triggered CI/CD deployment pipeline check.
 - 12 Oct 2026: Fixed production build typecheck by excluding volatile `.next/dev/types` from `tsconfig.json`. Added Coming Soon page for `/account` reusing `ComingSoon` component.
+- 12 Oct 2026: Preloaded product variant sizes directly in initial catalogue fetch (`lib/products.ts`) and forwarded them via `ProductCard` into `QuickAddModal`, enabling instant 0ms modal opening with zero extra network fetch.
+- 12 Oct 2026: Optimized mobile collections toolbar layout in `app/collections/(list)/page.tsx` and `SortSelect.tsx`: eliminated awkward multi-line text wrapping on product counter ("Showing 12 of 21 products") and ensured responsive spacing for Filter and Sort controls on small viewports.
+- 12 Oct 2026: Integrated black Luxury AR Boutique Monogram (`public/images/logo-black.png`): applied in StoreFooter for high-contrast visibility against light background, and configured StoreHeader to seamlessly switch to the black monogram logo when scrolling or navigating internal pages.

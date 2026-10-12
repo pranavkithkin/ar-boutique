@@ -2,110 +2,107 @@
 
 import * as React from "react"
 import Image from "next/image"
+import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { ZoomableProductImage } from "@/components/store/ZoomableProductImage"
 import { cn } from "@/lib/utils"
-import { ChevronUp, ChevronDown } from "lucide-react"
 
-export function ProductGallery({ images }: { images: string[] }) {
+const control = "flex h-11 w-11 shrink-0 items-center justify-center border border-input bg-background text-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-40"
+
+function GalleryArrows({ onNavigate, disabled }: { onNavigate: (direction: number) => void; disabled: boolean }) {
+  return (
+    <div className="pointer-events-none absolute inset-x-2 top-1/2 z-10 flex -translate-y-1/2 justify-between">
+      <button type="button" className={`${control} pointer-events-auto`} aria-label="Previous image" disabled={disabled} onClick={() => onNavigate(-1)}><ChevronLeft strokeWidth={1.5} /></button>
+      <button type="button" className={`${control} pointer-events-auto`} aria-label="Next image" disabled={disabled} onClick={() => onNavigate(1)}><ChevronRight strokeWidth={1.5} /></button>
+    </div>
+  )
+}
+
+function Gallery({ images }: { images: string[] }) {
   const [selectedIndex, setSelectedIndex] = React.useState(0)
-  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const [open, setOpen] = React.useState(false)
+  const opener = React.useRef<HTMLButtonElement>(null)
+  const thumbnails = React.useRef<HTMLDivElement>(null)
+  const imageLabel = `Product image ${selectedIndex + 1} of ${images.length}`
+  const navigate = (direction: number) => setSelectedIndex((index) => (index + direction + images.length) % images.length)
 
-  const scrollUp = () => {
-    scrollRef.current?.scrollBy({ top: -120, behavior: "smooth" })
-  }
+  React.useEffect(() => {
+    const active = thumbnails.current?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    const rail = thumbnails.current
+    if (!active || !rail) return
+    if (rail.scrollWidth > rail.clientWidth) rail.scrollTo({ left: active.offsetLeft - rail.clientWidth / 2 + active.clientWidth / 2 })
+    if (rail.scrollHeight > rail.clientHeight) rail.scrollTo({ top: active.offsetTop - rail.clientHeight / 2 + active.clientHeight / 2 })
+  }, [selectedIndex])
 
-  const scrollDown = () => {
-    scrollRef.current?.scrollBy({ top: 120, behavior: "smooth" })
+  function keys(event: React.KeyboardEvent) {
+    if (event.altKey || event.ctrlKey || event.metaKey) return
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return
+    event.preventDefault()
+    event.stopPropagation()
+    const root = event.currentTarget
+    const restoreImageFocus = event.target instanceof HTMLElement && event.target.hasAttribute("data-zoom")
+    navigate(event.key === "ArrowRight" ? 1 : -1)
+    if (restoreImageFocus) requestAnimationFrame(() => root.querySelector<HTMLElement>("[data-zoom]")?.focus())
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 sm:items-start relative w-full">
-      {/* Desktop Thumbnails (Left side) */}
-      <div className="hidden sm:flex flex-col w-14 xl:w-16 shrink-0 sticky top-24 h-[calc(100vh-8rem)] py-0">
-        {/* Up Arrow */}
-        <button
-          onClick={scrollUp}
-          className="flex items-center justify-center w-full h-8 mb-3 rounded-sm bg-secondary/80 hover:bg-secondary transition-colors shrink-0"
-        >
-          <ChevronUp className="w-4 h-4" />
-        </button>
-
-        {/* Desktop Thumbnail List */}
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto flex flex-col gap-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
-        >
-          {images.map((img, i) => (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <section aria-label="Product images" aria-roledescription="carousel" onKeyDown={keys} className="grid w-full min-w-0 gap-3 sm:grid-cols-[4rem_minmax(0,1fr)]">
+        <div ref={thumbnails} aria-label="Choose product image" className="relative order-2 flex max-w-full gap-2 overflow-auto sm:order-1 sm:max-h-[75dvh] sm:flex-col">
+          {images.map((src, index) => (
             <button
-              key={i}
-              onClick={() => setSelectedIndex(i)}
-              className={cn(
-                "relative aspect-[3/4] w-full overflow-hidden rounded-sm border-2 shrink-0 transition-colors",
-                selectedIndex === i
-                  ? "border-foreground"
-                  : "border-transparent hover:border-border"
-              )}
+              key={`${src}-${index}`}
+              type="button"
+              aria-label={`Show image ${index + 1}`}
+              aria-pressed={selectedIndex === index}
+              onClick={() => setSelectedIndex(index)}
+              className={cn("relative aspect-[3/4] w-16 shrink-0 overflow-hidden border-2 bg-muted focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ring", selectedIndex === index ? "border-foreground" : "border-transparent hover:border-input")}
             >
-              <Image
-                src={img}
-                alt={`Thumbnail ${i + 1}`}
-                fill
-                className="object-cover"
-                unoptimized={true}
-                sizes="100px"
-              />
+              <Image src={src} alt="" fill sizes="64px" unoptimized className="object-cover" />
             </button>
           ))}
         </div>
-
-        {/* Down Arrow */}
-        <button
-          onClick={scrollDown}
-          className="flex items-center justify-center w-full h-8 mt-3 rounded-sm bg-secondary/80 hover:bg-secondary transition-colors shrink-0"
-        >
-          <ChevronDown className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 w-full flex flex-col gap-4 min-w-0">
-        {/* Main Image */}
-        <div className="relative w-full rounded-md overflow-hidden bg-transparent">
-          <Image
-            src={images[selectedIndex]}
-            alt="Product image"
-            width={1000}
-            height={1500}
-            className="w-full h-auto transition-opacity duration-300"
-            priority
-            unoptimized={true}
-          />
+        <div className="order-1 min-w-0 space-y-2 sm:order-2">
+          <div className="relative">
+            <ZoomableProductImage key={`${selectedIndex}-${images[selectedIndex]}`} src={images[selectedIndex]} alt={imageLabel} onNavigate={navigate} />
+            <GalleryArrows onNavigate={navigate} disabled={images.length < 2} />
+            <button ref={opener} type="button" aria-label="Open full-screen gallery" className={`${control} absolute top-2 right-2`} onClick={() => setOpen(true)}><Maximize2 size={20} strokeWidth={1.5} /></button>
+          </div>
+          <p className="flex items-start justify-between gap-3 text-sm text-muted-foreground">
+            <span>Click or pinch to zoom. Swipe when unzoomed.</span>
+            <span className="shrink-0 tabular-nums" aria-live="polite" aria-atomic="true">{selectedIndex + 1} / {images.length}</span>
+          </p>
         </div>
-
-        {/* Mobile Thumbnails (Horizontal Bottom slider) */}
-        <div className="flex sm:hidden overflow-x-auto gap-3 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full">
-          {images.map((img, i) => (
-            <button
-              key={i}
-              onClick={() => setSelectedIndex(i)}
-              className={cn(
-                "relative aspect-[3/4] w-20 shrink-0 overflow-hidden rounded-sm border-2 transition-colors",
-                selectedIndex === i
-                  ? "border-foreground"
-                  : "border-transparent hover:border-border"
-              )}
-            >
-              <Image
-                src={img}
-                alt={`Thumbnail ${i + 1}`}
-                fill
-                className="object-cover"
-                unoptimized={true}
-                sizes="100px"
-              />
-            </button>
-          ))}
+      </section>
+      <DialogContent
+        showCloseButton={false}
+        finalFocus={opener}
+        onKeyDown={keys}
+        className="grid-rows-[auto_minmax(0,1fr)_auto] gap-3 bg-background p-3 text-foreground sm:p-5"
+        style={{ top: 0, left: 0, transform: "none", translate: "none", width: "100vw", maxWidth: "none", height: "100dvh" }}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <DialogTitle className="font-heading text-xl sm:text-2xl">Product gallery</DialogTitle>
+          <DialogClose aria-label="Close full-screen gallery" className={control}><X size={22} strokeWidth={1.5} /></DialogClose>
         </div>
-      </div>
-    </div>
+        <div className="relative min-h-0">
+          <ZoomableProductImage key={`full-${selectedIndex}-${images[selectedIndex]}`} src={images[selectedIndex]} alt={imageLabel} onNavigate={navigate} fullScreen />
+          <GalleryArrows onNavigate={navigate} disabled={images.length < 2} />
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <DialogDescription className="text-sm">Click or pinch to zoom. Drag to explore. Use arrows to change images.</DialogDescription>
+          <span className="shrink-0 text-sm tabular-nums" aria-live="polite" aria-atomic="true">{selectedIndex + 1} / {images.length}</span>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
+}
+
+export function ProductGallery({ images }: { images: string[] }) {
+  const usableImages = images.filter((src) => src.trim().length > 0)
+  if (usableImages.length === 0) {
+    return <div role="status" className="flex aspect-[3/4] items-center justify-center bg-muted p-6 text-muted-foreground">Product images are not available yet.</div>
+  }
+  // A new colourway/photo set starts at its first image and clears any old zoom.
+  return <Gallery key={JSON.stringify(usableImages)} images={usableImages} />
 }

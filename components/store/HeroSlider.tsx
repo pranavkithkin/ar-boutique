@@ -27,23 +27,23 @@ export function HeroSlider() {
   const slides: Slide[] = [
     {
       id: 1,
-      imageSrc: "/images/hero_3_desktop_v5.png",
-      mobileImageSrc: "/images/hero_3_mobile_v5.png",
-      alt: "Timeless Traditions Heritage Elegance",
+      imageSrc: "/images/hero_traditions_desktop.png",
+      mobileImageSrc: "/images/hero_traditions_mobile.png",
+      alt: "Timeless Traditions Fashion Heritage",
       href: "/collections",
     },
     {
       id: 2,
-      imageSrc: "/images/hero_2_desktop_v5.png",
-      mobileImageSrc: "/images/hero_2_mobile_v4.jpg",
-      alt: "Burgundy Boutique Elegance",
+      imageSrc: "/images/hero_boutique_desktop.png",
+      mobileImageSrc: "/images/hero_boutique_mobile.png",
+      alt: "Timeless Boutique Fashion Collection",
       href: "/collections",
     },
     {
       id: 3,
-      imageSrc: "/images/hero_1_desktop_v5.png",
-      mobileImageSrc: "/images/hero_1_mobile_v4.jpg",
-      alt: "Timeless Indian Boutique Elegance",
+      imageSrc: "/images/hero_elegance_desktop.png",
+      mobileImageSrc: "/images/hero_elegance_mobile.png",
+      alt: "Timeless Style, Modern Elegance",
       href: "/collections",
     }
   ]

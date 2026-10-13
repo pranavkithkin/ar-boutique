@@ -28,8 +28,9 @@ test("all four replacements use verified existing collection paths without uploa
   urls.forEach((url, index) => assert.ok(url.endsWith(expected[index])))
 })
 
-test("homepage opts into uncropped portrait framing with source-specific alt text", () => {
-  assert.equal((home.match(/imageFit="contain"/g) ?? []).length, 2)
+test("homepage promo uses contain while journal cards use cover to eliminate side gaps", () => {
+  assert.equal((home.match(/imageFit="contain"/g) ?? []).length, 1)
+  assert.equal((home.match(/imageFit="cover"/g) ?? []).length, 1)
   for (const alt of [
     "Co-ord set JAB24CD00489 - View 1",
     "Dress JAA25DR01202 - View 1",

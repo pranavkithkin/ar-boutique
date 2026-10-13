@@ -122,7 +122,7 @@ export function CategoryMenu({ categories, loading, error, refresh, mobile = fal
         <summary aria-label="Browse categories" className="flex h-11 w-11 cursor-pointer list-none items-center justify-center hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
           <ChevronDown className="h-4 w-4 group-open:rotate-180 motion-safe:transition-transform" strokeWidth={1.5} />
         </summary>
-        <div className="absolute top-full left-0 z-50 mt-2 max-h-[60dvh] w-64 overflow-y-auto border border-border bg-background p-2 shadow-md">{links}</div>
+        <div className="absolute top-full left-0 z-50 mt-2 max-h-[60dvh] w-64 overflow-y-auto border border-border bg-background text-foreground p-2 shadow-md">{links}</div>
       </details>
     </div>
   )

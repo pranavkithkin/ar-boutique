@@ -9,6 +9,8 @@ import { ProductTrustStrip } from "./ProductTrustStrip"
 import { useCartStore } from "@/features/cart/store"
 import { formatAED } from "@/lib/money"
 
+import { SizeChartModal } from "./SizeChartModal"
+
 export interface ProductType {
   id: string
   name: string
@@ -35,6 +37,7 @@ export function ProductInfo({ product, title }: ProductInfoProps) {
   })
   const [quantity, setQuantity] = React.useState(1)
   const [added, setAdded] = React.useState(false)
+  const [isSizeChartOpen, setIsSizeChartOpen] = React.useState(false)
 
   const addItem = useCartStore((state) => state.addItem)
 
@@ -100,7 +103,11 @@ export function ProductInfo({ product, title }: ProductInfoProps) {
       {/* Size Chart Button */}
       {product.sizes.length > 0 && product.sizes[0].name !== "One Size" && (
         <div className="mb-6">
-          <button className="flex items-center gap-2 bg-foreground text-background px-4 py-2 rounded-xs text-xs sm:text-sm font-medium hover:bg-foreground/90 transition-colors">
+          <button
+            type="button"
+            onClick={() => setIsSizeChartOpen(true)}
+            className="flex items-center gap-2 bg-foreground text-background px-4 py-2 rounded-xs text-xs sm:text-sm font-medium hover:bg-foreground/90 transition-colors cursor-pointer"
+          >
             <Ruler className="w-4 h-4" />
             Size Chart
           </button>
@@ -188,6 +195,11 @@ export function ProductInfo({ product, title }: ProductInfoProps) {
         <ProductAccordions product={product} />
         <ProductTrustStrip />
       </div>
+
+      <SizeChartModal
+        isOpen={isSizeChartOpen}
+        onClose={() => setIsSizeChartOpen(false)}
+      />
     </div>
   )
 }

@@ -23,7 +23,7 @@ export function BlogCard({ title, category, imageSrc, imageAlt, imageFit = "cove
             sizes="(min-width: 1280px) 400px, (min-width: 768px) 33vw, 100vw"
             className={imageFit === "contain"
               ? "object-contain object-center"
-              : "object-cover group-hover:scale-105 transition-transform duration-500"}
+              : "object-cover object-top group-hover:scale-105 transition-transform duration-500"}
           />
         </div>
         <CardContent className="flex flex-col gap-2 pt-6 flex-grow">

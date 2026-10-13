@@ -153,6 +153,7 @@ export default async function Home() {
               title="Summer Refresh"
               description="Enjoy up to 30% off selected styles."
               buttonText="SHOP THE SALE"
+              buttonHref="/collections"
             />
           </div>
         </AnimatedSection>
@@ -191,7 +192,7 @@ export default async function Home() {
                     category={post.category}
                     imageSrc={post.img}
                     imageAlt={post.imageAlt}
-                    imageFit="contain"
+                    imageFit="cover"
                     href={`/journal/${post.slug}`}
                   />
                 </StaggerItem>

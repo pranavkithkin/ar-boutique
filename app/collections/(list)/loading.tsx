@@ -16,7 +16,7 @@ import {
 export default function CollectionsLoading() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <AnnouncementBar text="FREE SHIPPING ON ORDERS OVER 150 AED | EASY RETURNS WITHIN 14 DAYS" />
+      <AnnouncementBar />
       <StoreHeader />
 
       <div className="flex-1 pb-16">

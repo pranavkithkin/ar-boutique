@@ -16,6 +16,7 @@ import { StoreButton } from "@/components/store/StoreButton"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowRight, Sparkles, HeartHandshake, ShieldCheck, Feather } from "lucide-react"
 import { AnimatedSection, FadeIn } from "@/components/store/AnimatedSection"
+import { JOURNAL_ENABLED } from "@/lib/journal"
 
 export const metadata: Metadata = {
   title: "About Us | AR Boutique",
@@ -198,6 +199,7 @@ export default function AboutPage() {
                   Up to forty hours of dedicated needlework are invested into a single yoke. When you slip into an AR Boutique ensemble, you wear not simply a dress, but the preserved legacy of master karigars.
                 </p>
 
+                {JOURNAL_ENABLED && (
                 <div className="pt-2">
                   <Link href="/journal">
                     <StoreButton variant="outline" className="gap-2 px-7">
@@ -206,6 +208,7 @@ export default function AboutPage() {
                     </StoreButton>
                   </Link>
                 </div>
+                )}
               </div>
 
               {/* Visual */}

@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
+import { notFound } from "next/navigation"
+import { JOURNAL_ENABLED } from "@/lib/journal"
 import { AnnouncementBar } from "@/components/store/AnnouncementBar"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
@@ -19,13 +21,18 @@ import { getAllArticles, getFeaturedArticle } from "@/features/blog/data"
 import { JournalList } from "@/features/blog/components/JournalList"
 import { AnimatedSection, FadeIn } from "@/components/store/AnimatedSection"
 
-export const metadata: Metadata = {
+export const metadata: Metadata = JOURNAL_ENABLED ? {
   title: "The Journal | AR Boutique",
   description:
     "Stories of timeless heritage, master craftsmanship, contemporary styling, and behind-the-scenes glimpses into the AR Boutique atelier.",
+} : {
+  title: "Page Not Found | AR Boutique",
+  robots: { index: false, follow: false },
 }
 
 export default function JournalPage() {
+  if (!JOURNAL_ENABLED) notFound()
+
   const articles = getAllArticles()
   const featured = getFeaturedArticle()
   const remainingArticles = articles.filter((a) => a.slug !== featured.slug)

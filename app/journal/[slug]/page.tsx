@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
+import { JOURNAL_ENABLED } from "@/lib/journal"
 import { AnnouncementBar } from "@/components/store/AnnouncementBar"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
@@ -31,6 +32,8 @@ interface ArticlePageProps {
 }
 
 export async function generateStaticParams() {
+  if (!JOURNAL_ENABLED) return []
+
   const articles = getAllArticles()
   return articles.map((article) => ({
     slug: article.slug,
@@ -40,6 +43,8 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: ArticlePageProps): Promise<Metadata> {
+  if (!JOURNAL_ENABLED) notFound()
+
   const { slug } = await params
   const article = getArticleBySlug(slug)
 
@@ -61,6 +66,8 @@ export async function generateMetadata({
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
+  if (!JOURNAL_ENABLED) notFound()
+
   const { slug } = await params
   const article = getArticleBySlug(slug)
 

@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { CartDrawer } from "@/features/cart/components/CartDrawer"
 import { useCartStore } from "@/features/cart/store"
 import { CategoryMenu, useMenuCategories } from "@/components/store/CategoryMenu"
+import { JOURNAL_ENABLED } from "@/lib/journal"
 
 const subscribeToHydration = () => () => {}
 
@@ -62,7 +63,7 @@ export function StoreHeader() {
       />
 
       {/* Size the mobile side columns to their controls so the complete brand always has room. */}
-      <div className="mx-auto grid h-20 max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center px-4 sm:px-6 lg:grid-cols-[auto_1fr_auto] lg:px-8">
+      <div className="mx-auto grid h-20 max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center px-4 sm:px-6 lg:px-8 lg:grid-cols-[auto_1fr_auto]">
         <div className="flex min-w-0 items-center -ml-2 lg:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={handleMobileMenu}>
             <SheetTrigger render={<button aria-label="Menu" className="flex h-11 w-11 shrink-0 items-center justify-center" />}>
@@ -74,7 +75,7 @@ export function StoreHeader() {
                 <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Home</Link>
                 <Link href="/collections" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Collections</Link>
                 <CategoryMenu {...categories} mobile onNavigate={() => setIsMobileMenuOpen(false)} />
-                <Link href="/journal" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Journal</Link>
+                {JOURNAL_ENABLED && <Link href="/journal" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Journal</Link>}
                 <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">About</Link>
                 <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Contact Us</Link>
                 <div className="mt-8 flex flex-col gap-4 border-t border-border pt-8">
@@ -137,7 +138,7 @@ export function StoreHeader() {
         >
           <Link href="/" className="hover:opacity-70 transition-opacity">Home</Link>
           <CategoryMenu {...categories} />
-          <Link href="/journal" className="hover:opacity-70 transition-opacity">Journal</Link>
+          {JOURNAL_ENABLED && <Link href="/journal" className="hover:opacity-70 transition-opacity">Journal</Link>}
           <Link href="/about" className="hover:opacity-70 transition-opacity">About</Link>
           <Link href="/contact" className="hover:opacity-70 transition-opacity">Contact Us</Link>
         </nav>

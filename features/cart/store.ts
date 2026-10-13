@@ -3,7 +3,6 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import type { CartStore } from "./types"
-import { normaliseApprovedCartSku, restoreCartItems } from "./sku-migration"
 
 const MAX_QUANTITY_PER_LINE = 5
 
@@ -19,29 +18,28 @@ export const useCartStore = create<CartStore>()(
 
       addItem: (newItem, quantity = 1) => {
         set((state) => {
-          const incoming = normaliseApprovedCartSku(newItem)
-          const items = restoreCartItems({ items: state.items })
-          const existingIndex = items.findIndex(
-            (item) => item.variantId === incoming.variantId
+          const existingIndex = state.items.findIndex(
+            (item) => item.variantId === newItem.variantId
           )
           const safeQty = Number.isFinite(quantity)
             ? Math.min(Math.max(1, Math.trunc(quantity)), MAX_QUANTITY_PER_LINE)
             : 1
 
           if (existingIndex > -1) {
-            items[existingIndex] = {
-              ...items[existingIndex],
-              ...incoming,
+            const updatedItems = [...state.items]
+            updatedItems[existingIndex] = {
+              ...updatedItems[existingIndex],
+              ...newItem,
               quantity: Math.min(
-                items[existingIndex].quantity + safeQty,
+                updatedItems[existingIndex].quantity + safeQty,
                 MAX_QUANTITY_PER_LINE
               ),
             }
-            return { items, isOpen: true }
+            return { items: updatedItems, isOpen: true }
           }
 
           return {
-            items: [...items, { ...incoming, quantity: safeQty }],
+            items: [...state.items, { ...newItem, quantity: safeQty }],
             isOpen: true,
           }
         })
@@ -89,12 +87,6 @@ export const useCartStore = create<CartStore>()(
       name: "ar_boutique_cart",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ items: state.items }),
-      // Keep version 0 readable and reconcile on every hydration, including
-      // carts saved by an older tab before the catalogue rename was deployed.
-      merge: (persisted, current) => ({
-        ...current,
-        items: restoreCartItems(persisted),
-      }),
     }
   )
 )

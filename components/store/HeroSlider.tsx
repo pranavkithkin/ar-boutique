@@ -28,21 +28,18 @@ export function HeroSlider() {
     {
       id: 1,
       imageSrc: "/images/hero_traditions_desktop.png",
-      mobileImageSrc: "/images/hero_traditions_mobile.png",
       alt: "Timeless Traditions Fashion Heritage",
       href: "/collections",
     },
     {
       id: 2,
       imageSrc: "/images/hero_boutique_desktop.png",
-      mobileImageSrc: "/images/hero_boutique_mobile.png",
       alt: "Timeless Boutique Fashion Collection",
       href: "/collections",
     },
     {
       id: 3,
       imageSrc: "/images/hero_elegance_desktop.png",
-      mobileImageSrc: "/images/hero_elegance_mobile.png",
       alt: "Timeless Style, Modern Elegance",
       href: "/collections",
     }
@@ -63,7 +60,7 @@ export function HeroSlider() {
                 className="block relative w-full group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label={`View collection: ${slide.alt}`}
               >
-                <div className={`relative w-full md:aspect-[2.13/1] ${slide.mobileImageSrc ? 'aspect-[2/3]' : 'aspect-[2.13/1]'}`}>
+                <div className={`relative w-full md:aspect-[2.13/1] ${slide.mobileImageSrc ? 'aspect-[4/4.5]' : 'aspect-[2.13/1]'}`}>
                   {/* Desktop Image */}
                   <Image
                     src={slide.imageSrc}
@@ -78,7 +75,7 @@ export function HeroSlider() {
                       src={slide.mobileImageSrc}
                       alt={`${slide.alt} mobile`}
                       fill
-                      className="object-cover object-center block md:hidden"
+                      className="object-fill block md:hidden"
                       priority={slide.id === 1}
                     />
                   )}

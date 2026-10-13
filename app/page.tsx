@@ -71,7 +71,7 @@ export default async function Home() {
       <AnnouncementBar />
       <StoreHeader />
 
-      <main className="flex-1 -mt-20">
+      <main className="flex-1 lg:-mt-20">
         <FadeIn delay={0.05}>
           <HeroSlider />
         </FadeIn>

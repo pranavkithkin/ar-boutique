@@ -51,11 +51,12 @@ export function StoreHeader() {
       className={`sticky top-0 z-50 w-full transition-colors duration-300 ${
         isActive
           ? "bg-background/95 backdrop-blur border-b border-border supports-[backdrop-filter]:bg-background/60 text-foreground"
-          : "border-transparent text-white"
+          : "bg-background/95 backdrop-blur border-b border-border text-foreground lg:bg-transparent lg:border-transparent lg:backdrop-blur-none lg:supports-[backdrop-filter]:bg-transparent lg:text-white"
       }`}
     >
+      {/* Top shadow gradient from top of header so text is easily readable on any banner background */}
       <div
-        className={`absolute top-0 left-0 right-0 h-32 -z-10 bg-gradient-to-b from-black/70 to-transparent transition-opacity duration-300 pointer-events-none ${
+        className={`hidden lg:block absolute top-0 left-0 right-0 h-36 -z-10 bg-gradient-to-b from-black/60 via-black/30 to-transparent transition-opacity duration-300 pointer-events-none ${
           isActive ? "opacity-0" : "opacity-100"
         }`}
       />
@@ -95,7 +96,7 @@ export function StoreHeader() {
           className="flex items-center justify-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:gap-2"
         >
           <div className="relative h-14 w-14 shrink-0 flex items-center justify-center sm:h-18 sm:w-18">
-            {/* White logo when transparent on homepage top */}
+            {/* White logo when transparent on homepage top (desktop only) */}
             <Image
               src="/images/logo.png"
               alt=""
@@ -103,11 +104,11 @@ export function StoreHeader() {
               height={1254}
               unoptimized
               priority
-              className={`h-full w-full object-contain transition-opacity duration-300 ${
-                isActive ? "opacity-0 absolute pointer-events-none" : "opacity-100 block drop-shadow-md"
+              className={`h-full w-full object-contain transition-opacity duration-300 hidden ${
+                isActive ? "lg:opacity-0 lg:absolute lg:pointer-events-none" : "lg:opacity-100 lg:block lg:drop-shadow-md"
               }`}
             />
-            {/* Black logo when scrolled, hovered, or on internal pages */}
+            {/* Black logo when scrolled, hovered, internal pages, or on mobile */}
             <Image
               src="/images/logo-black.png"
               alt=""
@@ -115,21 +116,24 @@ export function StoreHeader() {
               height={1254}
               unoptimized
               priority
-              className={`h-full w-full object-contain transition-opacity duration-300 ${
-                isActive ? "opacity-100 block" : "opacity-0 absolute pointer-events-none"
+              className={`h-full w-full object-contain transition-opacity duration-300 block ${
+                isActive ? "lg:opacity-100" : "lg:opacity-0 lg:absolute lg:pointer-events-none"
               }`}
             />
           </div>
           <span
-            className={`hidden sm:inline whitespace-nowrap font-heading text-lg leading-none transition-colors duration-300 sm:text-2xl ${
-              isActive ? "text-foreground" : "text-white drop-shadow-md"
+            className={`hidden sm:inline whitespace-nowrap font-heading text-lg leading-none transition-colors duration-300 sm:text-2xl text-foreground ${
+              isActive ? "lg:text-foreground" : "lg:text-white"
             }`}
           >
             AR Boutique
           </span>
         </Link>
 
-        <nav aria-label="Main navigation" className="hidden lg:flex items-center justify-center gap-4 xl:gap-8 text-[15px] font-normal">
+        <nav
+          aria-label="Main navigation"
+          className="hidden lg:flex items-center justify-center gap-4 xl:gap-8 text-[15px] font-normal"
+        >
           <Link href="/" className="hover:opacity-70 transition-opacity">Home</Link>
           <CategoryMenu {...categories} />
           <Link href="/journal" className="hover:opacity-70 transition-opacity">Journal</Link>

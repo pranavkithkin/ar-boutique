@@ -60,12 +60,14 @@ export function HeroSlider() {
                 className="block relative w-full group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label={`View collection: ${slide.alt}`}
               >
-                <div className={`relative w-full md:aspect-[2.13/1] ${slide.mobileImageSrc ? 'aspect-[4/4.5]' : 'aspect-[2.13/1]'}`}>
+                {/* A modest height increase: wide 16:9 fallback on phones, 2:1 from tablet upward. */}
+                <div className={`relative w-full md:aspect-[2/1] ${slide.mobileImageSrc ? 'aspect-[4/4.5]' : 'aspect-video'}`}>
                   {/* Desktop Image */}
                   <Image
                     src={slide.imageSrc}
                     alt={slide.alt}
                     fill
+                    sizes="100vw"
                     className={`object-cover object-center ${slide.mobileImageSrc ? 'hidden md:block' : 'block'}`}
                     priority={slide.id === 1}
                   />
@@ -75,6 +77,7 @@ export function HeroSlider() {
                       src={slide.mobileImageSrc}
                       alt={`${slide.alt} mobile`}
                       fill
+                      sizes="100vw"
                       className="object-fill block md:hidden"
                       priority={slide.id === 1}
                     />

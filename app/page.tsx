@@ -147,7 +147,7 @@ export default async function Home() {
           <div className="flex flex-col w-full gap-4 md:gap-6">
             <PromoBanner
               imageSrc="/images/promo_banner_summer.png"
-              imageAlt="Sunlit Garden Bouquet - Summer Refresh"
+              imageAlt="Sunny Garden Bouquet - Summer Refresh"
               imageFit="cover"
               eyebrow="LIMITED TIME ONLY"
               title="Summer Refresh"

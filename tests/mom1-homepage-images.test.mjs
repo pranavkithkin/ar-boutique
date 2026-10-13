@@ -28,7 +28,7 @@ test("all three journal cards use verified existing collection paths without upl
 
 test("homepage promo banner uses dedicated promo image with cover fit", () => {
   assert.match(home, /imageSrc="\/images\/promo_banner_summer\.png"/)
-  assert.match(home, /imageAlt="Sunlit Garden Bouquet - Summer Refresh"/)
+  assert.match(home, /imageAlt="Sunny Garden Bouquet - Summer Refresh"/)
   assert.equal((home.match(/imageFit="cover"/g) ?? []).length, 2)
   for (const alt of [
     "Dress JAA25DR01202 - View 1",

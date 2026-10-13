@@ -14,7 +14,8 @@ test("homepage has no remaining sample photos outside the untouched hero", () =>
   assert.match(home, /imageSrc=\{prod\.imageSrc\}/)
 })
 
-test("all three journal cards use verified existing collection paths without upload or upscaling", () => {
+test("preserved Journal card source stays behind the disabled feature switch", () => {
+  assert.match(home, /\{JOURNAL_ENABLED && \(\s*<AnimatedSection/)
   const urls = [...home.matchAll(/https:\/\/res\.cloudinary\.com\/q8qdyl3f\/image\/upload\/f_auto,q_auto,c_limit,w_640\/[^"\s]+/g)].map(match => match[0])
   assert.equal(urls.length, 3)
   assert.equal(new Set(urls).size, 3)
@@ -48,7 +49,7 @@ test("shared cards preserve existing defaults and add responsive image sizes", (
   assert.match(blog, /href=\{href\}/)
 })
 
-test("image-only change does not alter sale copy, article destinations or catalogue logic", () => {
+test("Journal disablement preserves sale copy, stored article destinations and catalogue logic", () => {
   assert.match(home, /description="Enjoy up to 30% off selected styles\."/)
   assert.match(home, /buttonText="SHOP THE SALE"/)
   assert.match(home, /href=\{`\/journal\/\$\{post\.slug\}`\}/)

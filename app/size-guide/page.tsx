@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
-import { SIZE_CHART_DATA } from "@/components/store/SizeChartModal"
+import { SIZE_CHART_DATA } from "@/lib/size-chart"
 import { Ruler } from "lucide-react"
 
 export const metadata: Metadata = {

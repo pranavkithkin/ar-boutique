@@ -59,7 +59,7 @@ const FAQS = [
   {
     question: "What are your delivery timeframes across the UAE?",
     answer:
-      "We offer next-day delivery across Dubai and Abu Dhabi for orders confirmed before 2:00 PM. Deliveries to Sharjah, Ajman, Ras Al Khaimah, Fujairah, and Umm Al Quwain typically arrive within 1 to 2 business days. Complimentary delivery is provided on all orders exceeding 150 AED.",
+      "We offer next-day delivery across Dubai and Abu Dhabi for orders confirmed before 2:00 PM. Deliveries to Sharjah, Ajman, Ras Al Khaimah, Fujairah, and Umm Al Quwain typically arrive within 1 to 2 business days. Complimentary delivery is provided on all orders of AED 200 or more.",
   },
   {
     question: "How does Cash on Delivery (COD) work?",

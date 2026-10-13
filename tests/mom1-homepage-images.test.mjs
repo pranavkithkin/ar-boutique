@@ -8,19 +8,17 @@ const home = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8")
 const promo = await readFile(new URL("../components/store/PromoBanner.tsx", import.meta.url), "utf8")
 const blog = await readFile(new URL("../features/blog/components/BlogCard.tsx", import.meta.url), "utf8")
 
-test("homepage has no remaining local sample photos outside the untouched hero", () => {
+test("homepage has no remaining sample photos outside the untouched hero", () => {
   assert.doesNotMatch(home, /(?:promo_banner_new|journal_style|journal_bts_2|journal_inspiration)\.jpg/)
-  assert.doesNotMatch(home, /["']\/images\//)
   assert.match(home, /<HeroSlider \/>/)
   assert.match(home, /imageSrc=\{prod\.imageSrc\}/)
 })
 
-test("all four replacements use verified existing collection paths without upload or upscaling", () => {
+test("all three journal cards use verified existing collection paths without upload or upscaling", () => {
   const urls = [...home.matchAll(/https:\/\/res\.cloudinary\.com\/q8qdyl3f\/image\/upload\/f_auto,q_auto,c_limit,w_640\/[^"\s]+/g)].map(match => match[0])
-  assert.equal(urls.length, 4)
-  assert.equal(new Set(urls).size, 4)
+  assert.equal(urls.length, 3)
+  assert.equal(new Set(urls).size, 3)
   const expected = [
-    "ar-dev/products/8a7f570c-eb0e-4395-b076-dceea35f2591/0d318751-ff56-4a96-a2f8-bcb885c1cf20/jab24cd00489",
     "ar-dev/products/55b382e9-331d-490e-88c1-e02bc891a4b9/85a48544-58c4-46d8-aba0-98ad9bcd54fe/jaa25dr01202",
     "ar-dev/products/8c3a236f-6172-47fe-a9cd-45b18ff9a7f9/37b3c5e3-63c4-4920-b372-57c10adb0afd/jaa25cd01945",
     "ar-dev/products/c8dd1b6b-4f84-4c50-a5be-dbfc783e2d0b/e6c009b4-87b8-4cb0-985a-4c39fe825fc8/jab24st00577",
@@ -28,11 +26,11 @@ test("all four replacements use verified existing collection paths without uploa
   urls.forEach((url, index) => assert.ok(url.endsWith(expected[index])))
 })
 
-test("homepage promo uses contain while journal cards use cover to eliminate side gaps", () => {
-  assert.equal((home.match(/imageFit="contain"/g) ?? []).length, 1)
-  assert.equal((home.match(/imageFit="cover"/g) ?? []).length, 1)
+test("homepage promo banner uses dedicated promo image with cover fit", () => {
+  assert.match(home, /imageSrc="\/images\/promo_banner_summer\.png"/)
+  assert.match(home, /imageAlt="Sunlit Garden Bouquet - Summer Refresh"/)
+  assert.equal((home.match(/imageFit="cover"/g) ?? []).length, 2)
   for (const alt of [
-    "Co-ord set JAB24CD00489 - View 1",
     "Dress JAA25DR01202 - View 1",
     "Co-ord set JAA25CD01945 - View 1",
     "Set JAB24ST00577 - View 1",

@@ -146,9 +146,9 @@ export default async function Home() {
         <AnimatedSection delay={0.08} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 mb-6 md:mt-10 md:mb-8">
           <div className="flex flex-col w-full gap-4 md:gap-6">
             <PromoBanner
-              imageSrc="https://res.cloudinary.com/q8qdyl3f/image/upload/f_auto,q_auto,c_limit,w_640/ar-dev/products/8a7f570c-eb0e-4395-b076-dceea35f2591/0d318751-ff56-4a96-a2f8-bcb885c1cf20/jab24cd00489"
-              imageAlt="Co-ord set JAB24CD00489 - View 1"
-              imageFit="contain"
+              imageSrc="/images/promo_banner_summer.png"
+              imageAlt="Sunlit Garden Bouquet - Summer Refresh"
+              imageFit="cover"
               eyebrow="LIMITED TIME ONLY"
               title="Summer Refresh"
               description="Enjoy up to 30% off selected styles."

@@ -61,7 +61,8 @@ export function StoreHeader() {
         }`}
       />
 
-      <div className="mx-auto grid h-20 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 lg:grid-cols-[auto_1fr_auto] lg:px-8">
+      {/* Size the mobile side columns to their controls so the complete brand always has room. */}
+      <div className="mx-auto grid h-20 max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center px-4 sm:px-6 lg:grid-cols-[auto_1fr_auto] lg:px-8">
         <div className="flex min-w-0 items-center -ml-2 lg:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={handleMobileMenu}>
             <SheetTrigger render={<button aria-label="Menu" className="flex h-11 w-11 shrink-0 items-center justify-center" />}>
@@ -93,9 +94,9 @@ export function StoreHeader() {
         <Link
           href="/"
           aria-label="AR Boutique home"
-          className="flex items-center justify-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:gap-2"
+          className="flex min-w-0 items-center justify-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:gap-2"
         >
-          <div className="relative h-14 w-14 shrink-0 flex items-center justify-center sm:h-18 sm:w-18">
+          <div className="relative h-12 w-12 shrink-0 flex items-center justify-center sm:h-18 sm:w-18">
             {/* White logo when transparent on homepage top (desktop only) */}
             <Image
               src="/images/logo.png"
@@ -122,7 +123,7 @@ export function StoreHeader() {
             />
           </div>
           <span
-            className={`hidden sm:inline whitespace-nowrap font-heading text-lg leading-none transition-colors duration-300 sm:text-2xl text-foreground ${
+            className={`shrink-0 whitespace-nowrap font-heading text-lg leading-none transition-colors duration-300 sm:text-2xl text-foreground ${
               isActive ? "lg:text-foreground" : "lg:text-white"
             }`}
           >

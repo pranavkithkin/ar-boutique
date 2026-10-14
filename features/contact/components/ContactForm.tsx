@@ -133,7 +133,7 @@ export function ContactForm() {
                   {...field}
                   id={field.name}
                   type="tel"
-                  placeholder="+971 50 xxx xxxx"
+                  placeholder="+971 50 273 6767"
                   className="h-10 px-3.5 text-xs sm:text-sm bg-background border border-input rounded-xs"
                   aria-invalid={fieldState.invalid}
                 />

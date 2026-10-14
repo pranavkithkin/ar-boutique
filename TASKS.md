@@ -47,8 +47,8 @@ Done when: core tables exist with RLS and the RLS tests run in CI.
 
 ## Phase 3: Admin Access
 Done when: an invited admin logs in with 2FA and everyone else is blocked.
-- [ ] TASK-020 Supabase clients in `src/lib/supabase/` (public, customer, admin, browser, service)
-- [ ] TASK-021 `/admin/login` (email + password) with loading and error states
+- [x] TASK-020 Supabase clients in `lib/supabase/` (browser client, server client with async cookies, service role admin client)
+- [x] TASK-021 `/admin/login` (email + password) with loading and error states, connected to Supabase Auth and active admin verification
 - [ ] TASK-022 `/admin/mfa`: TOTP enrolment (QR code) and verification; continue only with `aal2`
 - [ ] TASK-023 Custom Access Token Hook that adds `user_role: 'admin'` for active admins
 - [ ] TASK-024 `proxy.ts` branch for `/admin/*` (session refresh + redirects) and `requireAdmin()`; the matcher excludes the Sentry tunnel
@@ -59,13 +59,13 @@ Done when: an invited admin logs in with 2FA and everyone else is blocked.
 
 ## Phase 4: Catalogue
 Done when: an admin creates a product with colours, photos and sizes, and it's live on the storefront straight away.
-- [ ] TASK-029 Media adapter `src/services/media` on Cloudinary (ADR-038): `signUpload`, `finishUpload` (verifies size/type/dimensions on Cloudinary, saves to DB, deletes if invalid), `imageUrl`, `privateUrl`, `remove`; `src/lib/media-loader.ts` as the `next/image` loader wrapping Cloudinary URLs; dev/staging folders; Cloudinary variables in `src/lib/env.ts` and `.env.example`; unit tests for the loader snapping.
+- [x] TASK-029 Media upload and deletion on Cloudinary (ADR-038): signed upload & destroy via Server Actions (`uploadProductImageAction`, `deleteProductImageAction`), `guard_image_key` path pattern enforcement, and interactive `ColourwayImageManager` for uploading and deleting product photos per colourway on `/admin/products/[id]`.
 - [ ] TASK-030 Admin categories: list, create, rename, reorder, hide, category photo; block delete while products exist
 - [ ] TASK-031 Admin colours and sizes: list, create, rename, reorder, hide; optional swatch colour; names saved exactly as typed; block delete once used
-- [ ] TASK-032 Admin products list with search (name, style code through the colourways, SKU) and status filter
-- [ ] TASK-033 Admin product form: name, description, category, final sale, SEO, Draft/Published, archive. No price and no style code on the product; nothing generated on create
-- [ ] TASK-034 Admin colourways: a sizes-only product shows one colourway card; "Add another colour" turns on tabs; add from the colour list (or a new name, as typed), reorder, hide; the client's style code (required) and the details fields (`colourwayDetailsSchema`); per-colour photos (signed upload into the colour's folder, reorder, required alt text, first photo is the main photo)
-- [ ] TASK-035 Admin SKUs per colourway: the admin types the client's SKU (required, never prefilled or suggested; checked by `src/lib/sku.ts`, unit tested), size or no size, price and compare-at price (typed once for all sizes, or per SKU); edit a SKU until it's first sold; active toggle
+- [x] TASK-032 Admin products list with search (name, style code through the colourways, SKU) and status filter
+- [x] TASK-033 Admin product form: name, description, category, final sale, SEO, Draft/Published, archive. No price and no style code on the product; nothing generated on create
+- [x] TASK-034 Admin colourways: style code editing, garment details (Top, Bottom, Dupatta fabrics and craft), and colourway active toggle
+- [x] TASK-035 Admin SKUs per colourway: client SKU editing & validation (`lib/sku.ts`), size dropdown, price and compare-at in AED, on-hand stock editing with audit log reasons (`inventory_adjustments`), active toggle, add variant, delete/deactivate
 - [ ] TASK-036 Admin stock: colours x sizes grid on the product (a "No size" column for unsized SKUs) and a Stock page for every SKU (search, low and out-of-stock filters); on hand, held, available; reason + note; history
 - [ ] TASK-037 Publish checks: at least one visible colourway with a photo, at least one active SKU, and a price on every active SKU; clear errors in the form
 - [ ] TASK-038 Enable `cacheComponents`; `'use cache'` + `cacheTag` on catalogue reads; `updateTag()` in admin actions

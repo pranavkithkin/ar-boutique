@@ -10,6 +10,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Ruler } from "lucide-react"
 import { SIZE_CHART_DATA, type SizeMeasurement } from "@/lib/size-chart"
+import { STORE_CONTACT } from "@/lib/contact"
 
 export { SIZE_CHART_DATA, type SizeMeasurement }
 
@@ -83,23 +84,36 @@ export function SizeChartModal({ isOpen, onClose }: SizeChartModalProps) {
             </table>
           </div>
 
-          <div className="mt-5 pt-4 border-t border-border text-xs text-muted-foreground space-y-2.5">
-            <p className="font-heading text-sm font-semibold text-foreground">How to Measure:</p>
-            <div>
-              <p className="font-medium text-foreground">1. Bust:</p>
-              <p className="leading-relaxed">Measure around the fullest part of your bust, keeping the tape parallel to the ground.</p>
-            </div>
-            <div>
-              <p className="font-medium text-foreground">2. Waist:</p>
-              <p className="leading-relaxed">Find the narrowest part of your waist, usually an inch above your belly button. Keep the tape comfortably snug.</p>
-            </div>
-            <div>
-              <p className="font-medium text-foreground">3. Hip:</p>
-              <p className="leading-relaxed">Measure around the fullest part of your hips, ensuring the tape is parallel to the ground.</p>
-            </div>
-            <div>
-              <p className="font-medium text-foreground">4. Shoulder:</p>
-              <p className="leading-relaxed">Measure from the edge of one shoulder across your back to the same point on the opposite shoulder.</p>
+          <div className="mt-5 pt-4 border-t border-border text-xs text-muted-foreground space-y-3">
+            <p className="font-heading text-sm font-semibold text-foreground">How to measure</p>
+            <ul className="space-y-1.5 text-xs">
+              <li>
+                <strong className="font-medium text-foreground">Bust:</strong> around the fullest part of your bust
+              </li>
+              <li>
+                <strong className="font-medium text-foreground">Waist:</strong> around your natural waistline
+              </li>
+              <li>
+                <strong className="font-medium text-foreground">Hip:</strong> around the fullest part of your hips
+              </li>
+              <li>
+                <strong className="font-medium text-foreground">Length:</strong> from the top of the shoulder down to the hem
+              </li>
+            </ul>
+
+            <div className="rounded-md bg-muted/40 border border-border/40 p-3 mt-3">
+              <p className="text-xs text-muted-foreground">
+                Between two sizes?{" "}
+                <a
+                  href={STORE_CONTACT.whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+                >
+                  Message us on WhatsApp at {STORE_CONTACT.whatsapp}
+                </a>{" "}
+                and we will help you choose.
+              </p>
             </div>
           </div>
         </ScrollArea>

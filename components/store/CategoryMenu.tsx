@@ -18,9 +18,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+// Module-level cache so category navigation is instantaneous across pages without loading delay
+let cachedCategories: Category[] = [
+  { id: "46f8d18f-5cf3-4eb3-8c66-87828c0f2d83", name: "Co-ord set", slug: "co-ord-set" },
+  { id: "94075982-7e7c-4009-99a6-0fc8223c70f7", name: "Dress", slug: "dress" },
+  { id: "46d68711-40a3-4ebd-9a4a-d8b9db7092f9", name: "Set", slug: "set" },
+  { id: "1377e04f-2293-429b-b5f6-484028d9bb8c", name: "Top", slug: "top" },
+  { id: "7f9f12cd-56a6-4199-b8ba-83f186ae3337", name: "Kurta", slug: "kurta" },
+]
+
 // One hook per header, shared by desktop and mobile menus.
 export function useMenuCategories() {
-  const [state, setState] = React.useState<MenuState>({ categories: [], loading: true, error: false })
+  const [state, setState] = React.useState<MenuState>({
+    categories: cachedCategories,
+    loading: cachedCategories.length === 0,
+    error: false,
+  })
   const pending = React.useRef<AbortController | null>(null)
   const refresh = React.useCallback(async () => {
     if (pending.current) return
@@ -32,11 +45,16 @@ export function useMenuCategories() {
       if (!response.ok) throw new Error("Category menu unavailable")
       const result = responseSchema.safeParse(await response.json())
       if (!result.success) throw new Error("Invalid category menu")
-      if (pending.current === controller) setState({ categories: result.data.categories, loading: false, error: false })
+      cachedCategories = result.data.categories
+      if (pending.current === controller) {
+        setState({ categories: result.data.categories, loading: false, error: false })
+      }
     } catch {
       // Clear stale links on failure rather than continuing to show a category
       // that could have been hidden or renamed.
-      if (pending.current === controller) setState({ categories: [], loading: false, error: true })
+      if (pending.current === controller) {
+        setState((prev) => ({ ...prev, loading: false, error: prev.categories.length === 0 }))
+      }
     } finally {
       window.clearTimeout(timeout)
       if (pending.current === controller) pending.current = null
@@ -115,7 +133,9 @@ export function CategoryMenu({ categories, loading, error, refresh, mobile = fal
         >
           Shop all
         </Link>
-        {loading && <p role="status" className="px-3 py-2 text-sm text-muted-foreground">Loading categories...</p>}
+        {loading && categories.length === 0 && (
+          <p role="status" className="px-3 py-2 text-sm text-muted-foreground">Loading categories...</p>
+        )}
         {error && (
           <div role="status" className="px-3 py-2 text-sm text-muted-foreground">
             <p>Categories unavailable.</p>
@@ -186,7 +206,7 @@ export function CategoryMenu({ categories, loading, error, refresh, mobile = fal
             Shop all
           </DropdownMenuItem>
 
-          {loading && (
+          {loading && categories.length === 0 && (
             <div role="status" className="px-3 py-2 text-[15px] text-muted-foreground font-normal">
               Loading categories...
             </div>

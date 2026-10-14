@@ -95,13 +95,13 @@ export function StoreHeader() {
         <Link
           href="/"
           aria-label="AR Boutique home"
-          className="flex min-w-0 items-center justify-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:gap-2"
+          className="flex min-w-0 items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          <div className="relative h-12 w-12 shrink-0 flex items-center justify-center sm:h-18 sm:w-18">
+          <div className="relative h-14 w-14 shrink-0 flex items-center justify-center sm:h-18 sm:w-18">
             {/* White logo when transparent on homepage top (desktop only) */}
             <Image
               src="/images/logo.png"
-              alt=""
+              alt="AR Boutique"
               width={1254}
               height={1254}
               unoptimized
@@ -113,7 +113,7 @@ export function StoreHeader() {
             {/* Black logo when scrolled, hovered, internal pages, or on mobile */}
             <Image
               src="/images/logo-black.png"
-              alt=""
+              alt="AR Boutique"
               width={1254}
               height={1254}
               unoptimized
@@ -123,13 +123,6 @@ export function StoreHeader() {
               }`}
             />
           </div>
-          <span
-            className={`shrink-0 whitespace-nowrap font-heading text-lg leading-none transition-colors duration-300 sm:text-2xl text-foreground ${
-              isActive ? "lg:text-foreground" : "lg:text-white"
-            }`}
-          >
-            AR Boutique
-          </span>
         </Link>
 
         <nav

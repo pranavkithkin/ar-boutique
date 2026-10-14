@@ -21,6 +21,7 @@ import {
 import { MessageSquare, Mail, MapPin, Clock, Truck, ShieldCheck } from "lucide-react"
 import { ContactForm } from "@/features/contact/components/ContactForm"
 import { AnimatedSection, FadeIn } from "@/components/store/AnimatedSection"
+import { STORE_CONTACT } from "@/lib/contact"
 
 export const metadata: Metadata = {
   title: "Contact Us | AR Boutique",
@@ -33,25 +34,25 @@ const CONCIERGE_CHANNELS = [
     icon: MessageSquare,
     title: "WhatsApp Concierge",
     subtitle: "Instant styling & order chat",
-    detail: "+971 50 xxx xxxx",
+    detail: STORE_CONTACT.whatsapp,
     action: "Chat on WhatsApp",
-    href: "https://wa.me/",
+    href: STORE_CONTACT.whatsappHref,
   },
   {
     icon: Mail,
     title: "Email Assistance",
     subtitle: "Dedicated client responses",
-    detail: "concierge@arboutique.ae",
+    detail: STORE_CONTACT.email,
     action: "Send an Email",
-    href: "mailto:concierge@arboutique.ae",
+    href: STORE_CONTACT.emailHref,
   },
   {
     icon: MapPin,
     title: "Private Atelier",
     subtitle: "By private appointment",
-    detail: "Dubai Design District (d3), UAE",
+    detail: STORE_CONTACT.atelier,
     action: "View Location",
-    href: "https://maps.google.com/?q=Dubai+Design+District",
+    href: STORE_CONTACT.atelierHref,
   },
 ]
 

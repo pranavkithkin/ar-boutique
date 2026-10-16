@@ -24,7 +24,9 @@ import {
   AlertCircle,
   Tag,
   Palette,
+  Plus,
 } from "lucide-react"
+import { AddColourwayModal } from "./AddColourwayModal"
 
 interface ProductVariantsManagerProps {
   productId: string
@@ -42,6 +44,7 @@ export function ProductVariantsManager({
   const router = useRouter()
   const [stockModalVariant, setStockModalVariant] =
     React.useState<AdminProductVariant | null>(null)
+  const [isAddColourwayOpen, setIsAddColourwayOpen] = React.useState(false)
 
   // All detail keys exactly as stored in product_colours.details (per ARCHITECTURE.md)
   const DETAIL_KEYS = [
@@ -194,6 +197,26 @@ export function ProductVariantsManager({
             {totalAvailable} <span className="text-xs text-muted-foreground font-sans">available</span>
           </div>
         </div>
+      </div>
+
+      {/* Colourway Variations Header & Add Button */}
+      <div className="flex items-center justify-between border-b border-border pb-3 pt-2">
+        <div className="flex items-center gap-2">
+          <Palette className="size-4 text-muted-foreground" />
+          <h3 className="font-sans text-sm font-semibold text-foreground uppercase tracking-[0.08em]">
+            Product Colourways ({colourways.length})
+          </h3>
+        </div>
+
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => setIsAddColourwayOpen(true)}
+          className="h-8 text-xs font-sans rounded-none gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <Plus className="size-3.5" />
+          <span>Add Colourway</span>
+        </Button>
       </div>
 
       {/* Colourways & Variants Cards */}
@@ -397,6 +420,25 @@ export function ProductVariantsManager({
           </div>
         )
       })}
+
+      {/* Add Another Colourway Button */}
+      <button
+        type="button"
+        onClick={() => setIsAddColourwayOpen(true)}
+        className="w-full py-3.5 border-2 border-dashed border-border hover:border-foreground/40 transition-colors flex items-center justify-center gap-2 text-xs font-sans font-medium text-muted-foreground hover:text-foreground bg-muted/20"
+      >
+        <Plus className="size-4" />
+        <span>Add Another Colourway to Product</span>
+      </button>
+
+      {/* Add Colourway Modal */}
+      <AddColourwayModal
+        isOpen={isAddColourwayOpen}
+        onClose={() => setIsAddColourwayOpen(false)}
+        productId={productId}
+        existingColours={colours}
+        defaultStyleCode={colourways[0]?.style_code || ""}
+      />
 
       {/* Stock Adjustment Modal */}
       <StockAdjustmentModal

@@ -11,7 +11,7 @@ export function StoreFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="col-span-1 md:col-span-1">
             <Link href="/" className="mb-6 inline-block">
-              <Image src="/images/logo-black.png" alt="AR Boutique" width={300} height={120} unoptimized className="h-20 sm:h-24 w-auto" />
+              <Image src="/images/logo-black.png" alt="AR Boutique" width={2126} height={740} unoptimized className="h-12 sm:h-14 w-auto object-contain" />
             </Link>
             <p className="text-[14px] text-muted-foreground leading-relaxed max-w-xs mt-2">
               Timeless style meets modern elegance. Designed for the way you live.

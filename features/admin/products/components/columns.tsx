@@ -16,14 +16,14 @@ export const columns: ColumnDef<AdminProductListItem>[] = [
     cell: ({ row }) => {
       const p = row.original
       return (
-        <div className="relative size-12 bg-muted/60 border border-border/80 overflow-hidden shrink-0">
+        <div className="relative w-11 aspect-[4/5] bg-muted/60 border border-border/80 overflow-hidden shrink-0">
           {p.thumbnail_url ? (
             <Image
               src={p.thumbnail_url}
               alt={p.name}
               fill
               sizes="48px"
-              className="object-cover"
+              className="object-cover object-top"
               unoptimized
             />
           ) : (

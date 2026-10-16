@@ -11,7 +11,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { SIZE_CHART_DATA } from "@/lib/size-chart"
 import { STORE_CONTACT } from "@/lib/contact"
 import { Ruler, MessageSquare, CheckCircle2, ArrowRight } from "lucide-react"
@@ -127,6 +127,9 @@ export default function SizeGuidePage() {
                           <th className="py-3.5 px-4 text-center uppercase tracking-wider font-semibold">
                             Shoulder
                           </th>
+                          <th className="py-3.5 px-4 text-center uppercase tracking-wider font-semibold">
+                            Length
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/60">
@@ -149,6 +152,9 @@ export default function SizeGuidePage() {
                             </td>
                             <td className="py-4 px-4 text-center text-muted-foreground tabular-nums">
                               {row.shoulder}&quot;
+                            </td>
+                            <td className="py-4 px-4 text-center text-muted-foreground tabular-nums">
+                              {row.length}&quot;
                             </td>
                           </tr>
                         ))}

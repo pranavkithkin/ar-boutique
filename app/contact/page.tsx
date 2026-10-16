@@ -22,6 +22,8 @@ import { MessageSquare, Mail, MapPin, Clock, Truck, ShieldCheck } from "lucide-r
 import { ContactForm } from "@/features/contact/components/ContactForm"
 import { AnimatedSection, FadeIn } from "@/components/store/AnimatedSection"
 import { STORE_CONTACT } from "@/lib/contact"
+import { DEFAULT_FAQS } from "@/features/admin/settings/types"
+import { getStoreSettings } from "@/features/admin/settings/actions"
 
 export const metadata: Metadata = {
   title: "Contact Us | AR Boutique",
@@ -56,30 +58,10 @@ const CONCIERGE_CHANNELS = [
   },
 ]
 
-const FAQS = [
-  {
-    question: "What are your delivery timeframes across the UAE?",
-    answer:
-      "We offer next-day delivery across Dubai and Abu Dhabi for orders confirmed before 2:00 PM. Deliveries to Sharjah, Ajman, Ras Al Khaimah, Fujairah, and Umm Al Quwain typically arrive within 1 to 2 business days. Complimentary delivery is provided on all orders of AED 200 or more.",
-  },
-  {
-    question: "How does Cash on Delivery (COD) work?",
-    answer:
-      "Cash on delivery is available throughout the United Arab Emirates. Once you place a COD order, our concierge team will reach out via WhatsApp or phone to confirm your delivery address and schedule before dispatching your package.",
-  },
-  {
-    question: "What is your return and exchange policy?",
-    answer:
-      "We offer a 14-day return window from the date of delivery. Items must be unworn, in original condition with all boutique tags and luxury garment packaging intact. Card refunds are processed back to the original method, while COD refunds are issued via secure UAE bank transfer.",
-  },
-  {
-    question: "Can I receive personal sizing and styling guidance?",
-    answer:
-      "Yes, absolutely. Our dedicated stylists are available via WhatsApp to provide garment measurements, fabric close-ups, and occasion pairing recommendations tailored to your silhouette.",
-  },
-]
+export default async function ContactPage() {
+  const settings = await getStoreSettings()
+  const faqs = settings.faqs && settings.faqs.length > 0 ? settings.faqs : DEFAULT_FAQS
 
-export default function ContactPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <AnnouncementBar />
@@ -204,8 +186,8 @@ export default function ContactPage() {
                     Frequently Asked Questions
                   </h3>
                   <Accordion className="w-full">
-                    {FAQS.map((faq, i) => (
-                      <AccordionItem key={i} value={`item-${i}`} className="border-b border-border/60 py-1">
+                    {faqs.map((faq, i) => (
+                      <AccordionItem key={faq.id || i} value={`item-${i}`} className="border-b border-border/60 py-1">
                         <AccordionTrigger className="text-xs sm:text-sm font-medium text-foreground hover:no-underline text-left">
                           {faq.question}
                         </AccordionTrigger>

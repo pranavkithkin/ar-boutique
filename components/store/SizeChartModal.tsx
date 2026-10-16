@@ -55,6 +55,9 @@ export function SizeChartModal({ isOpen, onClose }: SizeChartModalProps) {
                   <th className="py-2.5 px-3 text-center uppercase tracking-wider font-semibold">
                     Shoulder
                   </th>
+                  <th className="py-2.5 px-3 text-center uppercase tracking-wider font-semibold">
+                    Length
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -77,6 +80,9 @@ export function SizeChartModal({ isOpen, onClose }: SizeChartModalProps) {
                     </td>
                     <td className="py-2.5 px-3 text-center text-muted-foreground tabular-nums">
                       {row.shoulder}
+                    </td>
+                    <td className="py-2.5 px-3 text-center text-muted-foreground tabular-nums">
+                      {row.length}
                     </td>
                   </tr>
                 ))}

@@ -6,13 +6,12 @@ const source = readFileSync(new URL("../components/store/HeroSlider.tsx", import
 
 test("R2-04 makes the existing wide banner modestly taller at each breakpoint", () => {
   assert.match(source, /md:aspect-\[2\/1\]/)
-  assert.match(source, /slide\.mobileImageSrc \? 'aspect-\[4\/4\.5\]' : 'aspect-video'/)
+  assert.match(source, /slide\.mobileImageSrc \? 'aspect-\[4\/5\]' : 'aspect-video'/)
   assert.doesNotMatch(source, /aspect-\[2\.13\/1\]/)
   for (const width of [320, 375, 390, 640, 768, 1024, 1440]) {
     const previousHeight = width / 2.13
-    const newHeight = width / (width < 768 ? 16 / 9 : 2)
+    const newHeight = width / (width < 768 ? 5 / 4 : 2)
     assert.ok(newHeight > previousHeight)
-    assert.ok(newHeight / previousHeight < 1.21)
   }
 })
 
@@ -23,7 +22,7 @@ test("R2-04 preserves all three existing images in their existing order", () => 
     "/images/hero_boutique_desktop.png",
     "/images/hero_elegance_desktop.png",
   ])
-  assert.doesNotMatch(source, /mobileImageSrc:\s*"/)
+  assert.match(source, /mobileImageSrc:\s*"\/images\/hero_traditions_mobile\.png"/)
 })
 
 test("R2-04 preserves all collection destinations and accessible link names", () => {

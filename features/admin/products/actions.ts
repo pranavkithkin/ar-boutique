@@ -14,6 +14,11 @@ import {
 } from "./types"
 import { adminProductSchema, AdminProductFormValues } from "./schemas"
 import { validateSku } from "@/lib/sku"
+import {
+  evaluatePublishRules,
+  ColourwayPublishSnapshot,
+  PublishValidationResult,
+} from "./publish-checks"
 
 const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "q8qdyl3f"
 
@@ -387,6 +392,82 @@ export async function getAdminProductById(id: string): Promise<AdminProductDetai
 }
 
 /**
+ * Check if a product satisfies all publish rules (TASK-037).
+ */
+export async function checkProductPublishReadinessAction(
+  productId: string
+): Promise<PublishValidationResult> {
+  const supabase = createAdminClient()
+
+  const { data: colours, error } = await supabase
+    .from("product_colours")
+    .select(`
+      id,
+      is_active,
+      product_images (
+        id,
+        media_key
+      ),
+      product_variants (
+        id,
+        sku,
+        price_fils,
+        is_active
+      )
+    `)
+    .eq("product_id", productId)
+
+  if (error || !colours) {
+    console.error("Failed to check product publish readiness:", error)
+    return {
+      canPublish: false,
+      errors: ["Failed to verify product readiness due to a database error."],
+      checks: {
+        hasVisibleColourwayWithPhoto: false,
+        hasActiveSku: false,
+        allActiveSkusHavePrice: false,
+      },
+      details: {
+        visibleColourwaysCount: 0,
+        photosCount: 0,
+        activeSkusCount: 0,
+        skusMissingPrice: [],
+      },
+    }
+  }
+
+  interface DbReadinessColourway {
+    id: string
+    is_active: boolean | null
+    product_images: { id: string; media_key: string | null }[] | null
+    product_variants: {
+      id: string
+      sku: string
+      price_fils: number | null
+      is_active: boolean | null
+    }[] | null
+  }
+
+  const rawColours = colours as unknown as DbReadinessColourway[]
+
+  const snapshots: ColourwayPublishSnapshot[] = rawColours.map((c) => ({
+    id: c.id,
+    is_active: !!c.is_active,
+    hasPhoto: (c.product_images || []).some(
+      (img) => typeof img.media_key === "string" && img.media_key.trim().length > 0
+    ),
+    variants: (c.product_variants || []).map((v) => ({
+      id: v.id,
+      sku: v.sku,
+      is_active: !!v.is_active,
+      price_fils: v.price_fils,
+    })),
+  }))
+
+  return evaluatePublishRules(snapshots)
+}
+
+/**
  * Create a new product.
  */
 export async function createAdminProduct(
@@ -397,6 +478,15 @@ export async function createAdminProduct(
     return {
       success: false,
       error: parsed.error.issues[0]?.message || "Invalid input",
+    }
+  }
+
+  // TASK-037: Cannot create a new product directly as Published
+  if (parsed.data.status === "published") {
+    return {
+      success: false,
+      error:
+        "New products must be created as Draft before publishing. Add colourways, photos, and variants first.",
     }
   }
 
@@ -411,7 +501,7 @@ export async function createAdminProduct(
     is_final_sale: parsed.data.is_final_sale,
     seo_title: parsed.data.seo_title || null,
     seo_description: parsed.data.seo_description || null,
-    published_at: parsed.data.status === "published" ? new Date().toISOString() : null,
+    published_at: null,
   }
 
   const { data, error } = await supabase
@@ -445,6 +535,17 @@ export async function updateAdminProduct(
     return {
       success: false,
       error: parsed.error.issues[0]?.message || "Invalid input",
+    }
+  }
+
+  // TASK-037: Guard publish status change with validation rules
+  if (parsed.data.status === "published") {
+    const readiness = await checkProductPublishReadinessAction(id)
+    if (!readiness.canPublish) {
+      return {
+        success: false,
+        error: `Cannot publish product: ${readiness.errors.join(" ")}`,
+      }
     }
   }
 
@@ -498,6 +599,17 @@ export async function toggleProductStatusAction(
   id: string,
   newStatus: ProductStatus
 ): Promise<{ success: boolean; error?: string }> {
+  // TASK-037: Guard publish status toggle with validation rules
+  if (newStatus === "published") {
+    const readiness = await checkProductPublishReadinessAction(id)
+    if (!readiness.canPublish) {
+      return {
+        success: false,
+        error: `Cannot publish product: ${readiness.errors.join(" ")}`,
+      }
+    }
+  }
+
   const supabase = await createClient()
 
   const payload: any = {
@@ -816,6 +928,92 @@ export async function updateColourwayAction(input: {
   revalidatePath(`/admin/products/${input.productId}`)
   revalidatePath("/admin/products")
   return { success: true }
+}
+
+/**
+ * Create a new colourway under a product.
+ */
+export async function createColourwayAction(input: {
+  productId: string
+  colourId?: string
+  newColourName?: string
+  styleCode: string
+  details?: Record<string, string>
+}): Promise<{ success: boolean; colourwayId?: string; error?: string }> {
+  if (!input.styleCode || input.styleCode.trim().length === 0) {
+    return { success: false, error: "Style code is required." }
+  }
+
+  const adminDb = createAdminClient()
+  let resolvedColourId = input.colourId
+
+  if (!resolvedColourId && input.newColourName && input.newColourName.trim()) {
+    const trimmedName = input.newColourName.trim()
+    const { data: existingColour } = await adminDb
+      .from("colours")
+      .select("id")
+      .ilike("name", trimmedName)
+      .maybeSingle()
+
+    if (existingColour) {
+      resolvedColourId = existingColour.id
+    } else {
+      const slug = trimmedName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+      const { data: newColour, error: colErr } = await adminDb
+        .from("colours")
+        .insert({ name: trimmedName, slug })
+        .select("id")
+        .single()
+
+      if (colErr || !newColour) {
+        return { success: false, error: colErr?.message || "Failed to create colour." }
+      }
+      resolvedColourId = newColour.id
+    }
+  }
+
+  if (!resolvedColourId) {
+    return { success: false, error: "Please select or enter a colour name." }
+  }
+
+  // Check if colourway already exists for this product
+  const { data: existingCw } = await adminDb
+    .from("product_colours")
+    .select("id")
+    .eq("product_id", input.productId)
+    .eq("colour_id", resolvedColourId)
+    .maybeSingle()
+
+  if (existingCw) {
+    return {
+      success: false,
+      error: "This colourway already exists on this product.",
+    }
+  }
+
+  const { data: inserted, error: insertErr } = await adminDb
+    .from("product_colours")
+    .insert({
+      product_id: input.productId,
+      colour_id: resolvedColourId,
+      style_code: input.styleCode.trim(),
+      details: input.details || {},
+      is_active: true,
+      sort: 0,
+    })
+    .select("id")
+    .single()
+
+  if (insertErr || !inserted) {
+    return { success: false, error: insertErr?.message || "Failed to create colourway." }
+  }
+
+  revalidatePath(`/admin/products/${input.productId}`)
+  revalidatePath("/admin/products")
+  return { success: true, colourwayId: inserted.id }
 }
 
 /**

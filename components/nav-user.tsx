@@ -35,7 +35,7 @@ export function NavUser() {
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger render={<Avatar className="size-8 cursor-pointer" />}><AvatarImage src={user.avatar} className="object-contain p-1" /><AvatarFallback className="font-serif text-xs font-semibold">AR</AvatarFallback></DropdownMenuTrigger>
+			<DropdownMenuTrigger nativeButton={false} render={<Avatar className="size-8 cursor-pointer" />}><AvatarImage src={user.avatar} className="object-contain p-1" /><AvatarFallback className="font-serif text-xs font-semibold">AR</AvatarFallback></DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-60">
 				<DropdownMenuGroup>
 					<DropdownMenuLabel className="pointer-events-none flex items-center gap-2">

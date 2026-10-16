@@ -83,10 +83,13 @@ test("existing currency and VAT helpers remain unchanged", () => {
   assert.equal(money.calculateVatPortion(22400), Math.round(22400 * 5 / 105))
 })
 
-const banner = load("components/store/AnnouncementBar.tsx", { "@/lib/money": money }).AnnouncementBar
-test("announcement renders the inclusive threshold and preserves custom text", () => {
-  assert.match(renderToStaticMarkup(React.createElement(banner)), /AED 200 or more/)
-  assert.match(renderToStaticMarkup(React.createElement(banner, { text: "Custom notice" })), /Custom notice/)
+const banner = load("components/store/AnnouncementBar.tsx", {
+  "@/lib/money": money,
+  "@/features/admin/settings/actions": { getStoreSettings: async () => ({ announcement_bar_enabled: true }) },
+}).AnnouncementBar
+test("announcement renders the inclusive threshold and preserves custom text", async () => {
+  assert.match(renderToStaticMarkup(await banner({})), /AED 200 or more/)
+  assert.match(renderToStaticMarkup(await banner({ text: "Custom notice" })), /Custom notice/)
 })
 
 const passthrough = ({ children }) => React.createElement("div", null, children)

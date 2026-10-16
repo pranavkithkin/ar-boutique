@@ -13,7 +13,6 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { footerNavLinks, navGroups } from "@/components/app-shared";
-import { LatestChange } from "@/components/latest-change";
 import { NavGroup } from "@/components/nav-group";
 
 export function AppSidebar() {
@@ -60,7 +59,6 @@ export function AppSidebar() {
 				))}
 			</SidebarContent>
 			<SidebarFooter className="gap-0 p-0">
-				<LatestChange />
 				<SidebarMenu className="border-t p-2">
 					{footerNavLinks.map((item) => (
 						<SidebarMenuItem key={item.title}>

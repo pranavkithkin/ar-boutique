@@ -2,15 +2,14 @@ import type { ReactNode } from "react";
 import {
 	LayoutGridIcon,
 	PackageIcon,
+	TagIcon,
 	BoxesIcon,
 	ShoppingBagIcon,
 	RotateCcwIcon,
-	ReceiptIcon,
-	UsersIcon,
 	SettingsIcon,
-	ShieldCheckIcon,
-	HelpCircleIcon,
 	BookOpenIcon,
+	PaletteIcon,
+	UsersIcon,
 } from "lucide-react";
 
 export type SidebarNavItem = {
@@ -34,12 +33,21 @@ export const navGroups: SidebarNavGroup[] = [
 				title: "Overview",
 				path: "/admin",
 				icon: <LayoutGridIcon />,
-				isActive: true,
 			},
 			{
-				title: "Products",
+				title: "Products Management",
 				path: "/admin/products",
 				icon: <PackageIcon />,
+			},
+			{
+				title: "Categories",
+				path: "/admin/categories",
+				icon: <TagIcon />,
+			},
+			{
+				title: "Colours & Sizes",
+				path: "/admin/attributes",
+				icon: <PaletteIcon />,
 			},
 			{
 				title: "Inventory & Stock",
@@ -51,40 +59,20 @@ export const navGroups: SidebarNavGroup[] = [
 				path: "/admin/orders",
 				icon: <ShoppingBagIcon />,
 			},
-		],
-	},
-	{
-		label: "Fulfilment & Care",
-		items: [
+			{
+				title: "Customers",
+				path: "/admin/customers",
+				icon: <UsersIcon />,
+			},
 			{
 				title: "Returns & Exchanges",
 				path: "/admin/returns",
 				icon: <RotateCcwIcon />,
 			},
 			{
-				title: "COD Reconciliation",
-				path: "/admin/reports/cod",
-				icon: <ReceiptIcon />,
-			},
-		],
-	},
-	{
-		label: "Administration",
-		items: [
-			{
-				title: "Staff & Access",
-				path: "/admin/staff",
-				icon: <UsersIcon />,
-			},
-			{
 				title: "Store Settings",
 				path: "/admin/settings",
 				icon: <SettingsIcon />,
-			},
-			{
-				title: "Security & Audit",
-				path: "/admin/audit",
-				icon: <ShieldCheckIcon />,
 			},
 		],
 	},
@@ -95,11 +83,6 @@ export const footerNavLinks: SidebarNavItem[] = [
 		title: "Storefront",
 		path: "/",
 		icon: <BookOpenIcon />,
-	},
-	{
-		title: "Concierge Help",
-		path: "/contact",
-		icon: <HelpCircleIcon />,
 	},
 ];
 

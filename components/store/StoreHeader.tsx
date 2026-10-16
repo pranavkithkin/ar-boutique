@@ -97,29 +97,43 @@ export function StoreHeader() {
           aria-label="AR Boutique home"
           className="flex min-w-0 items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          <div className="relative h-14 w-14 shrink-0 flex items-center justify-center sm:h-18 sm:w-18">
-            {/* White logo when transparent on homepage top (desktop only) */}
+          {/* Mobile-only brand logo */}
+          <div className="relative h-9 w-36 sm:h-11 sm:w-44 shrink-0 flex items-center justify-center lg:hidden">
             <Image
-              src="/images/logo.png"
-              alt="AR Boutique"
-              width={1254}
-              height={1254}
+              src="/images/logo-black.png"
+              alt="The AR Boutique"
+              width={2126}
+              height={740}
               unoptimized
               priority
-              className={`h-full w-full object-contain transition-opacity duration-300 hidden ${
-                isActive ? "lg:opacity-0 lg:absolute lg:pointer-events-none" : "lg:opacity-100 lg:block lg:drop-shadow-md"
+              className="h-full w-full object-contain"
+            />
+          </div>
+
+          {/* Desktop logo */}
+          <div className="relative hidden lg:flex h-12 w-44 xl:h-14 xl:w-52 shrink-0 items-center justify-center">
+            {/* White logo when transparent on homepage top (desktop only) */}
+            <Image
+              src="/images/logo-white.png"
+              alt="AR Boutique"
+              width={1169}
+              height={432}
+              unoptimized
+              priority
+              className={`h-full w-full object-contain transition-opacity duration-300 ${
+                isActive ? "opacity-0 absolute pointer-events-none" : "opacity-100 drop-shadow-md"
               }`}
             />
-            {/* Black logo when scrolled, hovered, internal pages, or on mobile */}
+            {/* Black logo when scrolled, hovered, or on internal pages */}
             <Image
               src="/images/logo-black.png"
               alt="AR Boutique"
-              width={1254}
-              height={1254}
+              width={2126}
+              height={740}
               unoptimized
               priority
-              className={`h-full w-full object-contain transition-opacity duration-300 block ${
-                isActive ? "lg:opacity-100" : "lg:opacity-0 lg:absolute lg:pointer-events-none"
+              className={`h-full w-full object-contain transition-opacity duration-300 ${
+                isActive ? "opacity-100" : "opacity-0 absolute pointer-events-none"
               }`}
             />
           </div>

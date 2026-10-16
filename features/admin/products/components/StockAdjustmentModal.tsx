@@ -46,6 +46,19 @@ export function StockAdjustmentModal({
   const [note, setNote] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+  const inputRef = React.useRef<HTMLInputElement>(null)
+
+  React.useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault()
+    }
+    el.addEventListener("wheel", handleWheel, { passive: false })
+    return () => {
+      el.removeEventListener("wheel", handleWheel)
+    }
+  }, [isOpen, variant])
 
   React.useEffect(() => {
     if (variant) {
@@ -165,6 +178,7 @@ export function StockAdjustmentModal({
                   -
                 </Button>
                 <Input
+                  ref={inputRef}
                   id="new-on-hand"
                   type="number"
                   min={variant.reserved}
@@ -173,7 +187,8 @@ export function StockAdjustmentModal({
                     const val = parseInt(e.target.value, 10)
                     setNewOnHand(isNaN(val) ? 0 : Math.max(0, val))
                   }}
-                  className="h-9 text-center font-mono text-sm bg-background border-input rounded-none"
+                  onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
+                  className="h-9 text-center font-mono text-sm bg-background border-input rounded-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <Button
                   type="button"

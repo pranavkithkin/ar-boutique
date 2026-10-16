@@ -48,8 +48,8 @@ export function AddVariantForm({
     )
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSubmit(e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) {
+    if (e) e.preventDefault()
     setErrorMessage(null)
 
     if (!sku.trim()) {
@@ -102,8 +102,13 @@ export function AddVariantForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
+    <div
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault()
+          handleSubmit(e)
+        }
+      }}
       className="p-4 bg-muted/40 border border-border space-y-4 rounded-none"
     >
       <div className="flex items-center justify-between border-b border-border/80 pb-2">
@@ -218,8 +223,9 @@ export function AddVariantForm({
           Cancel
         </Button>
         <Button
-          type="submit"
+          type="button"
           size="sm"
+          onClick={handleSubmit}
           disabled={isSubmitting}
           className="h-8 text-xs font-sans font-medium uppercase tracking-[0.08em] rounded-none bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5"
         >
@@ -233,6 +239,6 @@ export function AddVariantForm({
           )}
         </Button>
       </div>
-    </form>
+    </div>
   )
 }

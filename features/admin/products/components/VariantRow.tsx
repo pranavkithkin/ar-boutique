@@ -268,7 +268,7 @@ export function VariantRow({
               value={stockOnHand}
               onChange={(e) => setStockOnHand(e.target.value)}
               onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
-              className="h-8 w-24 text-xs font-mono bg-background border-input rounded-none"
+              className="h-8 w-24 text-xs font-mono bg-background border-input rounded-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               title="Stock on hand"
             />
             <span className="text-[10px] text-muted-foreground">units</span>

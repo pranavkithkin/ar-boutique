@@ -1,3 +1,6 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -17,6 +20,15 @@ import type { SidebarNavGroup } from "@/components/app-shared";
 import { ChevronRightIcon } from "lucide-react";
 
 export function NavGroup({ label, items }: SidebarNavGroup) {
+	const pathname = usePathname();
+
+	function isItemActive(path?: string) {
+		if (!path) return false;
+		// Exact match for /admin (dashboard root), prefix match for everything else
+		if (path === "/admin") return pathname === "/admin";
+		return pathname.startsWith(path);
+	}
+
 	return (
 		<SidebarGroup>
 			{label && (
@@ -29,7 +41,8 @@ export function NavGroup({ label, items }: SidebarNavGroup) {
 					<Collapsible
 						className="group/collapsible"
 						defaultOpen={
-							!!item.isActive || item.subItems?.some((i) => !!i.isActive)
+							isItemActive(item.path) ||
+							item.subItems?.some((i) => isItemActive(i.path))
 						}
 						key={item.title}
 						render={<SidebarMenuItem />}
@@ -39,7 +52,7 @@ export function NavGroup({ label, items }: SidebarNavGroup) {
 								<CollapsibleTrigger
 									render={
 										<SidebarMenuButton
-											isActive={item.isActive}
+											isActive={isItemActive(item.path)}
 											className="text-xs font-sans tracking-wide font-normal"
 										/>
 									}
@@ -53,7 +66,7 @@ export function NavGroup({ label, items }: SidebarNavGroup) {
 										{item.subItems?.map((subItem) => (
 											<SidebarMenuSubItem key={subItem.title}>
 												<SidebarMenuSubButton
-													isActive={subItem.isActive}
+													isActive={isItemActive(subItem.path)}
 													className="text-xs font-sans tracking-wide"
 													render={<a href={subItem.path} />}
 												>
@@ -67,7 +80,7 @@ export function NavGroup({ label, items }: SidebarNavGroup) {
 							</>
 						) : (
 							<SidebarMenuButton
-								isActive={item.isActive}
+								isActive={isItemActive(item.path)}
 								className="text-xs font-sans tracking-wide font-normal data-active:font-medium"
 								render={<a href={item.path} />}
 							>
@@ -81,3 +94,4 @@ export function NavGroup({ label, items }: SidebarNavGroup) {
 		</SidebarGroup>
 	);
 }
+

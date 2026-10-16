@@ -1,6 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
-import Image from "next/image"
 import { AnnouncementBar } from "@/components/store/AnnouncementBar"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
@@ -12,54 +10,34 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { StoreButton } from "@/components/store/StoreButton"
-import { Card, CardContent } from "@/components/ui/card"
-import { ArrowRight, Sparkles, HeartHandshake, ShieldCheck, Feather } from "lucide-react"
 import { AnimatedSection, FadeIn } from "@/components/store/AnimatedSection"
-import { JOURNAL_ENABLED } from "@/lib/journal"
 
 export const metadata: Metadata = {
-  title: "About Us | AR Boutique",
+  title: "About Us | The AR Boutique",
   description:
-    "Discover the heritage and artistry of AR Boutique. Bringing timeless South Asian craftsmanship and modern silhouette elegance to discerning women across the UAE.",
+    "Welcome to The AR Boutique, where timeless Indian heritage meets modern-day elegance. Discover elegant outfits, stylish tops, versatile tunics, and effortlessly chic co-ord sets.",
 }
 
-const PILLARS = [
+const COMMITMENT_ITEMS = [
   {
-    icon: Feather,
-    title: "Ancestral Mastery",
+    title: "Curated Style",
     description:
-      "We collaborate with master karigars whose families have perfected intricate zardozi needlework, gota patti, and handloom weaving for generations.",
+      "Bringing together distinctive designs that balance timeless elegance with modern trends.",
   },
   {
-    icon: ShieldCheck,
-    title: "Pure & Honest Materials",
+    title: "Quality & Comfort",
     description:
-      "Every textile is hand-selected: pure Mulberry silks, breathable organic Chanderi, fine hand-spun mulmul, and genuine metallic threads that never tarnish.",
+      "Prioritizing styles that look beautiful and feel comfortable to wear.",
   },
   {
-    icon: HeartHandshake,
-    title: "Unhurried Luxury",
+    title: "A Thoughtful Shopping Experience",
     description:
-      "We deliberately reject fast-fashion cycles. Each design is released in limited editions, ensuring ethical compensation, artisan dignity, and heirloom longevity.",
-  },
-]
-
-const TIMELINE = [
-  {
-    year: "Our Origin",
-    title: "A Family Legacy of Fine Textiles",
-    text: "Born from a deep reverence for heritage craftsmanship, AR Boutique was conceived to bring the refined richness of artisanal ethnic attire to modern women seeking grace without compromise.",
+      "Making your journey with us simple, enjoyable, and inspiring.",
   },
   {
-    year: "The Atelier",
-    title: "The Meeting of Past & Present",
-    text: "Our design studio bridges royal court heritage with contemporary urban life—lightweight linings, breathable weaves, and versatile modular silhouettes that transition effortlessly from daytime gatherings to celebratory evenings.",
-  },
-  {
-    year: "Today",
-    title: "Serving the Discerning UAE Client",
-    text: "From our base in the United Arab Emirates, we take pride in delivering bespoke luxury with next-day service, personalized WhatsApp concierge consultations, and flexible cash on delivery.",
+    title: "Fashion for Every Moment",
+    description:
+      "Offering versatile collections for celebrations, everyday elegance, and everything in between.",
   },
 ]
 
@@ -69,11 +47,11 @@ export default function AboutPage() {
       <AnnouncementBar />
       <StoreHeader />
 
-      <main className="flex-1 pb-20">
-        {/* Page Hero Header */}
-        <div className="bg-muted/50 py-8 md:py-12 border-b border-border/40">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-            <Breadcrumb className="mb-4 md:mb-6">
+      <main className="flex-1 pb-24">
+        {/* Masthead Header */}
+        <section className="border-b border-border/50 bg-muted/20 py-10 md:py-16">
+          <div className="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
+            <Breadcrumb className="mb-8">
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbLink href="/" className="hover:text-foreground">
@@ -87,187 +65,93 @@ export default function AboutPage() {
               </BreadcrumbList>
             </Breadcrumb>
 
-            <div className="text-center">
-              <h1 className="text-3xl sm:text-4xl font-heading font-normal text-foreground tracking-tight mb-3">
-                The Story of AR Boutique
-              </h1>
-              <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
-                Where centuries of artisanal needlework meet contemporary silhouette. Designed for effortless grace, crafted with generational devotion.
+            <FadeIn delay={0.05}>
+              <div className="max-w-3xl space-y-4">
+                <span className="text-[11px] font-sans font-medium uppercase tracking-[0.25em] text-muted-foreground block">
+                  The AR Boutique
+                </span>
+                <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-normal text-foreground leading-[1.2] tracking-tight">
+                  Welcome to <em className="italic">The AR Boutique</em>, where timeless Indian heritage meets modern-day elegance.
+                </h1>
+              </div>
+            </FadeIn>
+          </div>
+        </section>
+
+        {/* Content Container */}
+        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8 mt-12 md:mt-20 space-y-16 md:space-y-24">
+          {/* Section 1: Philosophy & Curation */}
+          <AnimatedSection delay={0.08}>
+            <div className="max-w-3xl space-y-6 text-base sm:text-lg text-muted-foreground font-sans leading-relaxed">
+              <p>
+                We believe fashion is more than just clothing — Our collection brings together the beauty of Indian traditional wear and the charm of contemporary fashion, featuring elegant outfits, stylish tops, versatile tunics, and effortlessly chic co-ord sets.
+              </p>
+              <p>
+                At The AR Boutique, we carefully curate styles that help you look and feel your best, whether you&apos;re dressing for a festive celebration, a special occasion, a casual outing, or your everyday moments.
               </p>
             </div>
-          </div>
-        </div>
-
-        <div className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-8 mt-12 md:mt-20 flex flex-col gap-16 md:gap-24">
-          {/* Main Story Hero Spread */}
-          <FadeIn delay={0.05}>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
-              {/* Visual Frame */}
-              <div className="lg:col-span-6 relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden rounded-xs bg-muted shadow-sm group">
-                <Image
-                  src="/images/artisan_embroidery.jpg"
-                  alt="Artisan embroidering fine gold zardozi"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  priority
-                />
-              </div>
-
-              {/* Editorial Copy */}
-              <div className="lg:col-span-6 flex flex-col gap-5 text-left">
-                <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.15em] uppercase text-muted-foreground">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>The Soul of Our Atelier</span>
-                </div>
-
-                <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-normal text-foreground leading-[1.2]">
-                  We believe true luxury is born of human touch and unhurried patience.
-                </h2>
-
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  In an era dominated by fleeting trends and machine-made uniformity, AR Boutique stands as a sanctuary for time-honored artistic traditions. Every garment in our collection is an intimate conversation between the weaver&apos;s loom, the embroiderer&apos;s needle, and the modern woman who breathes life into it.
-                </p>
-
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  Headquartered in the United Arab Emirates, our collections are meticulously tailored to harmonize cultural reverence with modern ease—offering lightweight comfort that flourishes in regional climates while preserving the majestic grandeur of bespoke South Asian attire.
-                </p>
-
-                <div className="pt-2">
-                  <Link href="/collections">
-                    <StoreButton className="gap-2 px-7">
-                      <span>Explore Our Creations</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </StoreButton>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </FadeIn>
-
-          {/* Pillars of Excellence */}
-          <AnimatedSection delay={0.08}>
-            <div className="flex flex-col gap-10">
-              <div className="text-center max-w-2xl mx-auto">
-                <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2">
-                  Our Guiding Principles
-                </p>
-                <h2 className="font-heading text-2xl sm:text-3xl font-normal text-foreground">
-                  The Pillars of AR Boutique
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                {PILLARS.map((pillar, i) => {
-                  const Icon = pillar.icon
-                  return (
-                    <Card
-                      key={i}
-                      className="border-border/60 hover:border-foreground/30 transition-all duration-500 shadow-xs hover:shadow-md bg-card p-6 sm:p-8 flex flex-col gap-4 text-center items-center"
-                    >
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-foreground">
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <h3 className="font-heading text-xl sm:text-2xl font-normal text-foreground">
-                        {pillar.title}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        {pillar.description}
-                      </p>
-                    </Card>
-                  )
-                })}
-              </div>
-            </div>
           </AnimatedSection>
 
-          {/* Behind the Scenes & Craft Narrative */}
+          {/* Tagline Feature Card */}
           <AnimatedSection delay={0.1}>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
-              {/* Copy */}
-              <div className="lg:col-span-6 order-2 lg:order-1 flex flex-col gap-5 text-left">
-                <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-                  Bespoke Craftsmanship
-                </p>
-                <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-normal text-foreground leading-[1.2]">
-                  From Raw Thread to Heirloom Ensemble
-                </h2>
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  Our process begins months prior to each collection. We hand-sketch intricate jaal and botanical motifs inspired by Mughal architecture and Persian tapestries, which are subsequently hand-transferred onto natural mulberry silks and tissue organzas.
-                </p>
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  Up to forty hours of dedicated needlework are invested into a single yoke. When you slip into an AR Boutique ensemble, you wear not simply a dress, but the preserved legacy of master karigars.
-                </p>
-
-                {JOURNAL_ENABLED && (
-                <div className="pt-2">
-                  <Link href="/journal">
-                    <StoreButton variant="outline" className="gap-2 px-7">
-                      <span>Read Behind The Scenes</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </StoreButton>
-                  </Link>
-                </div>
-                )}
-              </div>
-
-              {/* Visual */}
-              <div className="lg:col-span-6 order-1 lg:order-2 relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden rounded-xs bg-muted shadow-sm group">
-                <Image
-                  src="/images/journal_bts_2.jpg"
-                  alt="Our atelier design process and textiles"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
-              </div>
+            <div className="bg-card border border-border p-8 sm:p-14 text-center rounded-none shadow-xs">
+              <p className="font-heading text-2xl sm:text-3xl md:text-4xl font-normal text-foreground leading-[1.3] italic max-w-2xl mx-auto">
+                &ldquo;The AR Boutique — Style Redefined. Your Style, Your Story.&rdquo;
+              </p>
             </div>
           </AnimatedSection>
 
-          {/* Timeline / Journey */}
+          {/* Section 2: Our Commitment */}
           <AnimatedSection delay={0.12}>
-            <div className="rounded-xs bg-muted/40 border border-border/60 p-8 sm:p-12 md:p-16">
-              <div className="text-center max-w-xl mx-auto mb-10 md:mb-14">
-                <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2">
-                  The Journey
-                </p>
-                <h2 className="font-heading text-2xl sm:text-3xl font-normal text-foreground">
-                  Our Commitment to You
+            <div className="space-y-12">
+              <div className="max-w-3xl space-y-6">
+                <h2 className="font-heading text-3xl sm:text-4xl font-normal text-foreground leading-[1.2]">
+                  Our Commitment
                 </h2>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
-                {TIMELINE.map((item, i) => (
-                  <div key={i} className="flex flex-col gap-3">
-                    <span className="font-heading text-2xl sm:text-3xl text-foreground/40 font-normal">
-                      0{i + 1}
-                    </span>
-                    <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                      {item.year}
-                    </span>
-                    <h3 className="font-heading text-lg sm:text-xl font-normal text-foreground">
-                      {item.title}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                      {item.text}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </AnimatedSection>
-
-          {/* Founder Pull Quote */}
-          <AnimatedSection delay={0.14}>
-            <div className="max-w-3xl mx-auto text-center flex flex-col items-center gap-6 py-4">
-              <blockquote className="font-heading text-2xl sm:text-3xl md:text-4xl font-normal text-foreground leading-[1.3] italic">
-                &ldquo;A woman should never have to compromise between cultural magnificence and modern ease. Every stitch we craft is dedicated to making you feel extraordinary.&rdquo;
-              </blockquote>
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.15em] text-foreground">
-                  The Creative Atelier
+                <p className="text-base sm:text-lg text-muted-foreground font-sans leading-relaxed">
+                  At <em className="italic text-foreground">The AR Boutique</em>, our commitment goes beyond fashion. We strive to bring you thoughtfully curated styles that celebrate individuality, confidence, and the beauty of self-expression.
                 </p>
-                <p className="text-xs text-muted-foreground">AR Boutique • Dubai, United Arab Emirates</p>
+
+                <p className="text-base sm:text-lg text-muted-foreground font-sans leading-relaxed">
+                  We are dedicated to offering collections that blend the richness of Indian heritage with the elegance of contemporary fashion, helping you find pieces that feel as special as the moments you wear them for.
+                </p>
+              </div>
+
+              {/* Our commitment to you: 4 Cards */}
+              <div className="space-y-6 pt-4">
+                <p className="text-sm font-sans font-medium uppercase tracking-[0.15em] text-foreground">
+                  Our commitment to you:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {COMMITMENT_ITEMS.map((item, index) => (
+                    <div
+                      key={index}
+                      className="bg-card border border-border/80 p-6 sm:p-7 flex flex-col justify-between rounded-none hover:border-foreground/40 transition-colors space-y-4"
+                    >
+                      <div className="space-y-3">
+                        <span className="font-mono text-xs text-muted-foreground/60 block">
+                          0{index + 1}
+                        </span>
+                        <h3 className="font-heading text-xl font-normal text-foreground">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground font-sans leading-relaxed">
+                          {item.description}
+                        </p>
+                      </div>
+                      <div className="h-px w-8 bg-border" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Closing statement */}
+              <div className="pt-8 border-t border-border/60">
+                <p className="font-heading text-xl sm:text-2xl md:text-3xl font-normal text-foreground leading-[1.35] italic max-w-2xl">
+                  &ldquo;Every choice we make reflects our desire to help you discover styles that feel uniquely yours.&rdquo;
+                </p>
               </div>
             </div>
           </AnimatedSection>

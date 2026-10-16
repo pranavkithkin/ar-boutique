@@ -2,7 +2,8 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { AppShell } from "@/components/app-shell"
-import { Dashboard } from "@/components/dashboard"
+import { getAdminDashboardData } from "@/features/admin/dashboard/actions"
+import { DashboardClientContainer } from "@/features/admin/dashboard/components/DashboardClientContainer"
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | AR Boutique",
@@ -23,9 +24,11 @@ export default async function AdminDashboardPage() {
     redirect("/admin/login")
   }
 
+  const initialData = await getAdminDashboardData("7d")
+
   return (
     <AppShell>
-      <Dashboard />
+      <DashboardClientContainer initialData={initialData} />
     </AppShell>
   )
 }

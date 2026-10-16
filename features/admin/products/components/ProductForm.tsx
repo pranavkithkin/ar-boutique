@@ -26,7 +26,10 @@ import {
 } from "../actions"
 import { AdminCategory, AdminProductDetail, AdminSize, AdminColour } from "../types"
 import { ProductVariantsManager } from "./ProductVariantsManager"
-import { formatAED } from "@/lib/money"
+import {
+  evaluatePublishRules,
+  ColourwayPublishSnapshot,
+} from "../publish-checks"
 import {
   ArrowLeft,
   Save,
@@ -35,6 +38,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Image as ImageIcon,
+  Check,
+  X,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react"
 
 interface ProductFormProps {
@@ -71,12 +78,54 @@ export function ProductForm({
     handleSubmit,
     control,
     setValue,
-    watch,
-    formState: { isSubmitting, isDirty },
+    formState: { isSubmitting },
   } = useForm<AdminProductFormValues>({
     resolver: zodResolver(adminProductSchema),
     defaultValues,
   })
+
+  // Evaluate publish validation rules in real-time (TASK-037)
+  const publishReadiness = React.useMemo(() => {
+    if (mode === "create" || !initialProduct) {
+      return {
+        canPublish: false,
+        errors: [
+          "A product must have at least one visible colourway with at least one uploaded photo.",
+          "A product must have at least one active SKU (variant).",
+          "Every active SKU must have a valid selling price in AED.",
+        ],
+        checks: {
+          hasVisibleColourwayWithPhoto: false,
+          hasActiveSku: false,
+          allActiveSkusHavePrice: false,
+        },
+        details: {
+          visibleColourwaysCount: 0,
+          photosCount: 0,
+          activeSkusCount: 0,
+          skusMissingPrice: [],
+        },
+      }
+    }
+
+    const snapshots: ColourwayPublishSnapshot[] = initialProduct.colourways.map((cw) => ({
+      id: cw.id,
+      is_active: cw.is_active,
+      hasPhoto:
+        cw.images.length > 0 &&
+        cw.images.some(
+          (img) => typeof img.media_key === "string" && img.media_key.trim().length > 0
+        ),
+      variants: cw.variants.map((v) => ({
+        id: v.id,
+        sku: v.sku,
+        is_active: v.is_active,
+        price_fils: v.price_fils,
+      })),
+    }))
+
+    return evaluatePublishRules(snapshots)
+  }, [initialProduct, mode])
 
   // Auto-generate slug from name in create mode
   function handleNameChange(val: string) {
@@ -92,6 +141,14 @@ export function ProductForm({
   async function onSubmit(data: AdminProductFormValues) {
     setSuccessMessage(null)
     setErrorMessage(null)
+
+    // TASK-037: Enforce publish checks prior to server dispatch
+    if (data.status === "published" && !publishReadiness.canPublish) {
+      setErrorMessage(
+        `Cannot publish product: ${publishReadiness.errors.join(" ")}`
+      )
+      return
+    }
 
     try {
       if (mode === "create") {
@@ -363,9 +420,113 @@ export function ProductForm({
                       className="h-10 px-3 text-xs font-sans bg-background border border-input rounded-none text-foreground w-full mt-1.5 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
                     >
                       <option value="draft">Draft (Hidden from Storefront)</option>
-                      <option value="published">Published (Live Online)</option>
+                      <option
+                        value="published"
+                        disabled={mode === "create" || !publishReadiness.canPublish}
+                      >
+                        {mode === "create"
+                          ? "Published (Configure variants first)"
+                          : !publishReadiness.canPublish
+                          ? "Published (Incomplete publish requirements)"
+                          : "Published (Live Online)"}
+                      </option>
                       <option value="archived">Archived (Deactivated)</option>
                     </select>
+
+                    {/* Publish Readiness Checklist Card (TASK-037) */}
+                    <div className="mt-3 p-3 bg-muted/30 border border-border rounded-none space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          {publishReadiness.canPublish ? (
+                            <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                          ) : (
+                            <ShieldAlert className="size-3.5 text-amber-600 dark:text-amber-400" />
+                          )}
+                          <span className="text-[10px] font-sans font-semibold uppercase tracking-[0.12em] text-foreground">
+                            Publish Checklist
+                          </span>
+                        </div>
+                        <span
+                          className={`text-[9px] font-mono uppercase px-1.5 py-0.5 border ${
+                            publishReadiness.canPublish
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                              : "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400"
+                          }`}
+                        >
+                          {publishReadiness.canPublish ? "Ready" : "Incomplete"}
+                        </span>
+                      </div>
+
+                      <ul className="space-y-1.5 text-[11px] font-sans">
+                        <li className="flex items-start gap-2">
+                          {publishReadiness.checks.hasVisibleColourwayWithPhoto ? (
+                            <Check className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                          ) : (
+                            <X className="size-3.5 text-destructive shrink-0 mt-0.5" />
+                          )}
+                          <span
+                            className={
+                              publishReadiness.checks.hasVisibleColourwayWithPhoto
+                                ? "text-foreground"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            At least 1 visible colourway with photos
+                            {mode === "edit" && (
+                              <span className="font-mono text-[10px] text-muted-foreground ml-1">
+                                ({publishReadiness.details.visibleColourwaysCount} visible, {publishReadiness.details.photosCount} with photos)
+                              </span>
+                            )}
+                          </span>
+                        </li>
+
+                        <li className="flex items-start gap-2">
+                          {publishReadiness.checks.hasActiveSku ? (
+                            <Check className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                          ) : (
+                            <X className="size-3.5 text-destructive shrink-0 mt-0.5" />
+                          )}
+                          <span
+                            className={
+                              publishReadiness.checks.hasActiveSku
+                                ? "text-foreground"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            At least 1 active SKU
+                            {mode === "edit" && (
+                              <span className="font-mono text-[10px] text-muted-foreground ml-1">
+                                ({publishReadiness.details.activeSkusCount} active)
+                              </span>
+                            )}
+                          </span>
+                        </li>
+
+                        <li className="flex items-start gap-2">
+                          {publishReadiness.checks.allActiveSkusHavePrice ? (
+                            <Check className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                          ) : (
+                            <X className="size-3.5 text-destructive shrink-0 mt-0.5" />
+                          )}
+                          <div className="flex flex-col">
+                            <span
+                              className={
+                                publishReadiness.checks.allActiveSkusHavePrice
+                                  ? "text-foreground"
+                                  : "text-muted-foreground"
+                              }
+                            >
+                              Valid AED price on all active SKUs
+                            </span>
+                            {publishReadiness.details.skusMissingPrice.length > 0 && (
+                              <span className="text-[10px] text-destructive font-mono mt-0.5">
+                                Missing: {publishReadiness.details.skusMissingPrice.join(", ")}
+                              </span>
+                            )}
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
                   </Field>
                 )}
               />

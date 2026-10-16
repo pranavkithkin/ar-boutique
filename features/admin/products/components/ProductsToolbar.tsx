@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Plus, Filter, X } from "lucide-react"
+import { Search, Plus, Filter, X, FileSpreadsheet, Download, Loader2 } from "lucide-react"
 import { AdminCategory } from "../types"
+import { StockSheetImportModal } from "./StockSheetImportModal"
 
 interface ProductsToolbarProps {
   categories: AdminCategory[]
@@ -26,7 +27,33 @@ export function ProductsToolbar({
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = React.useState(currentSearch)
+  const [isImportModalOpen, setIsImportModalOpen] = React.useState(false)
+  const [isExporting, setIsExporting] = React.useState(false)
   const [, startTransition] = React.useTransition()
+
+  async function handleExportCatalogue() {
+    try {
+      setIsExporting(true)
+      const res = await fetch("/api/admin/catalogue-export")
+      if (!res.ok) {
+        throw new Error("Export failed with status " + res.status)
+      }
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `AR-Boutique-Stock-${new Date().toISOString().slice(0, 10)}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error("Export error:", err)
+      alert("Failed to export catalogue. Please try again.")
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   function updateQuery(params: Record<string, string | null>) {
     const nextParams = new URLSearchParams(searchParams.toString())
@@ -77,8 +104,35 @@ export function ProductsToolbar({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <Button
+            type="button"
+            variant="outline"
+            onClick={handleExportCatalogue}
+            disabled={isExporting}
+            className="h-9 px-3.5 text-xs font-sans font-medium uppercase tracking-[0.08em] rounded-none border-border hover:bg-muted gap-1.5"
+            title="Download full catalogue spreadsheet (.xlsx)"
+          >
+            {isExporting ? (
+              <Loader2 className="size-4 animate-spin text-primary" />
+            ) : (
+              <Download className="size-4 text-primary" />
+            )}
+            <span>{isExporting ? "Exporting..." : "Download Catalogue"}</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-9 px-3.5 text-xs font-sans font-medium uppercase tracking-[0.08em] rounded-none border-border hover:bg-muted gap-1.5"
+          >
+            <FileSpreadsheet className="size-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Bulk Edit / Import</span>
+          </Button>
+
+          <Button
+            nativeButton={false}
             render={<Link href="/admin/products/new" />}
             className="h-9 px-4 text-xs font-sans font-medium uppercase tracking-[0.08em] rounded-none bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5"
           >
@@ -154,6 +208,11 @@ export function ProductsToolbar({
           </form>
         </div>
       </div>
+
+      <StockSheetImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+      />
     </div>
   )
 }

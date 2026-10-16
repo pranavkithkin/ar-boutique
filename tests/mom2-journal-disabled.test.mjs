@@ -87,7 +87,7 @@ test("header, homepage and About gate every public Journal entry point", () => {
   const header = read("components/store/StoreHeader.tsx")
   assert.equal((header.match(/\{JOURNAL_ENABLED && <Link href="\/journal"/g) ?? []).length, 2)
   assert.equal((header.match(/href="\/journal"/g) ?? []).length, 2)
-  for (const path of ["app/page.tsx", "app/about/page.tsx"]) {
+  for (const path of ["app/page.tsx"]) {
     const source = read(path)
     const guard = source.indexOf("{JOURNAL_ENABLED && (")
     const firstLink = source.indexOf('href="/journal"')
@@ -95,6 +95,7 @@ test("header, homepage and About gate every public Journal entry point", () => {
   }
   assert.match(read("app/page.tsx"), /\{JOURNAL_ENABLED && \(\s*<AnimatedSection/)
   assert.doesNotMatch(read("components/store/StoreFooter.tsx"), /href=["'`]\/journal/)
+  assert.doesNotMatch(read("app/about/page.tsx"), /href=["'`]\/journal/)
 })
 
 test("catalogue, hero, promo and About copy remain in place", () => {
@@ -102,5 +103,5 @@ test("catalogue, hero, promo and About copy remain in place", () => {
   assert.match(home, /<HeroSlider \/>/)
   assert.match(home, /getProductsPage\(\{\s*limit: 10,\s*sort: "newest",/)
   assert.match(home, /imageSrc="\/images\/promo_banner_summer\.png"/)
-  assert.match(read("app/about/page.tsx"), /A Family Legacy of Fine Textiles/)
+  assert.match(read("app/about/page.tsx"), /Style Redefined\. Your Style, Your Story\./)
 })

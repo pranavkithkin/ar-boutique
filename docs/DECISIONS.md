@@ -232,3 +232,10 @@ ext/image loader (src/lib/media-loader.ts) snaps widths to exactly 200, 400, 600
 - **Monitoring:** Usage email alerts are ON. Dashboard checked monthly. No custom domains on Free/Plus (URLs use 
 es.cloudinary.com).
 - **Environments:** Dev and staging share one Cloudinary account using folders. Production gets its own account before launch.
+
+---
+
+## ADR-039: Customer UAE bank details for COD return refunds
+**Status:** Accepted, 16 Oct 2026. Amends ADR-035 and PRD Q39
+**Decision:** When a customer requests a return for a Cash on Delivery (COD) order, the return submission form allows them to provide their UAE bank transfer details (Bank Name, Account Holder / Beneficiary Name, and UAE IBAN). These details are stored in `public.return_requests` and presented to administrators on `/admin/returns/[id]` to facilitate direct bank transfer execution when processing the refund.
+**Reason:** Seamless customer experience. Directly collecting the customer's IBAN during return submission eliminates manual back-and-forth communication over email/WhatsApp, accelerating claim resolution. Admins can verify the details and record the bank transfer reference in one unified workflow.

@@ -28,21 +28,22 @@ export function HeroSlider() {
     {
       id: 1,
       imageSrc: "/images/hero_traditions_desktop.png",
+      mobileImageSrc: "/images/hero_traditions_mobile.png",
       alt: "Timeless Traditions Fashion Heritage",
       href: "/collections",
     },
-    {
-      id: 2,
-      imageSrc: "/images/hero_boutique_desktop.png",
-      alt: "Timeless Boutique Fashion Collection",
-      href: "/collections",
-    },
-    {
-      id: 3,
-      imageSrc: "/images/hero_elegance_desktop.png",
-      alt: "Timeless Style, Modern Elegance",
-      href: "/collections",
-    }
+    // {
+    //   id: 2,
+    //   imageSrc: "/images/hero_boutique_desktop.png",
+    //   alt: "Timeless Boutique Fashion Collection",
+    //   href: "/collections",
+    // },
+    // {
+    //   id: 3,
+    //   imageSrc: "/images/hero_elegance_desktop.png",
+    //   alt: "Timeless Style, Modern Elegance",
+    //   href: "/collections",
+    // }
   ]
 
   return (
@@ -61,13 +62,14 @@ export function HeroSlider() {
                 aria-label={`View collection: ${slide.alt}`}
               >
                 {/* A modest height increase: wide 16:9 fallback on phones, 2:1 from tablet upward. */}
-                <div className={`relative w-full md:aspect-[2/1] ${slide.mobileImageSrc ? 'aspect-[4/4.5]' : 'aspect-video'}`}>
+                <div className={`relative w-full md:aspect-[2/1] ${slide.mobileImageSrc ? 'aspect-[4/5]' : 'aspect-video'}`}>
                   {/* Desktop Image */}
                   <Image
                     src={slide.imageSrc}
                     alt={slide.alt}
                     fill
                     sizes="100vw"
+                    unoptimized
                     className={`object-cover object-center ${slide.mobileImageSrc ? 'hidden md:block' : 'block'}`}
                     priority={slide.id === 1}
                   />
@@ -78,7 +80,8 @@ export function HeroSlider() {
                       alt={`${slide.alt} mobile`}
                       fill
                       sizes="100vw"
-                      className="object-fill block md:hidden"
+                      unoptimized
+                      className="object-cover object-center block md:hidden"
                       priority={slide.id === 1}
                     />
                   )}

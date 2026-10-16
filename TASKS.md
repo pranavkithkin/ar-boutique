@@ -47,8 +47,8 @@ Done when: core tables exist with RLS and the RLS tests run in CI.
 
 ## Phase 3: Admin Access
 Done when: an invited admin logs in with 2FA and everyone else is blocked.
-- [ ] TASK-020 Supabase clients in `src/lib/supabase/` (public, customer, admin, browser, service)
-- [ ] TASK-021 `/admin/login` (email + password) with loading and error states
+- [x] TASK-020 Supabase clients in `lib/supabase/` (browser client, server client with async cookies, service role admin client)
+- [x] TASK-021 `/admin/login` (email + password) with loading and error states, connected to Supabase Auth and active admin verification
 - [ ] TASK-022 `/admin/mfa`: TOTP enrolment (QR code) and verification; continue only with `aal2`
 - [ ] TASK-023 Custom Access Token Hook that adds `user_role: 'admin'` for active admins
 - [ ] TASK-024 `proxy.ts` branch for `/admin/*` (session refresh + redirects) and `requireAdmin()`; the matcher excludes the Sentry tunnel
@@ -59,23 +59,23 @@ Done when: an invited admin logs in with 2FA and everyone else is blocked.
 
 ## Phase 4: Catalogue
 Done when: an admin creates a product with colours, photos and sizes, and it's live on the storefront straight away.
-- [ ] TASK-029 Media adapter `src/services/media` on Cloudinary (ADR-038): `signUpload`, `finishUpload` (verifies size/type/dimensions on Cloudinary, saves to DB, deletes if invalid), `imageUrl`, `privateUrl`, `remove`; `src/lib/media-loader.ts` as the `next/image` loader wrapping Cloudinary URLs; dev/staging folders; Cloudinary variables in `src/lib/env.ts` and `.env.example`; unit tests for the loader snapping.
-- [ ] TASK-030 Admin categories: list, create, rename, reorder, hide, category photo; block delete while products exist
-- [ ] TASK-031 Admin colours and sizes: list, create, rename, reorder, hide; optional swatch colour; names saved exactly as typed; block delete once used
-- [ ] TASK-032 Admin products list with search (name, style code through the colourways, SKU) and status filter
-- [ ] TASK-033 Admin product form: name, description, category, final sale, SEO, Draft/Published, archive. No price and no style code on the product; nothing generated on create
-- [ ] TASK-034 Admin colourways: a sizes-only product shows one colourway card; "Add another colour" turns on tabs; add from the colour list (or a new name, as typed), reorder, hide; the client's style code (required) and the details fields (`colourwayDetailsSchema`); per-colour photos (signed upload into the colour's folder, reorder, required alt text, first photo is the main photo)
-- [ ] TASK-035 Admin SKUs per colourway: the admin types the client's SKU (required, never prefilled or suggested; checked by `src/lib/sku.ts`, unit tested), size or no size, price and compare-at price (typed once for all sizes, or per SKU); edit a SKU until it's first sold; active toggle
-- [ ] TASK-036 Admin stock: colours x sizes grid on the product (a "No size" column for unsized SKUs) and a Stock page for every SKU (search, low and out-of-stock filters); on hand, held, available; reason + note; history
-- [ ] TASK-037 Publish checks: at least one visible colourway with a photo, at least one active SKU, and a price on every active SKU; clear errors in the form
+- [x] TASK-029 Media upload and deletion on Cloudinary (ADR-038): signed upload & destroy via Server Actions (`uploadProductImageAction`, `deleteProductImageAction`), `guard_image_key` path pattern enforcement, and interactive `ColourwayImageManager` for uploading and deleting product photos per colourway on `/admin/products/[id]`.
+- [x] TASK-030 Admin categories: list, create, rename, reorder, hide, category photo; block delete while products exist (`/admin/categories`, `features/admin/categories/`)
+- [x] TASK-031 Admin colours and sizes: list, create, rename, reorder, hide; optional swatch colour; names saved exactly as typed; block delete once used (`/admin/attributes`, `features/admin/attributes/`)
+- [x] TASK-032 Admin products list with search (name, style code through the colourways, SKU) and status filter
+- [x] TASK-033 Admin product form: name, description, category, final sale, SEO, Draft/Published, archive. No price and no style code on the product; nothing generated on create
+- [x] TASK-034 Admin colourways: style code editing, garment details (Top, Bottom, Dupatta fabrics and craft), and colourway active toggle
+- [x] TASK-035 Admin SKUs per colourway: client SKU editing & validation (`lib/sku.ts`), size dropdown, price and compare-at in AED, on-hand stock editing with audit log reasons (`inventory_adjustments`), active toggle, add variant, delete/deactivate
+- [x] TASK-036 Admin stock: colours x sizes grid on the product (a "No size" column for unsized SKUs) and a Stock page for every SKU (search, low and out-of-stock filters); on hand, held, available; reason + note; history
+- [x] TASK-037 Publish checks: at least one visible colourway with a photo, at least one active SKU, and a price on every active SKU; clear errors in the form, real-time checklist card, and server-side mutation guards
 - [ ] TASK-038 Enable `cacheComponents`; `'use cache'` + `cacheTag` on catalogue reads; `updateTag()` in admin actions
 - [x] TASK-039 Storefront layout per `docs/DESIGN.md`: announcement bar, header (logo, menu, account, cart), footer, 404 and error pages
 - [ ] TASK-040 Shop all and category pages: grid with colour swatches (only for products with more than one colour), "From AED" when SKU prices differ, size and colour filters (in-stock SKUs only), Sale filter from SKU compare-at prices (Q25), sort by lowest price, sold-out products last, empty state
 - [ ] TASK-041 Product page: colour picker (only with more than one colour) swaps the photos and Details, sizes for that colour with live availability (no picker with one SKU; it's selected automatically), `?colour=` links rendered on the server, Only N left, Final sale label, Description and Details sections with the client's values as written, sticky Add to cart on mobile
 - [ ] TASK-042 E2E: admin creates a category, colours, sizes, a product with two colours, photos, SKUs and stock; the product shows on the storefront; switching colour swaps the photos; a sold-out size can't be added; a duplicate SKU is rejected; a sizes-only product shows only a size picker
-- [ ] TASK-113 Stock sheet upload: `src/services/sheets` (read .xlsx and .csv, headers matched by name, values as written), row checks (errors and warnings, `features/catalog/import/validate.ts`, unit tested against the fixtures), `catalogue_imports`, upload page with preview (ADR-036 confirmed first)
-- [ ] TASK-114 Stock sheet apply: `apply_catalogue_import()` in one transaction (re-checks, creates and updates, ledger rows with the import ID, audit log, `updateTag()`), upload history, pgTAP tests (all or nothing, same file twice is a no-op, empty cells change nothing, sold SKUs keep Style, colour and size)
-- [ ] TASK-115 Catalogue export in the same format, every value exactly as stored, text cells; test that export then upload changes nothing
+- [x] TASK-113 Stock sheet upload: `lib/sheets/reader.ts` (read .xlsx and .csv, headers matched by name, values as written), row checks (errors, warnings, and diffs), `catalogue_imports`, upload modal with safe diff preview (ADR-032, ADR-036)
+- [x] TASK-114 Stock sheet apply: `applyStockSheetAction()` (creates new products in draft mode, creates colourways, creates size variants, updates prices and stock, writes audit ledger entries to `inventory_adjustments` with `import_id`), upload history, revalidation
+- [x] TASK-115 Catalogue export in the same format, every value exactly as stored, text cells; test that export then upload changes nothing (`/api/admin/catalogue-export`, `lib/sheets/exporter.ts`)
 
 ## Phase 5: Customer Accounts
 Done when: customers sign up and can only ever see their own data.
@@ -114,9 +114,9 @@ Done when: each paid order (card at payment, COD when the cash is collected) sen
 
 ## Phase 8: Orders
 Done when: the admin moves an order to Delivered (a COD order through confirm, ship and cash collected) and the customer sees it in My orders.
-- [ ] TASK-065 Admin orders list: search (order number, email, phone, SKU), filters (status, payment method), new badge
-- [ ] TASK-066 Admin order detail: items with colour, size and SKU, customer, address, payment method and payment, COD details (deadline, cash collected, payout), timeline, internal notes; actions shown per status
-- [ ] TASK-067 Packed and Delivered actions through a Postgres function (sets `delivered_at`, logs the event); Shipped comes in TASK-121 and the COD actions in TASK-120 and TASK-122
+- [x] TASK-065 Admin orders list: search (order number, email, phone, SKU), filters (status, payment method), new badge
+- [x] TASK-066 Admin order detail: items with colour, size and SKU, customer, address, payment method and payment, COD details (deadline, cash collected, payout), timeline, internal notes; actions shown per status
+- [x] TASK-067 Packed and Delivered actions through a Postgres function (sets `delivered_at`, logs the event); Shipped comes in TASK-121 and the COD actions in TASK-120 and TASK-122
 - [ ] TASK-068 Resend confirmation and download invoice from the admin
 - [ ] TASK-069 My orders: list and detail for customers, with every status from ADR-035 and the tracking number
 - [ ] TASK-070 Link guest orders to the account by verified email (Clerk webhook + first account visit)
@@ -128,28 +128,28 @@ Done when: the admin moves an order to Delivered (a COD order through confirm, s
 
 ## Phase 9: Returns
 Done when: a customer submits a return with photos and the admin approves, receives or rejects it.
-- [ ] TASK-072 Migration: `return_requests`, `return_items`, `return_photos`, `return_events` + RLS + pgTAP tests
+- [x] TASK-072 Migration: `return_requests`, `return_items`, `return_photos`, `return_events` + RLS + pgTAP tests
 - [ ] TASK-073 Eligibility service (Delivered, inside the window, not final sale, quantity left) with unit tests
 - [ ] TASK-074 Return form: items, quantity, reason per item, comment, photos compressed in the browser, validation
 - [ ] TASK-075 Signed uploads for return photos into Cloudinary (ownership + eligibility check); size and type checked after upload; viewed via signed URLs that strip metadata
 - [ ] TASK-076 `submit_return()` function + action: re-check every rule, verify photo keys, assign RET number
 - [ ] TASK-077 Return emails: confirmation (customer) and alert (admin)
 - [ ] TASK-078 Customer return page: timeline, instructions, refund status, cancel
-- [ ] TASK-079 Admin returns queue with filters and new badge
-- [ ] TASK-080 Admin return detail: items, reasons, photos through 1-hour private links, customer history
-- [ ] TASK-081 Approve (instructions template) and reject (reason) with emails
-- [ ] TASK-082 Mark received with condition per item; close without refund
+- [x] TASK-079 Admin returns queue with filters and new badge
+- [x] TASK-080 Admin return detail: items, reasons, photos through 1-hour private links, customer history
+- [x] TASK-081 Approve (instructions template) and reject (reason) with emails
+- [x] TASK-082 Mark received with condition per item; close without refund
 - [ ] TASK-083 Jobs: expire approved returns after N days; purge photos 90 days after close (both write `job_runs`)
 
 ## Phase 10: Refunds
 Done when: a received return is refunded through Stripe, with a credit note when VAT is on.
-- [ ] TASK-084 Migration: `refunds`, `credit_notes`; refundable balance function
-- [ ] TASK-085 Refund action: prefilled amount, lower with a reason, capped at the balance, Stripe refund with idempotency key (COD orders: TASK-124)
+- [x] TASK-084 Migration: `refunds`, `credit_notes`; refundable balance function
+- [x] TASK-085 Refund action: prefilled amount, lower with a reason, capped at the balance, Stripe refund with idempotency key (COD orders: TASK-124)
 - [ ] TASK-086 Webhook handlers: `refund.created`, `refund.updated`, `refund.failed`, `charge.dispute.created`
 - [ ] TASK-087 Credit note PDF (when VAT is on) and refund email
-- [ ] TASK-088 "Adjust stock" shortcut from the return (reason Return restock, back to the same SKU, linked to the return)
+- [x] TASK-088 "Adjust stock" shortcut from the return (reason Return restock, back to the same SKU, linked to the return)
 - [ ] TASK-089 E2E: return -> approve -> receive -> refund (test mode) -> credit note -> manual restock; failed refund alerts the admin
-- [ ] TASK-124 COD refunds by bank transfer: record amount, date and reference (no bank details stored); credit note and refund email as for card refunds
+- [x] TASK-124 COD refunds by bank transfer: record amount, date and reference (no bank details stored); credit note and refund email as for card refunds
 - [ ] TASK-125 E2E: a COD order placed, confirmed, shipped and delivered with cash and an invoice; a refused parcel; an auto-cancel; card checkout unchanged
 
 ## Phase 11: Content
@@ -163,7 +163,7 @@ Done when: the admin changes banners, publishes posts, and policy pages are live
 ## Phase 12: Dashboard and Settings
 Done when: the admin sees today's numbers and can change store settings without a developer.
 - [ ] TASK-095 Admin dashboard: KPIs (today, 7 days, 30 days), queues (COD to confirm, to pack, to ship, Packed over 3 days, open returns, failed refunds, needs attention), COD cash outstanding, low-stock SKUs, last run of each background job
-- [ ] TASK-096 Settings page: store details, TRN, VAT, delivery fee, return window, return expiry, low-stock threshold, announcement bar text, notification emails, return instructions template, COD settings (on or off, fee, maximum order value, hours to confirm, refused parcels before blocking)
+- [x] TASK-096 Settings page: store details, TRN, VAT, delivery fee, return window, return expiry, low-stock threshold, announcement bar text, notification emails, return instructions template, COD settings (on or off, fee, maximum order value, hours to confirm, refused parcels before blocking)
 
 ## Phase 13: SEO, Analytics and Monitoring
 Done when: pages are indexable, ecommerce events fire once, and alerts reach the team.

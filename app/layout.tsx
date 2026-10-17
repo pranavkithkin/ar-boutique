@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { fontSans, fontHeading, fontMono } from "@/lib/fonts";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { isClerkConfigured } from "@/lib/clerk";
 
 export const metadata: Metadata = {
   title: "AR Boutique",
@@ -16,16 +18,46 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
-  return (
+  const clerkActive = isClerkConfigured();
+
+  const content = (
     <html
       lang="en"
       data-scroll-behavior="smooth"
       suppressHydrationWarning
-      className={cn("h-full scroll-smooth", "antialiased", "font-sans", fontSans.variable, fontHeading.variable, fontMono.variable)}
+      className={cn(
+        "h-full scroll-smooth",
+        "antialiased",
+        "font-sans",
+        fontSans.variable,
+        fontHeading.variable,
+        fontMono.variable
+      )}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <NuqsAdapter>{children}</NuqsAdapter>
       </body>
     </html>
   );
-}
+
+  if (!clerkActive) {
+    return content;
+  }
+
+  return (
+    <ClerkProvider
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      appearance={{
+        variables: {
+          colorPrimary: "#0a0a0a",
+          colorBackground: "#ffffff",
+          borderRadius: "0.125rem",
+          fontFamily: "var(--font-sans), sans-serif",
+        },
+      }}
+    >
+      {content}
+    </ClerkProvider>
+  );
+}

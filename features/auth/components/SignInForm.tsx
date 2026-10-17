@@ -2,8 +2,10 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useSignIn } from "@clerk/nextjs/legacy"
 import {
   Field,
   FieldLabel,
@@ -13,12 +15,26 @@ import {
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { StoreButton } from "@/components/store/StoreButton"
-import { Eye, EyeOff, Lock, Mail, ArrowRight } from "lucide-react"
+import { Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
 import { signInSchema, type SignInFormValues } from "../schemas"
+import { loginCustomerAction } from "../actions"
 
-export function SignInForm() {
+interface SignInFormProps {
+  redirectTo?: string
+  onSuccess?: () => void
+}
+
+export function SignInForm({ redirectTo, onSuccess }: SignInFormProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const destination = redirectTo || searchParams.get("redirect") || "/account"
+
+  // Clerk headless authentication hook
+  const { isLoaded: isClerkLoaded, signIn, setActive } = useSignIn()
+
   const [showPassword, setShowPassword] = React.useState(false)
-  const [demoNotice, setDemoNotice] = React.useState(false)
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = React.useState<string | null>(null)
 
   const {
     handleSubmit,
@@ -33,16 +49,105 @@ export function SignInForm() {
     },
   })
 
-  function onSubmit(_data: SignInFormValues) {
-    setDemoNotice(true)
-    setTimeout(() => setDemoNotice(false), 4000)
+  async function onSubmit(data: SignInFormValues) {
+    setErrorMessage(null)
+    setSuccessMessage(null)
+
+    // 1. Try Clerk authentication if active
+    if (isClerkLoaded && signIn && setActive) {
+      try {
+        const attempt = await signIn.create({
+          identifier: data.email,
+          password: data.password,
+        })
+
+        if (attempt.status === "complete") {
+          await setActive({ session: attempt.createdSessionId })
+
+          try {
+            const profilePayload = {
+              email: data.email,
+              phone: "",
+            }
+            localStorage.setItem("ar_account_profile", JSON.stringify(profilePayload))
+          } catch {
+            // Ignore
+          }
+
+          setSuccessMessage("Welcome back! Redirecting...")
+          if (onSuccess) {
+            onSuccess()
+          } else {
+            setTimeout(() => {
+              router.push(destination)
+              router.refresh()
+            }, 500)
+          }
+          return
+        } else {
+          setErrorMessage("Additional verification is required for this account.")
+          return
+        }
+      } catch (clerkErr: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const errAny = clerkErr as any
+        const message =
+          errAny.errors?.[0]?.longMessage ||
+          errAny.errors?.[0]?.message ||
+          errAny.message ||
+          "Invalid email or password."
+        setErrorMessage(message)
+        return
+      }
+    }
+
+    // 2. Fallback to server action if Clerk is unconfigured
+    try {
+      const result = await loginCustomerAction(data)
+      if (!result.success || !result.customer) {
+        setErrorMessage(result.error || "Unable to sign in. Please verify your credentials.")
+        return
+      }
+
+      try {
+        const profilePayload = {
+          fullName: `${result.customer.firstName} ${result.customer.lastName}`.trim(),
+          email: result.customer.email,
+          phone: result.customer.phone || "",
+        }
+        localStorage.setItem("ar_account_profile", JSON.stringify(profilePayload))
+      } catch {
+        // Ignore
+      }
+
+      setSuccessMessage("Welcome back! Redirecting...")
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        setTimeout(() => {
+          router.push(destination)
+          router.refresh()
+        }, 500)
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "An unexpected error occurred."
+      setErrorMessage(msg)
+    }
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {demoNotice && (
-        <div className="p-3 text-xs bg-muted/60 border border-border text-foreground rounded-xs leading-relaxed animate-in fade-in-50">
-          <strong>Design Preview:</strong> Authentication backend (Clerk) is coming next. Your inputs passed client validation cleanly!
+      {errorMessage && (
+        <div className="p-3 text-xs bg-destructive/10 border border-destructive/20 text-destructive rounded-xs flex items-start gap-2 leading-relaxed animate-in fade-in-50">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="p-3 text-xs bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 rounded-xs flex items-start gap-2 leading-relaxed animate-in fade-in-50">
+          <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{successMessage}</span>
         </div>
       )}
 
@@ -156,8 +261,17 @@ export function SignInForm() {
         disabled={isSubmitting}
         className="w-full mt-4 h-11 gap-2 text-xs font-semibold tracking-[0.14em] uppercase transition-all duration-300"
       >
-        Sign In
-        <ArrowRight className="h-3.5 w-3.5" />
+        {isSubmitting ? (
+          <>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Signing In...
+          </>
+        ) : (
+          <>
+            Sign In
+            <ArrowRight className="h-3.5 w-3.5" />
+          </>
+        )}
       </StoreButton>
     </form>
   )

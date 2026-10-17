@@ -1,0 +1,142 @@
+import type { AccountAddress, AccountOrder, AccountUserProfile } from "./types"
+
+export const INITIAL_USER_PROFILE: AccountUserProfile = {
+  id: "cust_ae_8472910",
+  firstName: "Fatima",
+  lastName: "Al Mansoori",
+  email: "fatima.almansoori@gmail.com",
+  phone: "+971 50 847 2910",
+  memberSince: "August 2026",
+  tier: "Boutique VIP",
+  preferredLanguage: "en",
+  notifyWhatsApp: true,
+  notifyEmail: true,
+}
+
+export const INITIAL_ADDRESSES: AccountAddress[] = [
+  {
+    id: "addr_1",
+    label: "Home (Villa)",
+    isDefault: true,
+    recipientName: "Fatima Al Mansoori",
+    phone: "+971 50 847 2910",
+    emirate: "Dubai",
+    area: "Jumeirah 1",
+    street: "12B Street, Al Wasl Road",
+    building: "Villa 48",
+    apartment: "",
+    landmark: "Near BoxPark",
+  },
+  {
+    id: "addr_2",
+    label: "Atelier / Studio",
+    isDefault: false,
+    recipientName: "Fatima Al Mansoori",
+    phone: "+971 50 847 2910",
+    emirate: "Dubai",
+    area: "Dubai Design District (d3)",
+    street: "Building 4",
+    building: "Design Quarter",
+    apartment: "Studio 304",
+    landmark: "Behind North Parking",
+  },
+  {
+    id: "addr_3",
+    label: "Family Residence",
+    isDefault: false,
+    recipientName: "Al Mansoori Residence",
+    phone: "+971 52 391 8472",
+    emirate: "Abu Dhabi",
+    area: "Al Bateen",
+    street: "Al Bateen Beach Road",
+    building: "Villa 12",
+    landmark: "Opposite Bateen Marina",
+  },
+]
+
+export const INITIAL_ORDERS: AccountOrder[] = [
+  {
+    id: "ord_1048",
+    orderNumber: "AR-1048",
+    date: "14 Oct 2026",
+    status: "shipped",
+    statusLabel: "Out for Delivery",
+    trackingNumber: "EXP-AE-928194",
+    courierName: "Jeebly Express",
+    paymentMethod: "card",
+    subtotalFils: 125000,
+    deliveryFeeFils: 0, // Free delivery unlocked >= 200 AED
+    vatFils: 5952, // 5/105 of total
+    totalFils: 125000,
+    deliveryAddress: INITIAL_ADDRESSES[0],
+    items: [
+      {
+        id: "item_1",
+        productName: "Contemporary Co-ord Set",
+        styleCode: "JAB24CD00489",
+        colourName: "Dusty Rose",
+        sizeLabel: "M",
+        quantity: 1,
+        priceFils: 125000,
+        imageSrc:
+          "https://res.cloudinary.com/q8qdyl3f/image/upload/f_auto,q_auto,c_limit,w_600/ar-dev/products/8a7f570c-eb0e-4395-b076-dceea35f2591/0d318751-ff56-4a96-a2f8-bcb885c1cf20/jab24cd00489",
+      },
+    ],
+  },
+  {
+    id: "ord_1035",
+    orderNumber: "AR-1035",
+    date: "28 Sep 2026",
+    status: "delivered",
+    statusLabel: "Delivered",
+    trackingNumber: "EXP-AE-817263",
+    courierName: "Jeebly Express",
+    paymentMethod: "cod",
+    subtotalFils: 189000,
+    deliveryFeeFils: 0,
+    vatFils: 9000,
+    totalFils: 189000,
+    deliveryAddress: INITIAL_ADDRESSES[0],
+    items: [
+      {
+        id: "item_2",
+        productName: "Handcrafted Zardozi Kurta",
+        styleCode: "JNE4124-KR",
+        colourName: "Emerald",
+        sizeLabel: "S",
+        quantity: 1,
+        priceFils: 189000,
+        imageSrc:
+          "https://res.cloudinary.com/q8qdyl3f/image/upload/f_auto,q_auto,c_limit,w_600/ar-dev/products/5395c50a-43aa-47ca-be0a-9f1fc97a1c4d/b493c266-03b4-4d34-9bbf-53adf82a460e/jne4124-kr",
+      },
+    ],
+  },
+  {
+    id: "ord_1012",
+    orderNumber: "AR-1012",
+    date: "12 Aug 2026",
+    status: "delivered",
+    statusLabel: "Delivered",
+    trackingNumber: "EXP-AE-704928",
+    courierName: "Careem Express",
+    paymentMethod: "card",
+    subtotalFils: 245000,
+    deliveryFeeFils: 0,
+    vatFils: 11667,
+    totalFils: 245000,
+    deliveryAddress: INITIAL_ADDRESSES[1],
+    items: [
+      {
+        id: "item_3",
+        productName: "Artisanal Silk Evening Dress",
+        styleCode: "J0395-DR",
+        colourName: "Royal Navy",
+        sizeLabel: "M",
+        quantity: 1,
+        priceFils: 245000,
+        imageSrc:
+          "https://res.cloudinary.com/q8qdyl3f/image/upload/f_auto,q_auto,c_limit,w_600/ar-dev/products/e541ddf1-53c2-417a-877e-b06763d2199d/baa031ac-462d-45d4-9bd5-024f59e11943/j0395-dr",
+      },
+    ],
+  },
+]

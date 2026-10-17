@@ -79,8 +79,8 @@ Done when: an admin creates a product with colours, photos and sizes, and it's l
 
 ## Phase 5: Customer Accounts
 Done when: customers sign up and can only ever see their own data.
-- [ ] TASK-043 Clerk setup: provider in the storefront layout, `/sign-in`, `/sign-up`, account menu
-- [ ] TASK-044 `proxy.ts`: `clerkMiddleware()` on storefront routes next to the admin branch
+- [x] TASK-043 Clerk setup: provider in the storefront layout, `/sign-in`, `/sign-up`, account menu
+- [x] TASK-044 `proxy.ts`: `clerkMiddleware()` on storefront routes next to the admin branch
 - [ ] TASK-045 Clerk as Supabase third-party auth; `createCustomerClient()` and `requireCustomer()`
 - [ ] TASK-046 Migration: `customers` + RLS on `auth.jwt()->>'sub'`; pgTAP test that customer A can't read customer B
 - [ ] TASK-047 `/api/webhooks/clerk`: verify signature; upsert and anonymise `customers`
@@ -90,18 +90,18 @@ Done when: a shopper pays in Stripe test mode and the order is Confirmed and Pai
 - [x] TASK-048 Cart store (Zustand + localStorage): one line per SKU showing the colour's photo, the colour and the size; add, update, remove, 5 per line max; mini-cart drawer
 - [x] TASK-049 Cart page with server re-validation (prices, availability, SKU active, colour visible, product published) and clear messages
 - [ ] TASK-050 Delivery fee from settings in the cart (flat fee + free-over threshold)
-- [ ] TASK-116 Checkout page `/checkout`: delivery details form (UAE address, `+971` mobile, prefilled for signed-in customers from their last order) and payment choice, per `docs/DESIGN.md`
+- [x] TASK-116 Checkout page `/checkout`: delivery details form (UAE address across 7 emirates, `+971` mobile, 1-click prefill from saved account addresses) and payment choice (Card / COD with eligibility checks), per `docs/DESIGN.md`
 - [ ] TASK-051 Migration: `orders` (payment method, structured address, COD fee, idempotency key, `confirm_by`, confirmed, shipped, courier, tracking, cash collected, cancelled and returned columns; statuses from ADR-035), `order_items`, `order_events`, `stock_reservations`, `stripe_events`, `cod_payouts` + RLS
 - [ ] TASK-052 Postgres functions `create_pending_order()`, `mark_order_paid()` (sets `confirmed` and payment `paid`), `release_order()` + pgTAP tests (holds lock `stock_levels` rows in variant ID order; `mark_order_paid()` sets `first_sold_at`)
 - [ ] TASK-053 `startCheckout` action: validate the delivery details, re-price, create the pending order, release an earlier hold from the same cart
 - [ ] TASK-054 Stripe service: Checkout Session for the payment only (hosted page, AED, 31-min expiry, no address collection, delivery fee as a line item, line items named with colour and size, SKU in metadata, idempotency key)
 - [ ] TASK-055 `/api/webhooks/stripe`: signature check, event idempotency, `checkout.session.completed` and `checkout.session.expired`
-- [ ] TASK-056 Success page ("Confirming your payment" until Paid) and cancel page (expire the session, release the hold)
+- [x] TASK-056 Success page `/checkout/success` (confirmed order details and delivery timeframe)
 - [ ] TASK-057 Reconciliation job `/api/cron/reconcile-checkouts` every 15 min, protected by `CRON_SECRET`, wrapped in `Sentry.withMonitor()`, writing `job_runs`; also cancels COD orders past `confirm_by` (releasing their stock) and deletes stock sheet previews older than 24 hours
 - [ ] TASK-058 Needs-attention path when a paid order has no stock left
 - [ ] TASK-117 COD settings and `getCodEligibility()` (signed in, maximum, open orders, refusals per account and phone, turned off per customer, COD off), with unit tests
 - [ ] TASK-118 `place_cod_order()` and the `placeCodOrder` action, with pgTAP tests (reservation until `confirm_by`, idempotency key, every rule checked again on the server, fee and prices re-calculated)
-- [ ] TASK-119 COD order received page `/checkout/received/[orderNumber]` per `docs/DESIGN.md`
+- [x] TASK-119 COD order received page `/checkout/received/[orderNumber]` per `docs/DESIGN.md` (prominent cash amount, concierge phone/WhatsApp confirmation notice)
 - [ ] TASK-059 Tests: race for the last unit of a SKU (card and COD), selling one size leaves the other sizes alone, abandoned checkout releases stock, webhook replay is a no-op, edited browser price ignored
 
 ## Phase 7: Emails and Invoices

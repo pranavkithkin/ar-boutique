@@ -26,7 +26,7 @@ export function AppSidebar() {
 			collapsible="icon"
 			variant="sidebar"
 		>
-			<SidebarHeader className="h-16 justify-center border-b px-3">
+			<SidebarHeader className="h-14 justify-center border-b px-3">
 				<SidebarMenuButton
 					size="lg"
 					render={<Link href="/admin" />}

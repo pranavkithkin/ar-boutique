@@ -74,6 +74,7 @@ export function AccountView() {
   const [profile, setProfile] = React.useState<AccountUserProfile>(EMPTY_PROFILE)
   const [addresses, setAddresses] = React.useState<AccountAddress[]>([])
   const [orders, setOrders] = React.useState<AccountOrder[]>([])
+  const [returnTargetOrderId, setReturnTargetOrderId] = React.useState<string | undefined>(undefined)
 
   // Fetch live orders & profile from Supabase
   const loadAccountData = React.useCallback(
@@ -290,7 +291,15 @@ export function AccountView() {
 
         {/* Tab Content Panel */}
         <main className="flex-1 w-full min-w-0">
-          {activeTab === "orders" && <OrdersTab orders={orders} />}
+          {activeTab === "orders" && (
+            <OrdersTab
+              orders={orders}
+              onRequestReturn={(orderId) => {
+                setReturnTargetOrderId(orderId)
+                setActiveTab("returns")
+              }}
+            />
+          )}
           {activeTab === "addresses" && (
             <AddressesTab
               addresses={addresses}
@@ -303,7 +312,14 @@ export function AccountView() {
               onUpdateProfile={handleUpdateProfile}
             />
           )}
-          {activeTab === "returns" && <ReturnsTab />}
+          {activeTab === "returns" && (
+            <ReturnsTab
+              orders={orders}
+              customerEmail={profile.email}
+              preselectedOrderId={returnTargetOrderId}
+              onClearPreselectedOrder={() => setReturnTargetOrderId(undefined)}
+            />
+          )}
         </main>
       </div>
     </div>

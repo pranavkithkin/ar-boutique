@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -23,8 +24,8 @@ import {
   Trash2,
   Loader2,
   AlertCircle,
-  ChevronDown,
-  ChevronRight,
+  // ChevronDown,
+  // ChevronRight,
 } from "lucide-react"
 
 interface CategoryFormModalProps {
@@ -56,16 +57,18 @@ function CategoryFormContent({
   const [description, setDescription] = React.useState(categoryToEdit?.description || "")
   const [sort, setSort] = React.useState<number>(categoryToEdit ? categoryToEdit.sort : nextSuggestedSort)
   const [isActive, setIsActive] = React.useState(categoryToEdit ? categoryToEdit.is_active : true)
-  const [seoTitle, setSeoTitle] = React.useState(categoryToEdit?.seo_title || "")
-  const [seoDescription, setSeoDescription] = React.useState(categoryToEdit?.seo_description || "")
-  const [showSeo, setShowSeo] = React.useState(
-    Boolean(categoryToEdit?.seo_title || categoryToEdit?.seo_description)
-  )
+  // SEO fields commented out as not requested by client
+  // const [seoTitle, setSeoTitle] = React.useState(categoryToEdit?.seo_title || "")
+  // const [seoDescription, setSeoDescription] = React.useState(categoryToEdit?.seo_description || "")
+  // const [showSeo, setShowSeo] = React.useState(false)
+  const seoTitle = categoryToEdit?.seo_title || ""
+  const seoDescription = categoryToEdit?.seo_description || ""
 
   // Image state
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(categoryToEdit?.image_url || null)
   const [removeExistingImage, setRemoveExistingImage] = React.useState(false)
+  const [isDragging, setIsDragging] = React.useState(false)
 
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
@@ -84,12 +87,14 @@ function CategoryFormContent({
     setSlugManuallyEdited(true)
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  const processFile = (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
       setErrorMessage("Image file exceeds the 10MB limit.")
+      return
+    }
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setErrorMessage("Invalid image format. Please use JPG, PNG or WEBP.")
       return
     }
 
@@ -97,6 +102,13 @@ function CategoryFormContent({
     setRemoveExistingImage(false)
     const localUrl = URL.createObjectURL(file)
     setPreviewUrl(localUrl)
+    setErrorMessage(null)
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    processFile(file)
   }
 
   const handleRemoveImage = () => {
@@ -193,7 +205,7 @@ function CategoryFormContent({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+      <form onSubmit={handleSubmit} className="space-y-4 pt-1 w-full min-w-0">
         {/* Category Name */}
         <div className="space-y-1.5">
           <Label htmlFor="category-name" className="text-xs font-medium">
@@ -239,78 +251,107 @@ function CategoryFormContent({
           </p>
         </div>
 
-        {/* Merchandising Photo Upload */}
-        <div className="space-y-2 pt-1 border-t border-border">
+        {/* Category Photo Upload */}
+        <div className="space-y-1.5 pt-1 border-t border-border">
           <Label className="text-xs font-medium block">
-            Merchandising Photo (Square 1:1, min 600×600)
+            Category Photo <span className="text-muted-foreground font-normal">(Optional)</span>
           </Label>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-muted/20 p-3 border border-border">
-            {/* Photo Upload Area */}
-            <div className="space-y-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleFileChange}
-                className="hidden"
-                disabled={isSubmitting}
-              />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleFileChange}
+            className="hidden"
+            disabled={isSubmitting}
+          />
 
-              <div className="flex items-center gap-2">
+          {!previewUrl ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault()
+                setIsDragging(true)
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setIsDragging(false)
+                const file = e.dataTransfer.files?.[0]
+                if (file) processFile(file)
+              }}
+              className={cn(
+                "border-2 border-dashed transition-all p-5 text-center cursor-pointer group flex flex-col items-center justify-center gap-2 select-none",
+                isDragging
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-foreground/40 bg-muted/10 hover:bg-muted/20"
+              )}
+            >
+              <div className="size-9 rounded-full border border-border bg-background flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:border-foreground/30 transition-colors shadow-2xs">
+                <Upload className="size-4" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-xs font-medium text-foreground">
+                  <span className="underline underline-offset-2">Click to upload photo</span> or drag &amp; drop
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Square 1:1 (min 600×600) · JPG, PNG, WEBP up to 10MB
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full min-w-0 border border-border bg-muted/10 p-3 flex items-center gap-3">
+              <div className="relative size-12 sm:size-14 shrink-0 rounded-full overflow-hidden border border-border bg-background shadow-xs">
+                <Image
+                  src={previewUrl}
+                  alt={name || "Category photo"}
+                  fill
+                  className="object-cover object-center"
+                  unoptimized={previewUrl.startsWith("blob:")}
+                />
+              </div>
+
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <p
+                  className="text-xs font-medium text-foreground truncate max-w-full"
+                  title={selectedFile ? selectedFile.name : (name ? `${name} Photo` : "Category Photo")}
+                >
+                  {selectedFile ? selectedFile.name : (name ? `${name} Photo` : "Category Photo")}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate max-w-full">
+                  {selectedFile
+                    ? `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
+                    : "Current category photo"}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                 <Button
                   type="button"
                   variant="outline"
+                  size="sm"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isSubmitting}
-                  className="rounded-none text-xs h-8 gap-1.5 border-input"
+                  className="rounded-none text-xs h-8 px-2.5 sm:px-3 gap-1.5 border-input hover:bg-muted font-normal"
                 >
-                  <Upload className="h-3.5 w-3.5" />
-                  {previewUrl ? "Replace Photo" : "Upload Photo"}
+                  <Upload className="size-3.5" />
+                  Change
                 </Button>
-
-                {previewUrl && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleRemoveImage}
-                    disabled={isSubmitting}
-                    className="rounded-none text-xs h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 border-input"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Remove
-                  </Button>
-                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemoveImage}
+                  disabled={isSubmitting}
+                  className="rounded-none text-xs h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  title="Remove photo"
+                >
+                  <Trash2 className="size-3.5" />
+                  <span className="sr-only">Remove photo</span>
+                </Button>
               </div>
-
-              <p className="text-[11px] text-muted-foreground">
-                Used for the homepage &ldquo;Shop by Category&rdquo; circles and collection hero. JPG, PNG or WEBP up to 10MB.
-              </p>
             </div>
-
-            {/* Preview in Storefront Circle Format */}
-            <div className="flex flex-col items-center justify-center border-l-0 sm:border-l border-border pl-0 sm:pl-4 py-1">
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-medium">
-                Storefront Circle Preview
-              </span>
-              <div className="relative w-20 h-20 rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center shadow-xs">
-                {previewUrl ? (
-                  <Image
-                    src={previewUrl}
-                    alt={name || "Category preview"}
-                    fill
-                    className="object-cover object-center"
-                    unoptimized={previewUrl.startsWith("blob:")}
-                  />
-                ) : (
-                  <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
-                )}
-              </div>
-              <span className="text-xs font-medium text-foreground mt-1.5 truncate max-w-[140px]">
-                {name || "Category Name"}
-              </span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Display Sort & Visibility Row */}
@@ -369,7 +410,8 @@ function CategoryFormContent({
           />
         </div>
 
-        {/* SEO Accordion */}
+        {/* SEO Accordion - Commented out as not requested by client */}
+        {/*
         <div className="border border-border p-3 space-y-3 bg-muted/10">
           <button
             type="button"
@@ -419,6 +461,7 @@ function CategoryFormContent({
             </div>
           )}
         </div>
+        */}
 
         <DialogFooter className="pt-2 gap-2">
           <Button
@@ -461,7 +504,7 @@ export function CategoryFormModal({
 }: CategoryFormModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto rounded-none border-border">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-none border-border">
         {isOpen && (
           <CategoryFormContent
             key={categoryToEdit?.id || "new"}

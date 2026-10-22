@@ -6,6 +6,8 @@ import {
 	BoxesIcon,
 	ShoppingBagIcon,
 	RotateCcwIcon,
+	CreditCardIcon,
+	ImageIcon,
 	SettingsIcon,
 	BookOpenIcon,
 	PaletteIcon,
@@ -68,6 +70,16 @@ export const navGroups: SidebarNavGroup[] = [
 				title: "Returns & Exchanges",
 				path: "/admin/returns",
 				icon: <RotateCcwIcon />,
+			},
+			{
+				title: "Banners & Carousel",
+				path: "/admin/banners",
+				icon: <ImageIcon />,
+			},
+			{
+				title: "Payment Methods",
+				path: "/admin/payments",
+				icon: <CreditCardIcon />,
 			},
 			{
 				title: "Store Settings",

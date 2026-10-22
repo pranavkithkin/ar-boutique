@@ -71,3 +71,31 @@ export interface AdminStockMatrixRow {
   total_reserved: number
   total_available: number
 }
+
+export type BulkStockRowStatus = "ready" | "unchanged" | "error"
+
+export interface BulkStockImportRow {
+  rowNumber: number
+  sku: string
+  newOnHand: number
+  variantId?: string
+  productId?: string
+  productName?: string
+  colourName?: string
+  sizeLabel?: string
+  currentOnHand?: number
+  reserved?: number
+  delta?: number
+  status: BulkStockRowStatus
+  errorMessage?: string
+}
+
+export interface BulkStockImportPreview {
+  fileName: string
+  totalRows: number
+  readyCount: number
+  unchangedCount: number
+  errorCount: number
+  rows: BulkStockImportRow[]
+}
+

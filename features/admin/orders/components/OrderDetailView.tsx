@@ -5,7 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { AdminOrderDetail, AdminOrderItem, AdminOrderEvent, OrderStatus } from "../types"
-import { updateOrderStatusAction, updateOrderNotesAction } from "../actions"
+import { updateOrderStatusAction, updateOrderNotesAction, resendOrderConfirmationEmailAction } from "../actions"
 import { formatAED } from "@/lib/money"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,12 +36,14 @@ interface OrderDetailViewProps {
 
 const STATUS_BADGE_STYLES: Record<OrderStatus, string> = {
   pending: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
+  awaiting_confirmation: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
   confirmed: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30",
   packed: "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30",
   shipped: "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30",
   delivered: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
   cancelled: "bg-muted text-muted-foreground border-border",
   returned: "bg-destructive/10 text-destructive border-destructive/30",
+  returned_to_sender: "bg-destructive/10 text-destructive border-destructive/30",
 }
 
 export function OrderDetailView({ order }: OrderDetailViewProps) {
@@ -81,6 +83,24 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
     }
   }
 
+  const [isSendingEmail, setIsSendingEmail] = React.useState(false)
+  const [emailNotice, setEmailNotice] = React.useState<string | null>(null)
+
+  async function handleResendEmail() {
+    if (isSendingEmail) return
+    setIsSendingEmail(true)
+    setEmailNotice(null)
+    const res = await resendOrderConfirmationEmailAction(order.id)
+    setIsSendingEmail(false)
+    if (res.success) {
+      setEmailNotice(`Confirmation email sent to ${order.email || "customer"}`)
+      setTimeout(() => setEmailNotice(null), 6000)
+      router.refresh()
+    } else {
+      alert(res.error || "Failed to dispatch email")
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* ── Top Header ── */}
@@ -114,7 +134,7 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
 
         {/* Action Buttons depending on status */}
         <div className="flex flex-wrap items-center gap-2">
-          {order.status === "pending" && (
+          {(order.status === "pending" || order.status === "awaiting_confirmation") && (
             <Button
               onClick={() => handleStatusChange("confirmed")}
               disabled={isUpdating}
@@ -186,8 +206,48 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
               Cancel
             </Button>
           )}
+
+          {/* Resend Confirmation Email */}
+          <Button
+            onClick={handleResendEmail}
+            disabled={isSendingEmail || !order.email}
+            variant="outline"
+            className="h-9 px-3 text-xs font-sans font-medium uppercase tracking-[0.08em] rounded-none border-border hover:bg-muted text-foreground gap-1.5"
+            title="Resend Order Confirmation Email via Resend"
+          >
+            {isSendingEmail ? <Loader2 className="size-3.5 animate-spin" /> : <Mail className="size-3.5" />}
+            Resend Email
+          </Button>
+
+          {/* Download Bilingual Tax Invoice */}
+          <a
+            href={`/api/invoices/${order.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 h-9 px-3 text-xs font-sans font-medium uppercase tracking-[0.08em] rounded-none border border-border bg-card hover:bg-muted text-foreground transition-colors"
+            title="Open / Print Official Bilingual Tax Invoice (PDF)"
+          >
+            <FileText className="size-3.5 text-primary" />
+            Tax Invoice
+          </a>
         </div>
       </div>
+
+      {/* Email feedback banner */}
+      {emailNotice && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 px-4 py-3 rounded-none text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="size-4 shrink-0" />
+            <span>{emailNotice}</span>
+          </div>
+          <button
+            onClick={() => setEmailNotice(null)}
+            className="text-muted-foreground hover:text-foreground text-xs"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* ── Order Layout Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

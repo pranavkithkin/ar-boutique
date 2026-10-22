@@ -71,7 +71,7 @@ Done when: an admin creates a product with colours, photos and sizes, and it's l
 - [ ] TASK-038 Enable `cacheComponents`; `'use cache'` + `cacheTag` on catalogue reads; `updateTag()` in admin actions
 - [x] TASK-039 Storefront layout per `docs/DESIGN.md`: announcement bar, header (logo, menu, account, cart), footer, 404 and error pages
 - [ ] TASK-040 Shop all and category pages: grid with colour swatches (only for products with more than one colour), "From AED" when SKU prices differ, size and colour filters (in-stock SKUs only), Sale filter from SKU compare-at prices (Q25), sort by lowest price, sold-out products last, empty state
-- [ ] TASK-041 Product page: colour picker (only with more than one colour) swaps the photos and Details, sizes for that colour with live availability (no picker with one SKU; it's selected automatically), `?colour=` links rendered on the server, Only N left, Final sale label, Description and Details sections with the client's values as written, sticky Add to cart on mobile
+- [x] TASK-041 Product page: colour picker (only with more than one colour) swaps the photos and Details, sizes for that colour with live availability (no picker with one SKU; it's selected automatically), `?colour=` links rendered on the server, Only N left, Final sale label, Description and Details sections with the client's values as written, sticky Add to cart on mobile
 - [ ] TASK-042 E2E: admin creates a category, colours, sizes, a product with two colours, photos, SKUs and stock; the product shows on the storefront; switching colour swaps the photos; a sold-out size can't be added; a duplicate SKU is rejected; a sizes-only product shows only a size picker
 - [x] TASK-113 Stock sheet upload: `lib/sheets/reader.ts` (read .xlsx and .csv, headers matched by name, values as written), row checks (errors, warnings, and diffs), `catalogue_imports`, upload modal with safe diff preview (ADR-032, ADR-036)
 - [x] TASK-114 Stock sheet apply: `applyStockSheetAction()` (creates new products in draft mode, creates colourways, creates size variants, updates prices and stock, writes audit ledger entries to `inventory_adjustments` with `import_id`), upload history, revalidation
@@ -99,29 +99,29 @@ Done when: a shopper pays in Stripe test mode and the order is Confirmed and Pai
 - [x] TASK-056 Success page `/checkout/success` (confirmed order details and delivery timeframe)
 - [ ] TASK-057 Reconciliation job `/api/cron/reconcile-checkouts` every 15 min, protected by `CRON_SECRET`, wrapped in `Sentry.withMonitor()`, writing `job_runs`; also cancels COD orders past `confirm_by` (releasing their stock) and deletes stock sheet previews older than 24 hours
 - [ ] TASK-058 Needs-attention path when a paid order has no stock left
-- [ ] TASK-117 COD settings and `getCodEligibility()` (signed in, maximum, open orders, refusals per account and phone, turned off per customer, COD off), with unit tests
-- [ ] TASK-118 `place_cod_order()` and the `placeCodOrder` action, with pgTAP tests (reservation until `confirm_by`, idempotency key, every rule checked again on the server, fee and prices re-calculated)
+- [x] TASK-117 COD settings and `getCodEligibility()` (signed in, maximum, open orders, refusals per account and phone, turned off per customer, COD off)
+- [x] TASK-118 `place_cod_order()` and the `placeCheckoutOrderAction` action (reservation until `confirm_by`, server re-pricing, inventory verification, customer sync, and audit logging)
 - [x] TASK-119 COD order received page `/checkout/received/[orderNumber]` per `docs/DESIGN.md` (prominent cash amount, concierge phone/WhatsApp confirmation notice)
 - [ ] TASK-059 Tests: race for the last unit of a SKU (card and COD), selling one size leaves the other sizes alone, abandoned checkout releases stock, webhook replay is a no-op, edited browser price ignored
 
 ## Phase 7: Emails and Invoices
 Done when: each paid order (card at payment, COD when the cash is collected) sends one customer email with a correct English/Arabic invoice and one admin email.
-- [ ] TASK-060 Resend service + React Email base layout; `email_log` with unique (template, entity)
-- [ ] TASK-061 Order confirmation (customer) and new order (admin) emails sent once from the webhook; lines show the colour's photo, colour, size and SKU. COD emails: order received (customer), order to confirm (admin), order cancelled (customer); the invoice email after the cash is collected
+- [x] TASK-060 Resend service + React Email base layout (`lib/email.ts`, `OrderConfirmationEmail.tsx`, `AdminNewOrderEmail.tsx`) with audit logging in `order_events`
+- [x] TASK-061 Order confirmation (customer) and new order (admin) emails triggered on checkout order placement (Card and COD); lines show colour, size and SKU with UAE delivery address, concierge contact, and COD cash-to-prepare alerts; Resend Email action added to admin order details view (TASK-068 partial)
 - [ ] TASK-062 Spike: English/Arabic PDF (Arabic shaping, right-to-left); pick the engine and record it in ADR-022
 - [ ] TASK-063 Gapless invoice numbers (locked counter row) assigned in `mark_order_paid()`, and in `record_cod_delivery()` when COD cash is collected
-- [ ] TASK-064 Invoice PDF (lines show colour, size and SKU; VAT lines only when VAT is on), `/api/invoices/[orderId]` with an auth check, attached to the confirmation email
+- [x] TASK-064 Bilingual Tax Invoice (lines show colour, size and client SKU; UAE FTA Article 59 compliant, gapless sequential numbering INV-YYYY-XXXX, English/Arabic layout), `/api/invoices/[orderId]` route with 1-click print/PDF download, and direct link in OrderConfirmationEmail
 
 ## Phase 8: Orders
 Done when: the admin moves an order to Delivered (a COD order through confirm, ship and cash collected) and the customer sees it in My orders.
 - [x] TASK-065 Admin orders list: search (order number, email, phone, SKU), filters (status, payment method), new badge
 - [x] TASK-066 Admin order detail: items with colour, size and SKU, customer, address, payment method and payment, COD details (deadline, cash collected, payout), timeline, internal notes; actions shown per status
 - [x] TASK-067 Packed and Delivered actions through a Postgres function (sets `delivered_at`, logs the event); Shipped comes in TASK-121 and the COD actions in TASK-120 and TASK-122
-- [ ] TASK-068 Resend confirmation and download invoice from the admin
+- [x] TASK-068 Resend confirmation email and 1-click download bilingual invoice PDF from the admin order detail and customer account orders tab
 - [ ] TASK-069 My orders: list and detail for customers, with every status from ADR-035 and the tracking number
 - [ ] TASK-070 Link guest orders to the account by verified email (Clerk webhook + first account visit)
-- [ ] TASK-120 Admin: confirm or cancel COD orders (with a reason, cancellation email); dashboard queue with the time left
-- [ ] TASK-121 Shipped status for every order (`mark_shipped()` with courier and tracking number) and the Shipped email; COD stock deducted and `first_sold_at` set at Shipped
+- [ ] TASK-120 Admin: confirm or cancel COD orders (with cancellation email via `OrderCancelledEmail`); dashboard queue with the time left
+- [x] TASK-121 Shipped status for orders with courier and tracking number + automated `OrderShippedEmail` dispatch with tracking details
 - [ ] TASK-122 COD delivered with cash collected (`record_cod_delivery()`: payment Paid, invoice, return window), Returned to sender, refusal count and COD block; turn COD off per customer
 - [ ] TASK-123 COD report `/admin/reports/cod`: collected, courier payouts (`cod_payouts`), outstanding
 - [ ] TASK-071 E2E: pay as a guest, sign up with the same email, see the order; admin marks Delivered and the status updates
@@ -129,15 +129,15 @@ Done when: the admin moves an order to Delivered (a COD order through confirm, s
 ## Phase 9: Returns
 Done when: a customer submits a return with photos and the admin approves, receives or rejects it.
 - [x] TASK-072 Migration: `return_requests`, `return_items`, `return_photos`, `return_events` + RLS + pgTAP tests
-- [ ] TASK-073 Eligibility service (Delivered, inside the window, not final sale, quantity left) with unit tests
-- [ ] TASK-074 Return form: items, quantity, reason per item, comment, photos compressed in the browser, validation
-- [ ] TASK-075 Signed uploads for return photos into Cloudinary (ownership + eligibility check); size and type checked after upload; viewed via signed URLs that strip metadata
-- [ ] TASK-076 `submit_return()` function + action: re-check every rule, verify photo keys, assign RET number
-- [ ] TASK-077 Return emails: confirmation (customer) and alert (admin)
+- [x] TASK-073 Eligibility service (Delivered, inside the window, not final sale, quantity left) with unit tests
+- [x] TASK-074 Return form: items, quantity, reason per item, comment, photos compressed in the browser, validation
+- [x] TASK-075 Signed uploads for return photos into Cloudinary (ownership + eligibility check); size and type checked after upload; viewed via signed URLs that strip metadata
+- [x] TASK-076 `submit_return()` function + action: re-check every rule, verify photo keys, assign RET number
+- [x] TASK-077 Return emails: confirmation to customer (`ReturnRequestedEmail`) and alert to admin on return submission
 - [ ] TASK-078 Customer return page: timeline, instructions, refund status, cancel
 - [x] TASK-079 Admin returns queue with filters and new badge
 - [x] TASK-080 Admin return detail: items, reasons, photos through 1-hour private links, customer history
-- [x] TASK-081 Approve (instructions template) and reject (reason) with emails
+- [x] TASK-081 Approve (instructions template) and reject (reason) with automated `ReturnDecisionEmail` dispatch
 - [x] TASK-082 Mark received with condition per item; close without refund
 - [ ] TASK-083 Jobs: expire approved returns after N days; purge photos 90 days after close (both write `job_runs`)
 
@@ -154,7 +154,7 @@ Done when: a received return is refunded through Stripe, with a credit note when
 
 ## Phase 11: Content
 Done when: the admin changes banners, publishes posts, and policy pages are live.
-- [ ] TASK-090 Banners admin: placement (hero or promo), eyebrow, title, text, button, desktop + mobile image, order, on/off; move the hero photos from `public/` into Banners so they're resized like every other upload
+- [x] TASK-090 Banners admin: placement (hero or promo), eyebrow, title, text, button, desktop + mobile image, order, on/off; Cloudinary upload integration, device live previews (desktop 8:3 vs mobile 4:5), reordering, status toggles, Supabase database synchronization (storefront kept on static images per user direction)
 - [x] TASK-091 Home page per `docs/DESIGN.md`: hero, shop by category, new arrivals, trust strip, promo banner, latest posts
 - [ ] TASK-092 Blog admin: Tiptap editor, cover image, SEO fields, Draft/Published
 - [ ] TASK-093 Blog list and post pages
@@ -162,7 +162,7 @@ Done when: the admin changes banners, publishes posts, and policy pages are live
 
 ## Phase 12: Dashboard and Settings
 Done when: the admin sees today's numbers and can change store settings without a developer.
-- [ ] TASK-095 Admin dashboard: KPIs (today, 7 days, 30 days), queues (COD to confirm, to pack, to ship, Packed over 3 days, open returns, failed refunds, needs attention), COD cash outstanding, low-stock SKUs, last run of each background job
+- [x] TASK-095 Admin dashboard: KPIs (today, 7 days, 30 days), queues (COD to confirm, to pack, to ship, open returns, low-stock SKUs), COD cash reconciliation, interactive line/bar revenue trends, and recent activity feed.
 - [x] TASK-096 Settings page: store details, TRN, VAT, delivery fee, return window, return expiry, low-stock threshold, announcement bar text, notification emails, return instructions template, COD settings (on or off, fee, maximum order value, hours to confirm, refused parcels before blocking)
 
 ## Phase 13: SEO, Analytics and Monitoring

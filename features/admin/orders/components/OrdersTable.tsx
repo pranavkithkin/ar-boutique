@@ -101,8 +101,7 @@ export function OrdersTable({
         <ShoppingBag className="size-10 text-muted-foreground mx-auto mb-3 opacity-40" />
         <h3 className="font-sans text-base font-semibold text-foreground">No orders yet</h3>
         <p className="mt-1.5 text-xs text-muted-foreground max-w-sm mx-auto font-sans leading-relaxed">
-          Orders will appear here once customers complete checkout. The orders table is
-          provisioned in Phase 6 of the build.
+          Customer orders will appear here in real time once orders are placed via online card payment or Cash on Delivery.
         </p>
       </div>
     )

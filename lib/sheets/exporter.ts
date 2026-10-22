@@ -57,7 +57,7 @@ export async function exportCatalogueToExcelBuffer(): Promise<Buffer> {
       price_fils,
       compare_at_fils,
       is_active,
-      sizes:size_id (
+      sizes (
         id,
         label,
         sort
@@ -66,20 +66,20 @@ export async function exportCatalogueToExcelBuffer(): Promise<Buffer> {
         on_hand,
         reserved
       ),
-      product_colours:product_colour_id (
+      product_colours (
         id,
         style_code,
         details,
-        colours:colour_id (
+        colours (
           id,
           name
         ),
-        products:product_id (
+        products (
           id,
           name,
           description,
           product_group,
-          categories:category_id (
+          categories (
             id,
             name
           )
@@ -144,11 +144,14 @@ interface ExportVariantRow {
   price_fils: number | null
   compare_at_fils: number | null
   is_active: boolean
-  sizes: { id: string; label: string; sort: number } | null
-  stock_levels: { on_hand: number; reserved: number }[] | null
+  sizes: { id: string; label: string; sort?: number } | null
+  stock_levels:
+    | { on_hand: number; reserved?: number }
+    | { on_hand: number; reserved?: number }[]
+    | null
   product_colours: {
     id: string
-    style_code: string
+    style_code?: string | null
     details: Record<string, string> | null
     colours: { id: string; name: string } | null
     products: {
@@ -156,7 +159,7 @@ interface ExportVariantRow {
       name: string
       description: string | null
       product_group: string | null
-      categories: { id: string; name: string } | null
+      categories: { id: string; name: string } | { id: string; name: string }[] | null
     } | null
   } | null
 }
@@ -184,7 +187,12 @@ interface ExportVariantRow {
     const details = pc?.details || {}
     const colName = pc?.colours?.name || details["Top Primary Color"] || ""
     const sizeLabel = v.sizes?.label || ""
-    const catName = p?.categories?.name || ""
+    const catName = (() => {
+      const cats = p?.categories
+      if (!cats) return ""
+      if (Array.isArray(cats)) return cats[0]?.name || ""
+      return cats.name || ""
+    })()
 
     const sellingPriceAED = typeof v.price_fils === "number" ? v.price_fils / 100 : 0
     const compareAtPriceAED =
@@ -192,10 +200,15 @@ interface ExportVariantRow {
         ? v.compare_at_fils / 100
         : null
 
-    const stockOnHand =
-      v.stock_levels && v.stock_levels.length > 0 && typeof v.stock_levels[0].on_hand === "number"
-        ? v.stock_levels[0].on_hand
-        : 0
+    const stockOnHand = (() => {
+      if (!v.stock_levels) return 0
+      if (Array.isArray(v.stock_levels)) {
+        return v.stock_levels.length > 0 && typeof v.stock_levels[0].on_hand === "number"
+          ? v.stock_levels[0].on_hand
+          : 0
+      }
+      return typeof v.stock_levels.on_hand === "number" ? v.stock_levels.on_hand : 0
+    })()
 
     const rowData: Record<string, string | number | null> = {
       sku: v.sku ?? "",

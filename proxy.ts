@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server"
+import { NextResponse } from "next/server"
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { isClerkConfigured } from "@/lib/clerk"
 
@@ -19,7 +19,11 @@ const isPublicRoute = createRouteMatcher([
   "/admin(.*)", // Admin routes handle their own Supabase Auth
 ])
 
-const clerkHandler = clerkMiddleware(async (auth, request) => {
+export default clerkMiddleware(async (auth, request) => {
+  if (!isClerkConfigured()) {
+    return NextResponse.next()
+  }
+
   if (!isPublicRoute(request)) {
     const { userId } = await auth()
     const sessionCookie = request.cookies.get("ar_customer_session")?.value
@@ -30,15 +34,6 @@ const clerkHandler = clerkMiddleware(async (auth, request) => {
     }
   }
 })
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function proxy(request: NextRequest, event: any) {
-  if (!isClerkConfigured()) {
-    return NextResponse.next()
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (clerkHandler as any)(request, event)
-}
 
 export const config = {
   matcher: [

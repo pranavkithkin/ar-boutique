@@ -1,7 +1,5 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import Image from "next/image"
-import { notFound } from "next/navigation"
 import { AnnouncementBar } from "@/components/store/AnnouncementBar"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
@@ -12,15 +10,22 @@ import { formatAED } from "@/lib/money"
 import { STORE_CONTACT } from "@/lib/contact"
 import {
   CheckCircle2,
-  PhoneCall,
   MessageCircle,
   MapPin,
   Clock,
   Package,
-  ShoppingBag,
   ArrowRight,
-  ShieldCheck,
 } from "lucide-react"
+
+interface ReceivedOrderItem {
+  id: string
+  product_name: string
+  colour_name?: string | null
+  size_label?: string | null
+  quantity: number
+  sku: string
+  total_fils: number
+}
 
 interface ReceivedPageProps {
   params: Promise<{
@@ -222,7 +227,7 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
             </div>
 
             <div className="divide-y divide-border/50">
-              {order.order_items.map((item: any) => (
+              {order.order_items.map((item: ReceivedOrderItem) => (
                 <div key={item.id} className="py-3 flex items-center justify-between gap-4">
                   <div>
                     <h4 className="text-xs font-semibold text-foreground">

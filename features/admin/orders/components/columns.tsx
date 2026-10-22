@@ -10,23 +10,27 @@ import { Eye, CreditCard, Banknote } from "lucide-react"
 // ── Status badge ─────────────────────────────────────────────────────────────
 
 const ORDER_STATUS_STYLES: Record<OrderStatus, string> = {
-  pending:   "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25",
-  confirmed: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/25",
-  packed:    "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/25",
-  shipped:   "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/25",
-  delivered: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25",
-  cancelled: "bg-muted text-muted-foreground border-border",
-  returned:  "bg-destructive/10 text-destructive border-destructive/25",
+  pending:               "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25",
+  awaiting_confirmation: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25",
+  confirmed:             "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/25",
+  packed:                "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/25",
+  shipped:               "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/25",
+  delivered:             "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25",
+  cancelled:             "bg-muted text-muted-foreground border-border",
+  returned:              "bg-destructive/10 text-destructive border-destructive/25",
+  returned_to_sender:    "bg-destructive/10 text-destructive border-destructive/25",
 }
 
 const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  pending:   "Pending",
-  confirmed: "Confirmed",
-  packed:    "Packed",
-  shipped:   "Shipped",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-  returned:  "Returned",
+  pending:               "Pending",
+  awaiting_confirmation: "Awaiting Conf.",
+  confirmed:             "Confirmed",
+  packed:                "Packed",
+  shipped:               "Shipped",
+  delivered:             "Delivered",
+  cancelled:             "Cancelled",
+  returned:              "Returned",
+  returned_to_sender:    "Returned to Sender",
 }
 
 const PAYMENT_STATUS_STYLES: Record<PaymentStatus, string> = {

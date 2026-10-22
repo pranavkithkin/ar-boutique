@@ -13,13 +13,37 @@ import {
   MapPin,
   Clock,
   ArrowRight,
-  ShieldCheck,
-  CreditCard,
 } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Order Confirmed | AR Boutique",
   description: "Your payment has been confirmed and your AR Boutique order is being processed.",
+}
+
+interface SuccessOrderItem {
+  id: string
+  product_name: string
+  colour_name?: string | null
+  size_label?: string | null
+  sku: string
+  unit_price_fils: number
+  quantity: number
+  total_fils: number
+}
+
+interface SuccessOrder {
+  id: string
+  order_number: string
+  customer_name: string
+  email: string
+  phone: string
+  building: string
+  apartment?: string | null
+  street_address: string
+  area: string
+  emirate: string
+  total_fils: number
+  order_items: SuccessOrderItem[]
 }
 
 interface SuccessPageProps {
@@ -32,7 +56,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
   const { orderNumber } = await searchParams
   const decodedOrderNumber = orderNumber ? decodeURIComponent(orderNumber) : null
 
-  let order: any = null
+  let order: SuccessOrder | null = null
   if (decodedOrderNumber) {
     const supabase = createAdminClient()
     const { data } = await supabase
@@ -54,7 +78,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
       )
       .eq("order_number", decodedOrderNumber)
       .maybeSingle()
-    order = data
+    order = (data as unknown) as SuccessOrder | null
   }
 
   return (
@@ -178,7 +202,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             </div>
 
             <div className="divide-y divide-border/50">
-              {order.order_items.map((item: any) => (
+              {order.order_items.map((item: SuccessOrderItem) => (
                 <div key={item.id} className="py-3 flex items-center justify-between gap-4">
                   <div>
                     <h4 className="text-xs font-semibold text-foreground">

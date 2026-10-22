@@ -50,6 +50,12 @@ export async function getStoreSettings(): Promise<StoreSettings> {
       admin_notification_email: data.admin_notification_email || "",
       low_stock_threshold:
         typeof data.low_stock_threshold === "number" ? data.low_stock_threshold : 3,
+      card_enabled:
+        typeof (data as Record<string, unknown>).card_enabled === "boolean"
+          ? Boolean((data as Record<string, unknown>).card_enabled)
+          : Array.isArray(data.notification_emails) && data.notification_emails.includes("card_disabled")
+          ? false
+          : true,
       cod_enabled: typeof data.cod_enabled === "boolean" ? data.cod_enabled : false,
       cod_fee_fils: typeof data.cod_fee_fils === "number" ? data.cod_fee_fils : 0,
       cod_max_order_fils:
@@ -117,6 +123,9 @@ export async function updateStoreSettingsAction(
       // Validate clamp [1, 3] per check constraint
       dbPayload.low_stock_threshold = Math.min(3, Math.max(1, data.low_stock_threshold))
     }
+    if (data.card_enabled !== undefined) {
+      dbPayload.notification_emails = data.card_enabled ? [] : ["card_disabled"]
+    }
     if (data.cod_enabled !== undefined) dbPayload.cod_enabled = data.cod_enabled
     if (data.cod_fee_fils !== undefined) dbPayload.cod_fee_fils = data.cod_fee_fils
     if (data.cod_max_order_fils !== undefined) {
@@ -144,6 +153,7 @@ export async function updateStoreSettingsAction(
     // Bust cache across storefront and admin
     revalidatePath("/", "layout")
     revalidatePath("/admin/settings")
+    revalidatePath("/admin/payments")
     revalidatePath("/contact")
 
     return { success: true }

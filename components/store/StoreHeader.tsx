@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { CartDrawer } from "@/features/cart/components/CartDrawer"
 import { useCartStore } from "@/features/cart/store"
 import { CategoryMenu, useMenuCategories } from "@/components/store/CategoryMenu"
+import { SearchModal } from "@/components/store/SearchModal"
 import { JOURNAL_ENABLED } from "@/lib/journal"
 
 const subscribeToHydration = () => () => {}
@@ -20,6 +21,7 @@ export function StoreHeader() {
   const [isScrolled, setIsScrolled] = React.useState(false)
   const [isHovered, setIsHovered] = React.useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false)
 
   const categories = useMenuCategories()
   const handleMobileMenu = (open: boolean) => {
@@ -31,6 +33,22 @@ export function StoreHeader() {
   const cartItems = useCartStore((state) => state.items)
   const totalItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0)
   const mounted = React.useSyncExternalStore(subscribeToHydration, () => true, () => false)
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      const isInput = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        setIsSearchOpen((prev) => !prev)
+      } else if (e.key === "/" && !isInput) {
+        e.preventDefault()
+        setIsSearchOpen(true)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
 
   React.useEffect(() => {
     if (!isHomePage) return
@@ -87,7 +105,12 @@ export function StoreHeader() {
               </div>
             </SheetContent>
           </Sheet>
-          <button aria-label="Search" className="flex h-11 w-11 shrink-0 items-center justify-center">
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen(true)}
+            aria-label="Search catalogue"
+            className="flex h-11 w-11 shrink-0 items-center justify-center cursor-pointer hover:opacity-75 transition-opacity"
+          >
             <Search className="h-5 w-5" strokeWidth={1.5} />
           </button>
         </div>
@@ -151,7 +174,12 @@ export function StoreHeader() {
         </nav>
 
         <div className="flex min-w-0 items-center justify-end sm:gap-1">
-          <button aria-label="Search" className="hidden lg:flex h-11 w-11 shrink-0 items-center justify-center">
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen(true)}
+            aria-label="Search catalogue (Ctrl+K)"
+            className="hidden lg:flex h-11 w-11 shrink-0 items-center justify-center cursor-pointer hover:opacity-75 transition-opacity"
+          >
             <Search className="h-5 w-5" strokeWidth={1.5} />
           </button>
           <Link href="/account" aria-label="Account" className="hidden sm:flex h-11 w-11 shrink-0 items-center justify-center">
@@ -168,6 +196,7 @@ export function StoreHeader() {
         </div>
       </div>
       <CartDrawer />
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </header>
   )
 }

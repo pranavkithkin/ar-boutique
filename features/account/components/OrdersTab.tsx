@@ -22,13 +22,16 @@ import {
   Clock,
   MessageCircle,
   MapPin,
+  RotateCcw,
+  FileText,
 } from "lucide-react"
 
 interface OrdersTabProps {
   orders: AccountOrder[]
+  onRequestReturn?: (orderId: string) => void
 }
 
-export function OrdersTab({ orders }: OrdersTabProps) {
+export function OrdersTab({ orders, onRequestReturn }: OrdersTabProps) {
   const [filter, setFilter] = React.useState<"all" | "active" | "delivered">("all")
   const [selectedOrderForTracking, setSelectedOrderForTracking] =
     React.useState<AccountOrder | null>(null)
@@ -246,6 +249,26 @@ export function OrdersTab({ orders }: OrdersTabProps) {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  <a
+                    href={`/api/invoices/${order.id}?print=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border text-foreground font-medium rounded-xs hover:bg-muted/40 transition-colors text-xs"
+                    title="Download Official Bilingual Tax Invoice (PDF)"
+                  >
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                    Tax Invoice PDF
+                  </a>
+                  {order.status === "delivered" && onRequestReturn && (
+                    <button
+                      type="button"
+                      onClick={() => onRequestReturn(order.id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border text-foreground font-medium rounded-xs hover:bg-muted/40 transition-colors text-xs"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5 text-primary" />
+                      Request Return
+                    </button>
+                  )}
                   {order.status === "shipped" && (
                     <button
                       onClick={() => setSelectedOrderForTracking(order)}

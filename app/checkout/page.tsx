@@ -3,7 +3,7 @@ import { AnnouncementBar } from "@/components/store/AnnouncementBar"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
 import { CheckoutView } from "@/features/checkout/components/CheckoutView"
-import { getCheckoutConfigAction } from "@/features/checkout/actions"
+import { getCheckoutInitialDataAction } from "@/features/checkout/actions"
 
 export const metadata: Metadata = {
   title: "Secure Checkout | AR Boutique",
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 }
 
 export default async function CheckoutPage() {
-  const config = await getCheckoutConfigAction()
+  const { config, customerContext } = await getCheckoutInitialDataAction()
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -20,7 +20,7 @@ export default async function CheckoutPage() {
       <StoreHeader />
 
       <main className="flex-1 pb-16">
-        <CheckoutView config={config} />
+        <CheckoutView config={config} customerContext={customerContext} />
       </main>
 
       <StoreFooter />

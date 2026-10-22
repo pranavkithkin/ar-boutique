@@ -7,7 +7,11 @@ import { AdminProductListItem } from "../types"
 import { ProductStatusBadge } from "./ProductStatusBadge"
 import { formatAED } from "@/lib/money"
 import { Button } from "@/components/ui/button"
-import { Edit2, ExternalLink } from "lucide-react"
+import { Edit2, ExternalLink, Trash2 } from "lucide-react"
+
+export interface ColumnOptions {
+  onDelete?: (product: AdminProductListItem) => void
+}
 
 export const columns: ColumnDef<AdminProductListItem>[] = [
   {
@@ -124,8 +128,9 @@ export const columns: ColumnDef<AdminProductListItem>[] = [
   {
     id: "actions",
     header: () => <div className="text-right">Actions</div>,
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const p = row.original
+      const meta = table.options.meta as { onDeleteProduct?: (p: AdminProductListItem) => void } | undefined
       return (
         <div className="flex items-center justify-end gap-1">
           <Button
@@ -152,6 +157,17 @@ export const columns: ColumnDef<AdminProductListItem>[] = [
           >
             <ExternalLink className="size-3.5" />
           </Button>
+          {meta?.onDeleteProduct && (
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              onClick={() => meta.onDeleteProduct!(p)}
+              className="size-7 rounded-none text-muted-foreground hover:text-destructive cursor-pointer"
+              title="Delete product"
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
+          )}
         </div>
       )
     },

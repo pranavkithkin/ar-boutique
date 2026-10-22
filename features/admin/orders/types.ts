@@ -1,11 +1,13 @@
 export type OrderStatus =
   | "pending"
+  | "awaiting_confirmation"
   | "confirmed"
   | "packed"
   | "shipped"
   | "delivered"
   | "cancelled"
   | "returned"
+  | "returned_to_sender"
 
 export type PaymentMethod = "card" | "cod"
 

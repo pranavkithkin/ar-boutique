@@ -1,12 +1,23 @@
 "use server"
 
 import "server-only"
+import { auth, currentUser } from "@clerk/nextjs/server"
 import { createAdminClient } from "@/lib/supabase/server"
+import { isClerkConfigured } from "@/lib/clerk"
+import { getCurrentCustomerAction } from "@/features/auth/actions"
 import { getStoreSettings } from "@/features/admin/settings/actions"
 import { checkoutFormSchema, type CheckoutFormValues } from "./schemas"
 import type { CartItem } from "@/features/cart/types"
-import type { CheckoutConfig, PlaceOrderResult } from "./types"
+import type {
+  CheckoutConfig,
+  CheckoutPageData,
+  CodEligibilityStatus,
+  CustomerCheckoutContext,
+  PlaceOrderResult,
+  SavedAddressCandidate,
+} from "./types"
 import { calculateVatPortion } from "@/lib/money"
+import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email"
 
 /**
  * Fetch checkout delivery and payment configuration from database settings.
@@ -18,9 +29,12 @@ export async function getCheckoutConfigAction(): Promise<CheckoutConfig> {
       deliveryFeeFils: settings.delivery_fee_fils,
       freeDeliveryThresholdFils: settings.free_delivery_over_fils,
       vatRatePct: settings.vat_rate_pct,
+      cardEnabled: settings.card_enabled,
       codEnabled: settings.cod_enabled,
       codFeeFils: settings.cod_fee_fils,
       codMaxOrderFils: settings.cod_max_order_fils,
+      codConfirmHours: settings.cod_confirm_hours || 24,
+      codRefusedBlockCount: settings.cod_refused_block_count || 2,
     }
   } catch (err) {
     console.error("Failed to fetch checkout config:", err)
@@ -28,10 +42,175 @@ export async function getCheckoutConfigAction(): Promise<CheckoutConfig> {
       deliveryFeeFils: 2500, // 25 AED fallback
       freeDeliveryThresholdFils: 20000, // 200 AED free delivery
       vatRatePct: 5,
+      cardEnabled: true,
       codEnabled: true,
       codFeeFils: 0,
       codMaxOrderFils: 100000, // 1,000 AED max COD
+      codConfirmHours: 24,
+      codRefusedBlockCount: 2,
     }
+  }
+}
+
+/**
+ * Comprehensive server-side loader for the checkout page:
+ * - Reads live store settings and fees
+ * - Inspects active Clerk / Supabase customer session
+ * - Pulls verified past UAE delivery addresses from orders
+ * - Evaluates full Cash on Delivery eligibility rules
+ */
+export async function getCheckoutInitialDataAction(): Promise<CheckoutPageData> {
+  const supabase = createAdminClient()
+  const config = await getCheckoutConfigAction()
+
+  let email: string | undefined
+  let fullName: string | undefined
+  let phone: string | undefined
+  let isSignedIn = false
+
+  try {
+    if (isClerkConfigured()) {
+      const { userId } = await auth()
+      if (userId) {
+        isSignedIn = true
+        const clerkUser = await currentUser()
+        if (clerkUser) {
+          email = clerkUser.primaryEmailAddress?.emailAddress
+          fullName = `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || undefined
+          phone = clerkUser.primaryPhoneNumber?.phoneNumber || undefined
+        }
+      }
+    }
+
+    if (!isSignedIn) {
+      const session = await getCurrentCustomerAction()
+      if (session) {
+        isSignedIn = true
+        email = session.email
+        fullName = `${session.firstName} ${session.lastName}`.trim() || undefined
+        phone = session.phone || undefined
+      }
+    }
+  } catch (err) {
+    console.warn("Could not inspect customer auth in checkout initial data:", err)
+  }
+
+  const savedAddresses: SavedAddressCandidate[] = []
+  let codEligible = config.codEnabled
+  let codReason: string | undefined
+  let hasOpenCodOrder = false
+  let isBlocked = false
+  let refusalsCount = 0
+
+  if (email) {
+    const cleanEmail = email.toLowerCase().trim()
+
+    // 1. Check Customer record in `customers` table
+    const { data: customerRow } = await supabase
+      .from("customers")
+      .select("id, full_name, phone, cod_disabled, cod_disabled_reason")
+      .ilike("email", cleanEmail)
+      .maybeSingle()
+
+    if (customerRow) {
+      if (customerRow.full_name && !fullName) fullName = customerRow.full_name
+      if (customerRow.phone && !phone) phone = customerRow.phone
+      if (customerRow.cod_disabled) {
+        isBlocked = true
+        codEligible = false
+        codReason =
+          customerRow.cod_disabled_reason || "Cash on delivery has been restricted for this account."
+      }
+    }
+
+    // 2. Fetch past orders for address reuse & COD policy checks
+    const { data: pastOrders } = await supabase
+      .from("orders")
+      .select(
+        "id, customer_name, phone, emirate, area, street_address, building, apartment, landmark, status, payment_method, created_at"
+      )
+      .ilike("email", cleanEmail)
+      .order("created_at", { ascending: false })
+      .limit(20)
+
+    if (pastOrders && pastOrders.length > 0) {
+      const addressSignatures = new Set<string>()
+
+      for (const ord of pastOrders) {
+        if (!ord.street_address || !ord.emirate) continue
+
+        const sig = `${ord.emirate.toLowerCase()}|${(ord.area || "").toLowerCase()}|${ord.street_address.toLowerCase()}|${(ord.building || "").toLowerCase()}`
+        if (!addressSignatures.has(sig)) {
+          addressSignatures.add(sig)
+          savedAddresses.push({
+            id: `past_addr_${ord.id}`,
+            label: `${ord.area || ord.emirate} Delivery`,
+            recipientName: ord.customer_name || fullName || "Customer",
+            phone: ord.phone || phone || "+971 ",
+            emirate: ord.emirate,
+            area: ord.area || "",
+            street: ord.street_address,
+            building: ord.building || "",
+            apartment: ord.apartment || undefined,
+            landmark: ord.landmark || undefined,
+            isDefault: savedAddresses.length === 0,
+          })
+        }
+
+        // Active open COD order check
+        if (
+          ord.payment_method === "cod" &&
+          ["awaiting_confirmation", "confirmed", "processing", "packed", "shipped"].includes(
+            ord.status
+          )
+        ) {
+          hasOpenCodOrder = true
+        }
+
+        // Refused / returned order count
+        if (ord.status === "returned_to_sender") {
+          refusalsCount++
+        }
+      }
+
+      if (hasOpenCodOrder) {
+        codEligible = false
+        codReason =
+          "You already have an active Cash on Delivery order in progress. You can place another once it is delivered."
+      } else if (refusalsCount >= config.codRefusedBlockCount) {
+        isBlocked = true
+        codEligible = false
+        codReason = "Cash on delivery is disabled due to past parcel delivery refusals."
+      }
+    }
+  } else {
+    // Guest checkout: COD defaults to signed-in accounts only per ADR-033
+    codEligible = false
+    codReason = "Sign in to your account to pay with Cash on Delivery."
+  }
+
+  const codEligibility: CodEligibilityStatus = {
+    eligible: codEligible,
+    reason: codReason,
+    isSignedIn,
+    hasOpenCodOrder,
+    isBlocked,
+    refusalsCount,
+    maxOrderFils: config.codMaxOrderFils,
+  }
+
+  const customerContext: CustomerCheckoutContext = {
+    isSignedIn,
+    email,
+    fullName,
+    phone,
+    savedAddresses,
+    codEligibility,
+  }
+
+  return {
+    config,
+    customerContext,
   }
 }
 
@@ -53,7 +232,6 @@ async function generateOrderNumber(supabase: ReturnType<typeof createAdminClient
     }
   }
 
-  // Count existing orders as baseline
   const { count } = await supabase
     .from("orders")
     .select("id", { count: "exact", head: true })
@@ -65,6 +243,7 @@ async function generateOrderNumber(supabase: ReturnType<typeof createAdminClient
 /**
  * Place a customer order with complete server-side verification:
  * - Re-prices each SKU against live database prices (preventing browser tampering)
+ * - Evaluates live stock availability & reserves inventory
  * - Evaluates Cash on Delivery eligibility rules (max order value, settings status)
  * - Inserts the order, line item snapshots, and initial timeline audit row
  */
@@ -91,7 +270,18 @@ export async function placeCheckoutOrderAction(
     const supabase = createAdminClient()
     const settings = await getStoreSettings()
 
-    // 2. Re-price all cart items on the server from the product_variants database
+    // 2. Resolve Authenticated Customer (if signed in)
+    let clerkUserId: string | null = null
+    try {
+      if (isClerkConfigured()) {
+        const { userId } = await auth()
+        if (userId) clerkUserId = userId
+      }
+    } catch {
+      // Guest or local session
+    }
+
+    // 3. Re-price all cart items on the server from the product_variants database
     const variantIds = cartItems.map((i) => i.variantId).filter(Boolean)
     const { data: dbVariants } = await supabase
       .from("product_variants")
@@ -107,9 +297,44 @@ export async function placeCheckoutOrderAction(
       }
     }
 
+    // 4. Verify inventory stock levels
+    if (variantIds.length > 0) {
+      const { data: stockLevels } = await supabase
+        .from("stock_levels")
+        .select("variant_id, on_hand, reserved")
+        .in("variant_id", variantIds)
+
+      if (stockLevels) {
+        const stockMap = new Map<string, { on_hand: number; reserved: number }>()
+        for (const st of stockLevels) {
+          stockMap.set(st.variant_id, {
+            on_hand: st.on_hand ?? 0,
+            reserved: st.reserved ?? 0,
+          })
+        }
+
+        for (const item of cartItems) {
+          if (!item.variantId) continue
+          const stock = stockMap.get(item.variantId)
+          if (stock) {
+            const available = stock.on_hand - stock.reserved
+            if (available < item.quantity) {
+              const label = item.sizeLabel ? `${item.productName} (${item.sizeLabel})` : item.productName
+              return {
+                success: false,
+                error:
+                  available <= 0
+                    ? `Sorry, ${label} is currently sold out.`
+                    : `Sorry, only ${available} unit(s) remaining for ${label}. Please adjust your quantity.`,
+              }
+            }
+          }
+        }
+      }
+    }
+
     let subtotalFils = 0
     const verifiedLines = cartItems.map((item) => {
-      // Use verified price from DB or fallback safely to cart's registered price
       const verifiedUnitPrice = variantPriceMap.get(item.variantId) ?? item.priceFils
       const lineTotal = verifiedUnitPrice * item.quantity
       subtotalFils += lineTotal
@@ -120,7 +345,7 @@ export async function placeCheckoutOrderAction(
       }
     })
 
-    // 3. Compute delivery & COD fees
+    // 5. Compute delivery & COD fees
     const deliveryFeeFils =
       subtotalFils >= settings.free_delivery_over_fils ? 0 : settings.delivery_fee_fils
 
@@ -129,7 +354,7 @@ export async function placeCheckoutOrderAction(
     const totalFils = subtotalFils + deliveryFeeFils + codFeeFils
     const vatFils = calculateVatPortion(totalFils)
 
-    // 4. Validate Cash on Delivery eligibility rules per ADR-033
+    // 6. Validate Payment Method availability rules
     if (isCod) {
       if (!settings.cod_enabled) {
         return {
@@ -143,12 +368,56 @@ export async function placeCheckoutOrderAction(
           error: `Cash on delivery is only available for orders up to AED ${settings.cod_max_order_fils / 100}. Please choose card payment or adjust your bag.`,
         }
       }
+
+      // Check for past refused orders and open COD orders on customer email
+      const cleanEmail = data.email.toLowerCase().trim()
+      const { data: customerPastOrders } = await supabase
+        .from("orders")
+        .select("id, status, payment_method")
+        .ilike("email", cleanEmail)
+
+      if (customerPastOrders && customerPastOrders.length > 0) {
+        const hasOpen = customerPastOrders.some(
+          (o) =>
+            o.payment_method === "cod" &&
+            ["awaiting_confirmation", "confirmed", "processing", "packed", "shipped"].includes(o.status)
+        )
+        if (hasOpen) {
+          return {
+            success: false,
+            error:
+              "You currently have an active Cash on Delivery order awaiting confirmation or delivery.",
+          }
+        }
+
+        const refusedCount = customerPastOrders.filter((o) => o.status === "returned_to_sender").length
+        const allowedRefusals = settings.cod_refused_block_count || 2
+        if (refusedCount >= allowedRefusals) {
+          return {
+            success: false,
+            error: "Cash on delivery has been restricted due to past delivery refusals.",
+          }
+        }
+      }
+    } else {
+      if (!settings.card_enabled) {
+        return {
+          success: false,
+          error: "Online card payment is currently disabled. Please select Cash on Delivery.",
+        }
+      }
     }
 
-    // 5. Generate Order Number
+    // 7. Generate Order Number
     const orderNumber = await generateOrderNumber(supabase)
 
-    // 6. Insert Order Header into `orders`
+    // 8. Determine confirmation deadline for COD
+    const confirmHours = settings.cod_confirm_hours || 24
+    const confirmBy = isCod
+      ? new Date(Date.now() + confirmHours * 60 * 60 * 1000).toISOString()
+      : null
+
+    // 9. Insert Order Header into `orders`
     const { data: insertedOrder, error: orderError } = await supabase
       .from("orders")
       .insert({
@@ -162,7 +431,7 @@ export async function placeCheckoutOrderAction(
         building: data.building,
         apartment: data.apartment || null,
         landmark: data.landmark || null,
-        internal_notes: data.instructions ? `Customer notes: ${data.instructions}` : null,
+        internal_notes: data.instructions ? `Customer delivery notes: ${data.instructions}` : null,
         status: isCod ? "awaiting_confirmation" : "confirmed",
         payment_method: data.paymentMethod,
         payment_status: isCod ? "unpaid" : "paid",
@@ -172,8 +441,10 @@ export async function placeCheckoutOrderAction(
         vat_fils: vatFils,
         total_fils: totalFils,
         vat_rate_bps: settings.vat_rate_pct * 100,
+        confirm_by: confirmBy,
         confirmed_at: isCod ? null : new Date().toISOString(),
         paid_at: isCod ? null : new Date().toISOString(),
+        clerk_user_id: clerkUserId,
       })
       .select("id")
       .single()
@@ -185,14 +456,14 @@ export async function placeCheckoutOrderAction(
 
     const orderId = insertedOrder.id
 
-    // 7. Insert Order Items Snapshot
+    // 10. Insert Order Items Snapshot
     const orderItemsPayload = verifiedLines.map((line) => ({
       order_id: orderId,
       product_id: line.productId || null,
       variant_id: line.variantId || null,
       product_name: line.productName,
       colour_name: line.colourName,
-      style_code: line.sku, // Default style code representation
+      style_code: line.sku,
       size_label: line.sizeLabel || null,
       sku: line.sku,
       media_key: line.image || null,
@@ -201,25 +472,69 @@ export async function placeCheckoutOrderAction(
       total_fils: line.lineTotalFils,
     }))
 
-    const { error: itemsError } = await supabase
-      .from("order_items")
-      .insert(orderItemsPayload)
-
+    const { error: itemsError } = await supabase.from("order_items").insert(orderItemsPayload)
     if (itemsError) {
       console.error("Failed to insert order items:", itemsError)
     }
 
-    // 8. Insert Audit Event in `order_events`
+    // 11. Reserve stock in `stock_levels`
+    for (const line of verifiedLines) {
+      if (line.variantId) {
+        const { data: curStock } = await supabase
+          .from("stock_levels")
+          .select("reserved")
+          .eq("variant_id", line.variantId)
+          .maybeSingle()
+
+        if (curStock) {
+          await supabase
+            .from("stock_levels")
+            .update({ reserved: (curStock.reserved || 0) + line.quantity })
+            .eq("variant_id", line.variantId)
+        }
+      }
+    }
+
+    // 12. Insert Audit Event in `order_events`
     await supabase.from("order_events").insert({
       order_id: orderId,
       event_type: isCod ? "cod_order_placed" : "card_order_placed",
       from_status: null,
       to_status: isCod ? "awaiting_confirmation" : "confirmed",
       note: isCod
-        ? "Order placed via Cash on Delivery. Awaiting concierge phone or WhatsApp confirmation."
+        ? `Order placed via Cash on Delivery. Awaiting phone or WhatsApp confirmation within ${confirmHours} hours.`
         : "Order placed and confirmed successfully via Card payment.",
-      actor_sub: "storefront_shopper",
+      actor_sub: clerkUserId || "storefront_shopper",
     })
+
+    // 13. Sync customer profile in `customers` table
+    const cleanEmail = data.email.toLowerCase().trim()
+    try {
+      await supabase.from("customers").upsert(
+        {
+          email: cleanEmail,
+          full_name: data.fullName.trim(),
+          phone: data.phone.trim(),
+          clerk_user_id: clerkUserId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "email", ignoreDuplicates: false }
+      )
+    } catch (custSyncErr) {
+      console.warn("Failed to update customer registry on checkout:", custSyncErr)
+    }
+
+    // 14. Trigger customer confirmation and admin alert emails asynchronously
+    try {
+      void sendOrderConfirmationEmail(orderId).catch((err) =>
+        console.warn("[Checkout] Background confirmation email error:", err)
+      )
+      void sendAdminNewOrderNotification(orderId).catch((err) =>
+        console.warn("[Checkout] Background admin notification error:", err)
+      )
+    } catch (emailErr) {
+      console.warn("[Checkout] Could not trigger background emails:", emailErr)
+    }
 
     const redirectUrl = isCod
       ? `/checkout/received/${encodeURIComponent(orderNumber)}`
@@ -232,11 +547,13 @@ export async function placeCheckoutOrderAction(
       paymentMethod: data.paymentMethod,
       redirectUrl,
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("placeCheckoutOrderAction error:", err)
+    const errorMessage =
+      err instanceof Error ? err.message : "An unexpected error occurred while placing your order."
     return {
       success: false,
-      error: err?.message || "An unexpected error occurred while placing your order.",
+      error: errorMessage,
     }
   }
 }

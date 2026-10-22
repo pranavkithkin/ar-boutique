@@ -34,7 +34,8 @@ export interface StoreSettings {
   // Low stock
   low_stock_threshold: number
 
-  // Cash on delivery
+  // Payment methods
+  card_enabled: boolean
   cod_enabled: boolean
   cod_fee_fils: number
   cod_max_order_fils: number
@@ -95,6 +96,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   announcement_bar_enabled: false,
   admin_notification_email: "",
   low_stock_threshold: 3,
+  card_enabled: true,
   cod_enabled: false,
   cod_fee_fils: 0,
   cod_max_order_fils: 500000,

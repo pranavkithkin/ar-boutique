@@ -27,11 +27,12 @@ export async function GET() {
     const dateStr = new Date().toISOString().slice(0, 10)
     const filename = `AR-Boutique-Stock-${dateStr}.xlsx`
 
-    return new Response(buffer as unknown as BodyInit, {
+    return new Response(new Uint8Array(buffer), {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Length": buffer.length.toString(),
         "Cache-Control": "no-store, no-cache, must-revalidate",
       },
     })

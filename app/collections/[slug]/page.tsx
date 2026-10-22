@@ -10,20 +10,21 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { ProductGallery } from "@/components/store/ProductGallery"
-import { SyncScrollLayout } from "@/components/store/SyncScrollLayout"
-import { ProductInfo } from "@/components/store/ProductInfo"
+import { ProductDetailView } from "@/components/store/ProductDetailView"
 import { ProductCard } from "@/components/store/ProductCard"
 import { getProductBySlug } from "@/lib/product-detail"
 import { getProductsPage } from "@/lib/products"
 
 export default async function ProductPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ colour?: string }>
 }) {
   const { slug } = await params
-  const product = await getProductBySlug(slug)
+  const { colour } = await searchParams
+  const product = await getProductBySlug(slug, colour)
 
   if (!product) {
     notFound()
@@ -62,9 +63,9 @@ export default async function ProductPage({
         </div>
 
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 pb-24">
-          <SyncScrollLayout
-            left={<ProductGallery images={product.images} />}
-            right={<ProductInfo product={product} title={product.name} />}
+          <ProductDetailView
+            product={product}
+            initialColourSlug={colour}
           />
 
           {/* Recommended Products */}

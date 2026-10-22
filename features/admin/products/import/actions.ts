@@ -70,9 +70,9 @@ export async function previewStockSheetAction(
       { data: dbSizes },
       { data: dbCategories },
     ] = await Promise.all([
-      adminDb.from("products").select("id, name, slug, product_group"),
-      adminDb.from("product_colours").select("id, product_id, colour_id, style_code, details, colours(name)"),
-      adminDb.from("product_variants").select("id, sku, product_colour_id, size_id, price_fils, compare_at_fils, sizes(label), stock_levels(on_hand, reserved)"),
+      adminDb.from("products").select("id, name, slug, product_group, status"),
+      adminDb.from("product_colours").select("id, product_id, colour_id, style_code, details, is_active, colours(name)"),
+      adminDb.from("product_variants").select("id, product_id, sku, product_colour_id, size_id, price_fils, compare_at_fils, is_active, sizes(label), stock_levels(on_hand, reserved)"),
       adminDb.from("colours").select("id, name"),
       adminDb.from("sizes").select("id, label, sort"),
       adminDb.from("categories").select("id, name"),
@@ -124,6 +124,19 @@ export async function previewStockSheetAction(
         (v) => (v.sku || "").toLowerCase() === lowerSku
       )
 
+      const parentProductOfExisting = products.find((p) => {
+        if (existingVariant?.product_id) {
+          return p.id === existingVariant.product_id
+        }
+        const cw = colourways.find((c) => c.id === existingVariant?.product_colour_id)
+        return cw && cw.product_id === p.id
+      })
+
+      const isArchivedProduct = parentProductOfExisting
+        ? parentProductOfExisting.status === "archived"
+        : false
+      const isDeactivatedVariant = existingVariant ? !existingVariant.is_active : false
+
       let action: ImportRowAction = "unchanged"
       let actionLabel = "Unchanged"
       let isNewProduct = false
@@ -139,8 +152,33 @@ export async function previewStockSheetAction(
         priceFilsAfter = Math.round(row.sellingPriceAED * 100)
       }
 
-      if (existingVariant) {
-        // Variant already exists in database
+      if (existingVariant && isArchivedProduct) {
+        // Parent product was removed/archived: re-adding will re-create product and variant
+        isNewProduct = true
+        isNewVariant = true
+        action = "create_product"
+        actionLabel = "Create Product & SKU"
+        stockBefore = 0
+        stockAfter = row.stock !== null ? row.stock : (existingVariant.stock_levels?.on_hand ?? 5)
+        stockDelta = stockAfter
+
+        if (!newProductStylesSeen.has(row.style.toLowerCase())) {
+          newProductStylesSeen.add(row.style.toLowerCase())
+          productsToCreate++
+          colourwaysToCreate++
+        }
+        variantsToCreate++
+      } else if (existingVariant && isDeactivatedVariant) {
+        // Variant was deactivated: re-adding will re-create the variant SKU
+        isNewVariant = true
+        action = "create_variant"
+        actionLabel = "Add Variant SKU"
+        stockBefore = 0
+        stockAfter = row.stock !== null ? row.stock : (existingVariant.stock_levels?.on_hand ?? 5)
+        stockDelta = stockAfter
+        variantsToCreate++
+      } else if (existingVariant) {
+        // Variant already exists and is active in database
         const currentStock = existingVariant.stock_levels?.on_hand ?? 0
         const currentReserved = existingVariant.stock_levels?.reserved ?? 0
         stockBefore = currentStock
@@ -189,8 +227,8 @@ export async function previewStockSheetAction(
           )
         })
 
-        if (!existingProduct) {
-          // Product does not exist
+        if (!existingProduct || existingProduct.status === "archived") {
+          // Product does not exist or was archived
           isNewProduct = true
           isNewColourway = true
           action = "create_product"
@@ -213,8 +251,8 @@ export async function previewStockSheetAction(
             return matchesProduct && matchesStyle && matchesColour
           })
 
-          if (!existingColourway) {
-            // New colourway under existing product
+          if (!existingColourway || !existingColourway.is_active) {
+            // New or inactive colourway under existing product
             isNewColourway = true
             action = "create_colourway"
             actionLabel = "Add Colourway & SKU"
@@ -225,7 +263,7 @@ export async function previewStockSheetAction(
               colourwaysToCreate++
             }
           } else {
-            // Adding a new size variant to an existing colourway
+            // Adding a new size variant to an existing active colourway
             action = "create_variant"
             actionLabel = "Add Variant SKU"
           }
@@ -372,9 +410,9 @@ export async function applyStockSheetAction(importId: string): Promise<{
       { data: dbSizes },
       { data: dbCategories },
     ] = await Promise.all([
-      adminDb.from("products").select("id, name, slug, product_group"),
-      adminDb.from("product_colours").select("id, product_id, colour_id, style_code, details, colours(name)"),
-      adminDb.from("product_variants").select("id, sku, product_colour_id, size_id, price_fils, compare_at_fils, stock_levels(on_hand, reserved)"),
+      adminDb.from("products").select("id, name, slug, product_group, status"),
+      adminDb.from("product_colours").select("id, product_id, colour_id, style_code, details, is_active, colours(name)"),
+      adminDb.from("product_variants").select("id, product_id, sku, product_colour_id, size_id, price_fils, compare_at_fils, is_active, stock_levels(on_hand, reserved)"),
       adminDb.from("colours").select("id, name"),
       adminDb.from("sizes").select("id, label, sort"),
       adminDb.from("categories").select("id, name"),
@@ -483,7 +521,36 @@ export async function applyStockSheetAction(importId: string): Promise<{
       const targetStock = row.stock !== null ? row.stock : 5
 
       if (existingVariant) {
-        // 1. Update existing variant SKU
+        // 1. Resolve and unarchive parent product if archived
+        const parentProd = productsList.find((p) => {
+          if (existingVariant.product_id) {
+            return p.id === existingVariant.product_id
+          }
+          const cw = colourwaysList.find((c) => c.id === existingVariant.product_colour_id)
+          return cw && cw.product_id === p.id
+        })
+
+        if (parentProd && parentProd.status === "archived") {
+          await adminDb
+            .from("products")
+            .update({
+              status: "draft",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", parentProd.id)
+          parentProd.status = "draft"
+          createdProducts++
+        }
+
+        // 2. Reactivate parent colourway if deactivated
+        if (existingVariant.product_colour_id) {
+          await adminDb
+            .from("product_colours")
+            .update({ is_active: true })
+            .eq("id", existingVariant.product_colour_id)
+        }
+
+        // 3. Update existing variant SKU and ensure it is active
         const currentStock = existingVariant.stock_levels?.on_hand ?? 0
         const reserved = existingVariant.stock_levels?.reserved ?? 0
 
@@ -492,6 +559,7 @@ export async function applyStockSheetAction(importId: string): Promise<{
           .update({
             price_fils: priceFils > 0 ? priceFils : existingVariant.price_fils,
             compare_at_fils: compareAtFils,
+            is_active: true,
           })
           .eq("id", existingVariant.id)
 
@@ -499,14 +567,14 @@ export async function applyStockSheetAction(importId: string): Promise<{
           console.error("Failed to update variant price:", variantUpdateErr)
         }
 
-        // Update stock levels
+        // 4. Update stock levels
         if (row.stock !== null && targetStock !== currentStock) {
           await adminDb.from("stock_levels").upsert({
             variant_id: existingVariant.id,
             on_hand: targetStock,
             reserved,
             updated_at: new Date().toISOString(),
-          })
+          }, { onConflict: "variant_id" })
 
           const delta = targetStock - currentStock
           await adminDb.from("inventory_adjustments").insert({
@@ -521,7 +589,11 @@ export async function applyStockSheetAction(importId: string): Promise<{
           })
         }
 
-        updatedVariants++
+        if (!existingVariant.is_active) {
+          createdVariants++
+        } else {
+          updatedVariants++
+        }
       } else {
         // 2. Variant is new: Resolve Product -> Colourway -> Variant
         let productId: string
@@ -553,7 +625,7 @@ export async function applyStockSheetAction(importId: string): Promise<{
               status: "draft", // New products land as Draft (ARCHITECTURE.md)
               is_final_sale: false,
             })
-            .select("id, name, slug, product_group")
+            .select("id, name, slug, product_group, status")
             .single()
 
           if (prodErr || !newProd) {
@@ -564,6 +636,17 @@ export async function applyStockSheetAction(importId: string): Promise<{
           productId = newProd.id
           createdProducts++
         } else {
+          if (parentProduct.status === "archived") {
+            await adminDb
+              .from("products")
+              .update({
+                status: "draft",
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", parentProduct.id)
+            parentProduct.status = "draft"
+            createdProducts++
+          }
           productId = parentProduct.id
         }
 
@@ -588,7 +671,7 @@ export async function applyStockSheetAction(importId: string): Promise<{
               is_active: true,
               sort: 0,
             })
-            .select("id, product_id, colour_id, style_code, details")
+            .select("id, product_id, colour_id, style_code, details, is_active")
             .single()
 
           if (cwErr || !newCw) {
@@ -596,6 +679,12 @@ export async function applyStockSheetAction(importId: string): Promise<{
           }
           colourwaysList.push(newCw)
           colourway = newCw
+        } else if (!colourway.is_active) {
+          await adminDb
+            .from("product_colours")
+            .update({ is_active: true })
+            .eq("id", colourway.id)
+          colourway.is_active = true
         }
 
         // Resolve Size
@@ -605,6 +694,7 @@ export async function applyStockSheetAction(importId: string): Promise<{
         const { data: newVar, error: varErr } = await adminDb
           .from("product_variants")
           .insert({
+            product_id: productId,
             product_colour_id: colourway.id,
             sku: row.sku,
             size_id: sizeId,
@@ -619,13 +709,16 @@ export async function applyStockSheetAction(importId: string): Promise<{
           throw new Error(`Failed to create variant ${row.sku}: ${varErr?.message}`)
         }
 
-        // Initialize stock level
-        await adminDb.from("stock_levels").insert({
-          variant_id: newVar.id,
-          on_hand: targetStock,
-          reserved: 0,
-          updated_at: new Date().toISOString(),
-        })
+        // Initialize stock level (upsert handles row auto-created by database trigger initialise_stock)
+        await adminDb.from("stock_levels").upsert(
+          {
+            variant_id: newVar.id,
+            on_hand: targetStock,
+            reserved: 0,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "variant_id" }
+        )
 
         // Ledger row
         await adminDb.from("inventory_adjustments").insert({
@@ -655,6 +748,7 @@ export async function applyStockSheetAction(importId: string): Promise<{
 
     revalidatePath("/admin/products")
     revalidatePath("/admin/stock")
+    revalidatePath("/admin/categories")
 
     return {
       success: true,

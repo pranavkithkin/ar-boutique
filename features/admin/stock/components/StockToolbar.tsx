@@ -14,7 +14,9 @@ import {
   AlertTriangle,
   PackageCheck,
   PackageX,
+  Upload,
 } from "lucide-react"
+import { StockBulkImportModal } from "./StockBulkImportModal"
 
 interface StockToolbarProps {
   currentSearch: string
@@ -36,6 +38,7 @@ export function StockToolbar({
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchValue, setSearchValue] = React.useState(currentSearch)
+  const [isImportModalOpen, setIsImportModalOpen] = React.useState(false)
 
   // Sync internal state if URL changes
   React.useEffect(() => {
@@ -233,35 +236,56 @@ export function StockToolbar({
         </div>
       </div>
 
-      {/* Search Bar */}
-      <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search SKU, Style Code, Product Name, Colour..."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            className="pl-9 pr-8 h-9 text-xs rounded-none border-input font-sans bg-background"
-          />
-          {searchValue && (
-            <button
-              type="button"
-              onClick={handleClearSearch}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </div>
+      {/* Search Bar & Import Stock Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 flex-1 max-w-md">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search SKU, Style Code, Product Name, Colour..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              className="pl-9 pr-8 h-9 text-xs rounded-none border-input font-sans bg-background"
+            />
+            {searchValue && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+          <Button
+            type="submit"
+            size="sm"
+            className="h-9 px-4 text-xs font-sans rounded-none bg-primary text-primary-foreground"
+          >
+            Search
+          </Button>
+        </form>
+
         <Button
-          type="submit"
-          size="sm"
-          className="h-9 px-4 text-xs font-sans rounded-none bg-primary text-primary-foreground"
+          type="button"
+          onClick={() => setIsImportModalOpen(true)}
+          className="h-9 px-3.5 text-xs font-sans font-medium uppercase tracking-[0.08em] rounded-none bg-primary text-primary-foreground hover:bg-primary/90 gap-2 shrink-0"
         >
-          Search
+          <Upload className="size-3.5" />
+          <span>Upload Stock Sheet</span>
         </Button>
-      </form>
+      </div>
+
+      <StockBulkImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => {
+          startTransition(() => {
+            router.refresh()
+          })
+        }}
+      />
     </div>
   )
 }

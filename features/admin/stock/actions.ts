@@ -9,7 +9,10 @@ import {
   AdminStockMatrixRow,
   StockFilter,
   StockStatus,
+  BulkStockImportPreview,
+  BulkStockImportRow,
 } from "./types"
+import { parseBulkStockBuffer } from "@/lib/sheets/bulk-stock-reader"
 
 function getCloudinaryUrl(mediaKey?: string | null): string | null {
   if (!mediaKey) return null
@@ -58,7 +61,8 @@ export async function getAdminStockData(params: {
         products:product_id (
           id,
           name,
-          slug
+          slug,
+          status
         ),
         product_images (
           id,
@@ -67,6 +71,7 @@ export async function getAdminStockData(params: {
         )
       )
     `)
+    .eq("is_active", true)
 
   if (error) {
     console.error("Failed to query stock variants:", error)
@@ -92,8 +97,14 @@ export async function getAdminStockData(params: {
     }
   }
 
+  // Filter out any archived products and inactive variants
+  const activeRows = (rawVariants || []).filter((row: any) => {
+    const prod = row.product_colours?.products
+    return row.is_active && prod && prod.status !== "archived"
+  })
+
   // Transform raw items into AdminStockSkuItem
-  const allItems: AdminStockSkuItem[] = (rawVariants || []).map((row: any) => {
+  const allItems: AdminStockSkuItem[] = activeRows.map((row: any) => {
     const pc = row.product_colours
     const prod = pc?.products
     const colour = pc?.colours
@@ -400,3 +411,286 @@ export async function adjustVariantStock(input: {
 
   return { success: true, onHand: input.newOnHand }
 }
+
+/**
+ * Preview bulk stock updates from an uploaded spreadsheet (.xlsx or .csv)
+ */
+export async function previewBulkStockSheetAction(
+  formData: FormData
+): Promise<{ success: boolean; preview?: BulkStockImportPreview; error?: string }> {
+  try {
+    const file = formData.get("file") as File | null
+    if (!file) {
+      return { success: false, error: "No file was uploaded." }
+    }
+
+    const fileName = file.name
+    const isXlsx =
+      fileName.toLowerCase().endsWith(".xlsx") || fileName.toLowerCase().endsWith(".xls")
+    const isCsv = fileName.toLowerCase().endsWith(".csv")
+    if (!isXlsx && !isCsv) {
+      return {
+        success: false,
+        error: "Invalid file format. Please upload an Excel (.xlsx/.xls) or CSV (.csv) file.",
+      }
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      return { success: false, error: "File size exceeds the 10 MB limit." }
+    }
+
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    const parseResult = await parseBulkStockBuffer(buffer, fileName)
+    if (parseResult.errors.length > 0) {
+      return { success: false, error: parseResult.errors.join("; ") }
+    }
+
+    const adminDb = createAdminClient()
+
+    // Query active variants with stock and product metadata
+    const { data: variants, error: vErr } = await adminDb
+      .from("product_variants")
+      .select(`
+        id,
+        sku,
+        product_id,
+        is_active,
+        stock_levels (
+          on_hand,
+          reserved
+        ),
+        product_colours (
+          style_code,
+          colours:colour_id (
+            name
+          ),
+          products:product_id (
+            name,
+            status
+          )
+        ),
+        sizes:size_id (
+          label
+        )
+      `)
+
+    if (vErr) {
+      console.error("Failed to query variants for bulk stock preview:", vErr)
+      return { success: false, error: "Failed to query catalogue variants." }
+    }
+
+    // Index variants by lowercased SKU
+    const variantMap = new Map<string, any>()
+    for (const v of variants || []) {
+      if (v.sku) {
+        variantMap.set(v.sku.toLowerCase().trim(), v)
+      }
+    }
+
+    const previewRows: BulkStockImportRow[] = []
+    let readyCount = 0
+    let unchangedCount = 0
+    let errorCount = 0
+
+    for (const raw of parseResult.rows) {
+      if (raw.error || raw.newOnHand === null) {
+        errorCount++
+        previewRows.push({
+          rowNumber: raw.rowNumber,
+          sku: raw.sku,
+          newOnHand: raw.newOnHand || 0,
+          status: "error",
+          errorMessage: raw.error || "Invalid stock data",
+        })
+        continue
+      }
+
+      const matchedVariant = variantMap.get(raw.sku.toLowerCase().trim())
+      if (!matchedVariant) {
+        errorCount++
+        previewRows.push({
+          rowNumber: raw.rowNumber,
+          sku: raw.sku,
+          newOnHand: raw.newOnHand,
+          status: "error",
+          errorMessage: `SKU "${raw.sku}" not found in catalogue.`,
+        })
+        continue
+      }
+
+      const prod = matchedVariant.product_colours?.products
+      if (prod && prod.status === "archived") {
+        errorCount++
+        previewRows.push({
+          rowNumber: raw.rowNumber,
+          sku: raw.sku,
+          newOnHand: raw.newOnHand,
+          status: "error",
+          errorMessage: `Product "${prod.name}" is archived.`,
+        })
+        continue
+      }
+
+      const stockLevel = matchedVariant.stock_levels
+      const currentOnHand = stockLevel ? stockLevel.on_hand : 0
+      const reserved = stockLevel ? stockLevel.reserved : 0
+
+      if (raw.newOnHand < reserved) {
+        errorCount++
+        previewRows.push({
+          rowNumber: raw.rowNumber,
+          sku: raw.sku,
+          newOnHand: raw.newOnHand,
+          variantId: matchedVariant.id,
+          productId: matchedVariant.product_id,
+          productName: prod?.name,
+          colourName: matchedVariant.product_colours?.colours?.name,
+          sizeLabel: matchedVariant.sizes?.label,
+          currentOnHand,
+          reserved,
+          status: "error",
+          errorMessage: `Cannot be less than reserved quantity (${reserved} units reserved for customer orders).`,
+        })
+        continue
+      }
+
+      const delta = raw.newOnHand - currentOnHand
+      if (delta === 0) {
+        unchangedCount++
+        previewRows.push({
+          rowNumber: raw.rowNumber,
+          sku: matchedVariant.sku,
+          newOnHand: raw.newOnHand,
+          variantId: matchedVariant.id,
+          productId: matchedVariant.product_id,
+          productName: prod?.name,
+          colourName: matchedVariant.product_colours?.colours?.name,
+          sizeLabel: matchedVariant.sizes?.label,
+          currentOnHand,
+          reserved,
+          delta: 0,
+          status: "unchanged",
+        })
+      } else {
+        readyCount++
+        previewRows.push({
+          rowNumber: raw.rowNumber,
+          sku: matchedVariant.sku,
+          newOnHand: raw.newOnHand,
+          variantId: matchedVariant.id,
+          productId: matchedVariant.product_id,
+          productName: prod?.name,
+          colourName: matchedVariant.product_colours?.colours?.name,
+          sizeLabel: matchedVariant.sizes?.label,
+          currentOnHand,
+          reserved,
+          delta,
+          status: "ready",
+        })
+      }
+    }
+
+    return {
+      success: true,
+      preview: {
+        fileName,
+        totalRows: parseResult.rows.length,
+        readyCount,
+        unchangedCount,
+        errorCount,
+        rows: previewRows,
+      },
+    }
+  } catch (err: unknown) {
+    console.error("Bulk stock preview error:", err)
+    const msg = err instanceof Error ? err.message : "Failed to process stock sheet."
+    return { success: false, error: msg }
+  }
+}
+
+/**
+ * Apply bulk stock adjustments from confirmed preview rows
+ */
+export async function applyBulkStockSheetAction(input: {
+  updates: {
+    variantId: string
+    newOnHand: number
+    delta: number
+    currentOnHand: number
+    note?: string
+  }[]
+  reason:
+    | "restock"
+    | "correction"
+    | "opening stock"
+    | "damaged"
+    | "offline sale"
+    | "return restock"
+    | "COD refused"
+  defaultNote?: string
+}): Promise<{ success: boolean; updatedCount?: number; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const actorId = user?.id || "f93c1910-4399-41d2-88ac-e8d0bd43f0e7"
+
+  const adminDb = createAdminClient()
+
+  if (!input.updates || input.updates.length === 0) {
+    return { success: false, error: "No valid stock updates to apply." }
+  }
+
+  try {
+    let updatedCount = 0
+
+    for (const item of input.updates) {
+      if (item.delta === 0) continue
+
+      // Upsert stock_levels
+      const { error: upsertErr } = await adminDb
+        .from("stock_levels")
+        .upsert(
+          {
+            variant_id: item.variantId,
+            on_hand: item.newOnHand,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "variant_id" }
+        )
+
+      if (upsertErr) {
+        console.error(`Failed to update stock_levels for variant ${item.variantId}:`, upsertErr)
+        continue
+      }
+
+      // Insert audit row in inventory_adjustments
+      await adminDb.from("inventory_adjustments").insert({
+        variant_id: item.variantId,
+        delta: item.delta,
+        on_hand_before: item.currentOnHand,
+        on_hand_after: item.newOnHand,
+        reason: input.reason,
+        note: item.note || input.defaultNote || "Bulk stock sheet update",
+        actor_sub: actorId,
+      })
+
+      updatedCount++
+    }
+
+    revalidatePath("/admin/stock")
+    revalidatePath("/admin/products")
+    revalidatePath("/collections")
+    revalidatePath("/shop")
+    revalidatePath("/")
+
+    return { success: true, updatedCount }
+  } catch (err: unknown) {
+    console.error("Bulk stock apply error:", err)
+    const msg = err instanceof Error ? err.message : "Failed to apply stock updates."
+    return { success: false, error: msg }
+  }
+}
+

@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button"
 import { columns } from "./columns"
 import { AdminProductListItem } from "../types"
 import { Package, Plus } from "lucide-react"
+import { ProductDeleteDialog } from "./ProductDeleteDialog"
 
 interface ProductsTableProps {
   products: AdminProductListItem[]
@@ -48,6 +49,7 @@ export function ProductsTable({
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = React.useTransition()
+  const [productToDelete, setProductToDelete] = React.useState<AdminProductListItem | null>(null)
 
   // TanStack Table instance matching shadcn data-table pattern
   const table = useReactTable({
@@ -56,6 +58,9 @@ export function ProductsTable({
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     pageCount: totalPages,
+    meta: {
+      onDeleteProduct: (p: AdminProductListItem) => setProductToDelete(p),
+    },
     state: {
       pagination: {
         pageIndex: Math.max(0, currentPage - 1),
@@ -257,6 +262,14 @@ export function ProductsTable({
           )}
         </div>
       )}
+
+      <ProductDeleteDialog
+        productId={productToDelete?.id || null}
+        productName={productToDelete?.name || ""}
+        isOpen={!!productToDelete}
+        onClose={() => setProductToDelete(null)}
+        onDeleted={() => router.refresh()}
+      />
     </div>
   )
 }

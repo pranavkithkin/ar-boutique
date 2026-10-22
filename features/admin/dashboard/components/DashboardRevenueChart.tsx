@@ -1,7 +1,14 @@
 "use client"
 
-import type * as React from "react"
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import * as React from "react"
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+} from "recharts"
 import {
   type ChartConfig,
   ChartContainer,
@@ -58,7 +65,7 @@ function CustomGradientBar(
       />
       <rect fill={fill} height={2} stroke="none" width={width} x={x} y={y} />
       <defs>
-        <linearGradient id={gid} x1="0" x2="0" y1="0" y2="1">
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={fill} stopOpacity={0.6} />
           <stop offset="100%" stopColor={fill} stopOpacity={0.08} />
         </linearGradient>
@@ -71,6 +78,8 @@ export function DashboardRevenueChart({
   chartData,
   kpis,
 }: DashboardRevenueChartProps) {
+  const [chartType, setChartType] = React.useState<"line" | "bar">("line")
+
   const cardPct =
     kpis.grossRevenueFils > 0
       ? Math.round((kpis.cardRevenueFils / kpis.grossRevenueFils) * 100)
@@ -106,8 +115,34 @@ export function DashboardRevenueChart({
               Daily revenue in AED across card and confirmed COD transactions.
             </p>
           </div>
-          <div className="text-xs text-muted-foreground font-mono">
-            Total AED {Math.round(kpis.grossRevenueFils / 100).toLocaleString()}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="text-xs text-muted-foreground font-mono">
+              Total AED {Math.round(kpis.grossRevenueFils / 100).toLocaleString()}
+            </div>
+            <div className="inline-flex items-center p-0.5 border border-border bg-muted/40 rounded-xs">
+              <button
+                type="button"
+                onClick={() => setChartType("line")}
+                className={`px-2.5 py-1 text-[11px] font-sans font-medium transition-colors rounded-xs ${
+                  chartType === "line"
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Line
+              </button>
+              <button
+                type="button"
+                onClick={() => setChartType("bar")}
+                className={`px-2.5 py-1 text-[11px] font-sans font-medium transition-colors rounded-xs ${
+                  chartType === "bar"
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Bar
+              </button>
+            </div>
           </div>
         </div>
 
@@ -121,49 +156,115 @@ export function DashboardRevenueChart({
               className="aspect-auto h-64 w-full"
               config={chartConfig}
             >
-              <BarChart
-                accessibilityLayer
-                data={chartData}
-                margin={{ top: 12, right: 12, left: 12, bottom: 4 }}
-              >
-                <CartesianGrid
-                  vertical={false}
-                  strokeDasharray="3 3"
-                  className="stroke-border/40"
-                />
-                <XAxis
-                  dataKey="label"
-                  axisLine={false}
-                  tickLine={false}
-                  tickMargin={10}
-                  className="text-xs text-muted-foreground font-sans"
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={
-                    <ChartTooltipContent
-                      indicator="dot"
-                      formatter={(value, name) => (
-                        <div className="flex min-w-36 items-center justify-between text-xs gap-4">
-                          <span className="text-muted-foreground">
-                            {name === "revenueAed" ? "Net Revenue" : "Orders"}
-                          </span>
-                          <span className="font-mono font-semibold text-foreground">
-                            {name === "revenueAed"
-                              ? `AED ${Number(value).toLocaleString()}`
-                              : value}
-                          </span>
-                        </div>
-                      )}
-                    />
-                  }
-                />
-                <Bar
-                  dataKey="revenueAed"
-                  fill="var(--color-revenueAed)"
-                  shape={<CustomGradientBar />}
-                />
-              </BarChart>
+              {chartType === "line" ? (
+                <AreaChart
+                  accessibilityLayer
+                  data={chartData}
+                  margin={{ top: 12, right: 12, left: 12, bottom: 4 }}
+                >
+                  <defs>
+                    <linearGradient id="dashboardRevenueLineGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-revenueAed)" stopOpacity={0.32} />
+                      <stop offset="95%" stopColor="var(--color-revenueAed)" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    vertical={false}
+                    strokeDasharray="3 3"
+                    className="stroke-border/40"
+                  />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={10}
+                    className="text-xs text-muted-foreground font-sans"
+                  />
+                  <ChartTooltip
+                    cursor={{ stroke: "var(--border)", strokeWidth: 1, strokeDasharray: "3 3" }}
+                    content={
+                      <ChartTooltipContent
+                        indicator="dot"
+                        formatter={(value, name) => (
+                          <div className="flex min-w-36 items-center justify-between text-xs gap-4">
+                            <span className="text-muted-foreground">
+                              {name === "revenueAed" ? "Net Revenue" : "Orders"}
+                            </span>
+                            <span className="font-mono font-semibold text-foreground">
+                              {name === "revenueAed"
+                                ? `AED ${Number(value).toLocaleString()}`
+                                : value}
+                            </span>
+                          </div>
+                        )}
+                      />
+                    }
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenueAed"
+                    stroke="var(--color-revenueAed)"
+                    strokeWidth={2.5}
+                    fill="url(#dashboardRevenueLineGradient)"
+                    dot={{
+                      r: 3.5,
+                      fill: "var(--color-revenueAed)",
+                      stroke: "var(--background)",
+                      strokeWidth: 1.5,
+                    }}
+                    activeDot={{
+                      r: 6,
+                      fill: "var(--color-revenueAed)",
+                      stroke: "var(--background)",
+                      strokeWidth: 2,
+                    }}
+                  />
+                </AreaChart>
+              ) : (
+                <BarChart
+                  accessibilityLayer
+                  data={chartData}
+                  margin={{ top: 12, right: 12, left: 12, bottom: 4 }}
+                >
+                  <CartesianGrid
+                    vertical={false}
+                    strokeDasharray="3 3"
+                    className="stroke-border/40"
+                  />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={10}
+                    className="text-xs text-muted-foreground font-sans"
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={
+                      <ChartTooltipContent
+                        indicator="dot"
+                        formatter={(value, name) => (
+                          <div className="flex min-w-36 items-center justify-between text-xs gap-4">
+                            <span className="text-muted-foreground">
+                              {name === "revenueAed" ? "Net Revenue" : "Orders"}
+                            </span>
+                            <span className="font-mono font-semibold text-foreground">
+                              {name === "revenueAed"
+                                ? `AED ${Number(value).toLocaleString()}`
+                                : value}
+                            </span>
+                          </div>
+                        )}
+                      />
+                    }
+                  />
+                  <Bar
+                    dataKey="revenueAed"
+                    fill="var(--color-revenueAed)"
+                    shape={<CustomGradientBar />}
+                  />
+                </BarChart>
+              )}
             </ChartContainer>
           )}
         </div>

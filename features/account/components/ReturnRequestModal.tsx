@@ -26,12 +26,15 @@ import {
   CheckCircle2,
   Loader2,
   Building2,
+  ChevronDown,
 } from "lucide-react"
 import type { AccountOrder, AccountOrderItem } from "../types"
 import {
   evaluateOrderReturnEligibility,
   type OrderForEligibility,
+  type ExistingReturnedItem,
 } from "../returns/eligibility"
+import type { CustomerReturnRequest } from "../returns/types"
 import {
   RETURN_REASONS,
   type ReturnReason,
@@ -39,6 +42,7 @@ import {
 import {
   submitCustomerReturnAction,
   uploadReturnPhotoAction,
+  getCustomerReturnsAction,
 } from "../returns/actions"
 
 interface ReturnRequestModalProps {
@@ -47,6 +51,8 @@ interface ReturnRequestModalProps {
   orders: AccountOrder[]
   preselectedOrderId?: string
   onReturnSubmitted: (returnNumber: string) => void
+  existingReturns?: CustomerReturnRequest[]
+  customerEmail?: string
 }
 
 interface SelectedItemState {
@@ -74,6 +80,24 @@ interface ReturnRequestFormProps {
   onSelectOrderId: (orderId: string) => void
   onClose: () => void
   onReturnSubmitted: (returnNumber: string) => void
+  existingReturns?: CustomerReturnRequest[]
+  customerEmail?: string
+}
+
+function formatUaeIban(val: string): string {
+  // Strip non-alphanumeric and uppercase
+  let clean = val.toUpperCase().replace(/[^A-Z0-9]/g, "")
+  if (clean.length > 0 && !clean.startsWith("AE")) {
+    if (/^\d/.test(clean)) {
+      clean = "AE" + clean
+    }
+  }
+  clean = clean.slice(0, 23)
+  const parts: string[] = []
+  for (let i = 0; i < clean.length; i += 4) {
+    parts.push(clean.slice(i, i + 4))
+  }
+  return parts.join(" ")
 }
 
 function ReturnRequestForm({
@@ -82,12 +106,47 @@ function ReturnRequestForm({
   onSelectOrderId,
   onClose,
   onReturnSubmitted,
+  existingReturns,
+  customerEmail,
 }: ReturnRequestFormProps) {
+  const [internalReturns, setInternalReturns] = React.useState<CustomerReturnRequest[]>(
+    existingReturns || []
+  )
+
+  React.useEffect(() => {
+    if (existingReturns) {
+      setInternalReturns(existingReturns)
+      return
+    }
+    if (customerEmail) {
+      getCustomerReturnsAction(customerEmail).then((res) => {
+        if (res.success && res.returns) {
+          setInternalReturns(res.returns)
+        }
+      })
+    }
+  }, [existingReturns, customerEmail])
+
   const activeOrder = React.useMemo(() => {
     return deliveredOrders.find((o) => o.id === selectedOrderId) || null
   }, [deliveredOrders, selectedOrderId])
 
-  // Evaluate eligibility for this order
+  // Extract returned items for this active order
+  const existingItemsForOrder: ExistingReturnedItem[] = React.useMemo(() => {
+    if (!activeOrder) return []
+    const list = existingReturns || internalReturns || []
+    return list
+      .filter((ret) => ret.orderId === activeOrder.id && ret.status !== "rejected")
+      .flatMap((ret) =>
+        ret.items.map((it) => ({
+          orderItemId: it.orderItemId,
+          quantity: it.quantity,
+          status: ret.status,
+        }))
+      )
+  }, [existingReturns, internalReturns, activeOrder])
+
+  // Evaluate eligibility for this order taking existing returns into account
   const eligibility = React.useMemo(() => {
     if (!activeOrder) return null
     const orderForCheck: OrderForEligibility = {
@@ -101,8 +160,8 @@ function ReturnRequestForm({
         quantity: it.quantity,
       })),
     }
-    return evaluateOrderReturnEligibility(orderForCheck)
-  }, [activeOrder])
+    return evaluateOrderReturnEligibility(orderForCheck, existingItemsForOrder)
+  }, [activeOrder, existingItemsForOrder])
 
   // Form states initialized clean per key
   const [selectedItems, setSelectedItems] = React.useState<Map<string, SelectedItemState>>(
@@ -245,9 +304,9 @@ function ReturnRequestForm({
         return
       }
       const cleanIban = iban.replace(/\s+/g, "").toUpperCase()
-      if (!cleanIban.startsWith("AE") || cleanIban.length !== 23) {
+      if (!cleanIban.startsWith("AE") || cleanIban.length !== 23 || !/^AE\d{21}$/.test(cleanIban)) {
         setErrorMessage(
-          "Please enter a valid 23-character UAE IBAN starting with 'AE'."
+          `Please enter a valid 23-character UAE IBAN (currently ${cleanIban.length}/23 characters). Example: AE07 0330 0000 0000 1234 567`
         )
         return
       }
@@ -313,22 +372,43 @@ function ReturnRequestForm({
           </div>
         </div>
 
-        <div className="p-4 bg-muted/30 border border-border/60 rounded-xs text-left max-w-md mx-auto space-y-2.5 text-xs text-muted-foreground">
-          <div className="flex items-start gap-2">
-            <span className="font-semibold text-foreground">1. Courier Dispatch:</span>
-            <span>Our courier partner will contact you within 1-2 business days to collect the sealed package.</span>
-          </div>
-          <div className="flex items-start gap-2">
-            <span className="font-semibold text-foreground">2. Inspection:</span>
-            <span>Garments are inspected at our boutique atelier for tags and unworn condition.</span>
-          </div>
-          <div className="flex items-start gap-2">
-            <span className="font-semibold text-foreground">3. Refund:</span>
-            <span>
-              {isCod
-                ? "Direct UAE bank transfer will be processed to your provided IBAN."
-                : "Card payment reversal will credit your original payment card."}
+        <div className="p-4 sm:p-5 bg-muted/20 border border-border/80 rounded-xs text-left max-w-md mx-auto space-y-3.5 text-xs">
+          <div className="flex items-start gap-3">
+            <span className="w-5 h-5 rounded-full bg-background border border-border flex items-center justify-center text-[10px] font-mono font-medium text-foreground shrink-0 mt-0.5">
+              1
             </span>
+            <div className="space-y-0.5 min-w-0">
+              <span className="font-semibold text-foreground block text-xs">Courier Dispatch</span>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Our courier partner will contact you within 1–2 business days to collect the sealed package.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <span className="w-5 h-5 rounded-full bg-background border border-border flex items-center justify-center text-[10px] font-mono font-medium text-foreground shrink-0 mt-0.5">
+              2
+            </span>
+            <div className="space-y-0.5 min-w-0">
+              <span className="font-semibold text-foreground block text-xs">Atelier Inspection</span>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Garments are inspected at our boutique atelier for tags and unworn condition.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <span className="w-5 h-5 rounded-full bg-background border border-border flex items-center justify-center text-[10px] font-mono font-medium text-foreground shrink-0 mt-0.5">
+              3
+            </span>
+            <div className="space-y-0.5 min-w-0">
+              <span className="font-semibold text-foreground block text-xs">Refund</span>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                {isCod
+                  ? "Direct UAE bank transfer will be processed to your provided IBAN."
+                  : "Card payment reversal will credit your original payment card."}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -360,17 +440,20 @@ function ReturnRequestForm({
           <label className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
             Select Delivered Order *
           </label>
-          <select
-            value={selectedOrderId}
-            onChange={(e) => onSelectOrderId(e.target.value)}
-            className="w-full h-10 px-3 text-xs bg-background border border-border rounded-xs focus:outline-none focus:ring-1 focus:ring-primary font-sans"
-          >
-            {deliveredOrders.map((ord) => (
-              <option key={ord.id} value={ord.id}>
-                {ord.orderNumber} — Delivered on {ord.date} ({ord.items.length} items)
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={selectedOrderId}
+              onChange={(e) => onSelectOrderId(e.target.value)}
+              className="w-full h-10 px-3 pr-8 text-xs bg-background border border-input rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-foreground appearance-none cursor-pointer font-sans"
+            >
+              {deliveredOrders.map((ord) => (
+                <option key={ord.id} value={ord.id}>
+                  {ord.orderNumber} — Delivered on {ord.date} ({ord.items.length} items)
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
         </div>
       ) : activeOrder ? (
         <div className="p-3 bg-muted/20 border border-border/60 rounded-xs flex items-center justify-between text-xs">
@@ -391,6 +474,19 @@ function ReturnRequestForm({
         </div>
       )}
 
+      {/* Order Ineligibility Alert */}
+      {eligibility && !eligibility.isEligible && (
+        <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 rounded-xs flex items-start gap-2.5 text-xs animate-in fade-in-50">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+          <div className="space-y-0.5">
+            <span className="font-semibold block">Return Not Available for this Order</span>
+            <p className="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400/90">
+              {eligibility.ineligibleReason || "All garments from this order have already been submitted for return."}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Item Selection Section */}
       {activeOrder && (
         <div className="space-y-3">
@@ -403,7 +499,7 @@ function ReturnRequestForm({
             </span>
           </div>
 
-          <div className="space-y-3 border border-border/70 rounded-xs divide-y divide-border/50 overflow-hidden">
+          <div className="space-y-2.5">
             {activeOrder.items.map((item) => {
               const itemElig = eligibility?.items.find((e) => e.orderItemId === item.id)
               const isEligible = itemElig ? itemElig.isEligible : true
@@ -414,31 +510,31 @@ function ReturnRequestForm({
               return (
                 <div
                   key={item.id}
-                  className={`p-3.5 space-y-3 transition-colors ${
+                  className={`p-3.5 sm:p-4 rounded-xs border transition-all ${
                     !isEligible
-                      ? "opacity-50 bg-muted/10 cursor-not-allowed"
+                      ? "opacity-50 bg-muted/10 border-border cursor-not-allowed"
                       : isSelected
-                      ? "bg-secondary/20"
-                      : "bg-card"
+                      ? "bg-card border-foreground/40 shadow-xs ring-1 ring-foreground/20"
+                      : "bg-card border-border hover:border-border/80"
                   }`}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3.5">
                     <Checkbox
                       id={`item_${item.id}`}
                       checked={isSelected}
                       disabled={!isEligible}
                       onCheckedChange={() => isEligible && toggleItem(item, maxReturnable)}
-                      className="mt-1"
+                      className="shrink-0"
                     />
 
-                    <div className="h-14 w-12 rounded-xs overflow-hidden bg-muted relative shrink-0 border border-border/40">
+                    <div className="w-12 h-16 rounded-xs overflow-hidden bg-muted relative shrink-0 border border-border/60">
                       {item.imageSrc && (
                         <Image
                           src={item.imageSrc}
                           alt={item.productName}
                           fill
                           sizes="48px"
-                          className="object-cover"
+                          className="object-cover object-top"
                         />
                       )}
                     </div>
@@ -446,7 +542,7 @@ function ReturnRequestForm({
                     <div className="flex-1 min-w-0">
                       <label
                         htmlFor={`item_${item.id}`}
-                        className="text-xs font-semibold text-foreground block cursor-pointer"
+                        className="text-xs font-semibold text-foreground block cursor-pointer truncate"
                       >
                         {item.productName}
                       </label>
@@ -459,7 +555,7 @@ function ReturnRequestForm({
                           {formatAED(item.priceFils)}
                         </span>
                         {!isEligible && itemElig?.ineligibleReason && (
-                          <span className="text-[10px] text-destructive italic">
+                          <span className="text-[11px] font-medium text-destructive">
                             {itemElig.ineligibleReason}
                           </span>
                         )}
@@ -469,43 +565,49 @@ function ReturnRequestForm({
 
                   {/* Selected Item Controls */}
                   {isSelected && selectedData && (
-                    <div className="pl-7 pt-2 border-t border-border/30 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <label className="block text-[10px] uppercase font-sans tracking-wider text-muted-foreground mb-1">
+                    <div className="mt-3.5 pt-3.5 border-t border-border/50 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end animate-in fade-in-50 duration-150">
+                      <div className="sm:col-span-4">
+                        <label className="block text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                           Quantity to Return
                         </label>
-                        <select
-                          value={selectedData.quantity}
-                          onChange={(e) =>
-                            updateItemQuantity(item.id, parseInt(e.target.value, 10), maxReturnable)
-                          }
-                          className="h-8 px-2 text-xs bg-background border border-border rounded-xs w-24"
-                        >
-                          {Array.from({ length: maxReturnable }, (_, i) => i + 1).map((n) => (
-                            <option key={n} value={n}>
-                              {n}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select
+                            value={selectedData.quantity}
+                            onChange={(e) =>
+                              updateItemQuantity(item.id, parseInt(e.target.value, 10), maxReturnable)
+                            }
+                            className="w-full h-9 px-3 pr-8 text-xs bg-background border border-input rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-foreground appearance-none cursor-pointer font-sans"
+                          >
+                            {Array.from({ length: maxReturnable }, (_, i) => i + 1).map((n) => (
+                              <option key={n} value={n}>
+                                {n} {n === 1 ? "piece" : "pieces"}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-[10px] uppercase font-sans tracking-wider text-muted-foreground mb-1">
+                      <div className="sm:col-span-8">
+                        <label className="block text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                           Return Reason *
                         </label>
-                        <select
-                          value={selectedData.reason}
-                          onChange={(e) =>
-                            updateItemReason(item.id, e.target.value as ReturnReason)
-                          }
-                          className="h-8 px-2 text-xs bg-background border border-border rounded-xs w-full"
-                        >
-                          {RETURN_REASONS.map((r) => (
-                            <option key={r} value={r}>
-                              {r}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select
+                            value={selectedData.reason}
+                            onChange={(e) =>
+                              updateItemReason(item.id, e.target.value as ReturnReason)
+                            }
+                            className="w-full h-9 px-3 pr-8 text-xs bg-background border border-input rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-foreground appearance-none cursor-pointer font-sans"
+                          >
+                            {RETURN_REASONS.map((r) => (
+                              <option key={r} value={r}>
+                                {r}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
                       </div>
                     </div>
                   )}
@@ -612,16 +714,35 @@ function ReturnRequestForm({
             </div>
 
             <Field>
-              <FieldLabel className="text-[10px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                UAE IBAN (23 Characters) *
-              </FieldLabel>
+              <div className="flex items-center justify-between">
+                <FieldLabel className="text-[10px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                  UAE IBAN (23 Characters) *
+                </FieldLabel>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!bankName) setBankName("Emirates NBD")
+                    if (!accountHolderName) setAccountHolderName("Vivek VR")
+                    setIban("AE07 0330 0000 0000 1234 567")
+                  }}
+                  className="text-[10px] text-primary hover:underline font-sans cursor-pointer"
+                >
+                  Fill Sample UAE IBAN
+                </button>
+              </div>
               <Input
                 value={iban}
-                onChange={(e) => setIban(e.target.value)}
-                placeholder="AE00 0000 0000 0000 0000 000"
-                className="h-9 text-xs font-mono bg-background"
-                maxLength={27}
+                onChange={(e) => setIban(formatUaeIban(e.target.value))}
+                placeholder="AE07 0330 0000 0000 1234 567"
+                className="h-9 text-xs font-mono bg-background uppercase"
+                maxLength={32}
               />
+              <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-1">
+                <span>Format: AE followed by 21 digits (23 chars total)</span>
+                <span className={iban.replace(/\s+/g, "").length === 23 ? "text-emerald-600 font-semibold" : ""}>
+                  {iban.replace(/\s+/g, "").length}/23
+                </span>
+              </div>
             </Field>
           </FieldGroup>
         </div>
@@ -689,6 +810,8 @@ export function ReturnRequestModal({
   orders,
   preselectedOrderId,
   onReturnSubmitted,
+  existingReturns,
+  customerEmail,
 }: ReturnRequestModalProps) {
   const deliveredOrders = React.useMemo(() => {
     return orders.filter((o) => o.status === "delivered")
@@ -726,6 +849,8 @@ export function ReturnRequestModal({
             onSelectOrderId={setChosenOrderId}
             onClose={onClose}
             onReturnSubmitted={onReturnSubmitted}
+            existingReturns={existingReturns}
+            customerEmail={customerEmail}
           />
         )}
       </DialogContent>

@@ -46,7 +46,10 @@ export interface SendEmailResult {
 /**
  * Sends a luxury Order Confirmation email to the customer for a given order ID.
  */
-export async function sendOrderConfirmationEmail(orderId: string): Promise<SendEmailResult> {
+export async function sendOrderConfirmationEmail(
+  orderId: string,
+  recipientEmail?: string
+): Promise<SendEmailResult> {
   try {
     const supabase = createAdminClient()
     const settings = await getStoreSettings()
@@ -63,7 +66,8 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<SendE
       return { success: false, error: "Order not found" }
     }
 
-    if (!order.email) {
+    const toEmail = recipientEmail?.trim() || order.email
+    if (!toEmail) {
       return { success: false, error: "Order has no email address" }
     }
 
@@ -110,19 +114,19 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<SendE
 
     const resend = getResendClient()
     if (!resend) {
-      console.log(`[Email Mock] Would send confirmation email to ${order.email} for order ${order.order_number}`)
+      console.log(`[Email Mock] Would send confirmation email to ${toEmail} for order ${order.order_number}`)
       return { success: true, id: "mock_id" }
     }
 
     const { data: result, error: sendErr } = await resend.emails.send({
       from: sender,
-      to: [order.email],
+      to: [toEmail],
       subject,
       react: OrderConfirmationEmail({
         orderNumber: order.order_number,
         orderDate,
         customerName: order.customer_name || "Valued Patron",
-        customerEmail: order.email,
+        customerEmail: toEmail,
         customerPhone: order.phone || "",
         paymentMethod: isCod ? "cod" : "card",
         items: orderItems,
@@ -155,7 +159,7 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<SendE
       event_type: "email_sent",
       from_status: null,
       to_status: null,
-      note: `Confirmation email successfully sent via Resend (Msg ID: ${result?.id || "ok"}) to ${order.email}`,
+      note: `Confirmation email successfully sent via Resend (Msg ID: ${result?.id || "ok"}) to ${toEmail}`,
       actor_sub: "system_resend",
     })
 
@@ -256,7 +260,8 @@ export async function sendAdminNewOrderNotification(orderId: string): Promise<Se
 export async function sendOrderShippedEmail(
   orderId: string,
   courier?: string,
-  trackingNumber?: string
+  trackingNumber?: string,
+  recipientEmail?: string
 ): Promise<SendEmailResult> {
   try {
     const supabase = createAdminClient()
@@ -268,7 +273,8 @@ export async function sendOrderShippedEmail(
       .eq("id", orderId)
       .single()
 
-    if (orderErr || !order || !order.email) {
+    const toEmail = recipientEmail?.trim() || order?.email
+    if (orderErr || !order || !toEmail) {
       return { success: false, error: "Order not found or has no email" }
     }
 
@@ -288,7 +294,7 @@ export async function sendOrderShippedEmail(
     const sender = getSenderAddress(settings.store_name || "AR Boutique")
     const resend = getResendClient()
     if (!resend) {
-      console.log(`[Email Mock] Would send shipped email to ${order.email} for order ${order.order_number}`)
+      console.log(`[Email Mock] Would send shipped email to ${toEmail} for order ${order.order_number}`)
       return { success: true, id: "mock_id" }
     }
 
@@ -303,7 +309,7 @@ export async function sendOrderShippedEmail(
 
     const { data: result, error: sendErr } = await resend.emails.send({
       from: sender,
-      to: [order.email],
+      to: [toEmail],
       subject: `Your AR Boutique Order #${order.order_number} has Shipped`,
       react: OrderShippedEmail({
         orderNumber: order.order_number,
@@ -326,7 +332,7 @@ export async function sendOrderShippedEmail(
     await supabase.from("order_events").insert({
       order_id: orderId,
       event_type: "email_sent",
-      note: `Shipped notification email sent via Resend (Msg ID: ${result?.id || "ok"}) to ${order.email}`,
+      note: `Shipped notification email sent via Resend (Msg ID: ${result?.id || "ok"}) to ${toEmail}`,
       actor_sub: "system_resend",
     })
 
@@ -345,7 +351,8 @@ export async function sendOrderShippedEmail(
  */
 export async function sendOrderCancelledEmail(
   orderId: string,
-  cancellationReason?: string
+  cancellationReason?: string,
+  recipientEmail?: string
 ): Promise<SendEmailResult> {
   try {
     const supabase = createAdminClient()
@@ -357,20 +364,21 @@ export async function sendOrderCancelledEmail(
       .eq("id", orderId)
       .single()
 
-    if (orderErr || !order || !order.email) {
+    const toEmail = recipientEmail?.trim() || order?.email
+    if (orderErr || !order || !toEmail) {
       return { success: false, error: "Order not found or has no email" }
     }
 
     const sender = getSenderAddress(settings.store_name || "AR Boutique")
     const resend = getResendClient()
     if (!resend) {
-      console.log(`[Email Mock] Would send cancelled email to ${order.email} for order ${order.order_number}`)
+      console.log(`[Email Mock] Would send cancelled email to ${toEmail} for order ${order.order_number}`)
       return { success: true, id: "mock_id" }
     }
 
     const { data: result, error: sendErr } = await resend.emails.send({
       from: sender,
-      to: [order.email],
+      to: [toEmail],
       subject: `Order #${order.order_number} Cancellation - AR Boutique`,
       react: OrderCancelledEmail({
         orderNumber: order.order_number,
@@ -390,7 +398,7 @@ export async function sendOrderCancelledEmail(
     await supabase.from("order_events").insert({
       order_id: orderId,
       event_type: "email_sent",
-      note: `Cancellation email sent via Resend (Msg ID: ${result?.id || "ok"}) to ${order.email}`,
+      note: `Cancellation email sent via Resend (Msg ID: ${result?.id || "ok"}) to ${toEmail}`,
       actor_sub: "system_resend",
     })
 

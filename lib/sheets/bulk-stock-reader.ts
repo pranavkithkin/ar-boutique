@@ -229,3 +229,15 @@ export async function parseBulkStockBuffer(
     errors: [],
   }
 }
+
+/**
+ * Generate sample CSV template string for bulk stock updates
+ */
+export function generateSampleStockCsv(): string {
+  return (
+    "SKU,Stock,Notes\n" +
+    "ARB-EM-01-S,15,Monthly warehouse recount\n" +
+    "ARB-EM-01-M,20,Restock batch A\n"
+  )
+}
+

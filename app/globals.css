@@ -134,6 +134,19 @@
   }
 }
 
+/* Admin surface: clean modern sans (Inter) with zero serif across headers, cards, tables, and dialogs */
+[data-surface="admin"],
+html:has([data-surface="admin"]) {
+  --font-heading: var(--font-sans);
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+[data-surface="admin"] .font-heading,
+html:has([data-surface="admin"]) .font-heading {
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+
 /* Custom Scrollbar for right panel */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;

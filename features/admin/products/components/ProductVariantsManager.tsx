@@ -213,8 +213,8 @@ export function ProductVariantsManager({
           <div className="text-[10px] font-sans font-medium uppercase tracking-[0.1em] text-muted-foreground">
             Total Variants
           </div>
-          <div className="text-xl font-mono font-medium text-foreground mt-1">
-            {totalVariants} <span className="text-xs text-muted-foreground font-sans">SKUs</span>
+          <div className="text-xl font-sans font-semibold text-foreground mt-1 tabular-nums">
+            {totalVariants} <span className="text-xs text-muted-foreground font-sans font-normal">SKUs</span>
           </div>
         </div>
 
@@ -222,8 +222,8 @@ export function ProductVariantsManager({
           <div className="text-[10px] font-sans font-medium uppercase tracking-[0.1em] text-muted-foreground">
             Units On Hand
           </div>
-          <div className="text-xl font-mono font-medium text-foreground mt-1">
-            {totalOnHand} <span className="text-xs text-muted-foreground font-sans">units</span>
+          <div className="text-xl font-sans font-semibold text-foreground mt-1 tabular-nums">
+            {totalOnHand} <span className="text-xs text-muted-foreground font-sans font-normal">units</span>
           </div>
         </div>
 
@@ -231,8 +231,8 @@ export function ProductVariantsManager({
           <div className="text-[10px] font-sans font-medium uppercase tracking-[0.1em] text-muted-foreground">
             Reserved (Holds)
           </div>
-          <div className="text-xl font-mono font-medium text-foreground mt-1">
-            {totalReserved} <span className="text-xs text-muted-foreground font-sans">held</span>
+          <div className="text-xl font-sans font-semibold text-foreground mt-1 tabular-nums">
+            {totalReserved} <span className="text-xs text-muted-foreground font-sans font-normal">held</span>
           </div>
         </div>
 
@@ -240,8 +240,8 @@ export function ProductVariantsManager({
           <div className="text-[10px] font-sans font-medium uppercase tracking-[0.1em] text-muted-foreground">
             Available to Sell
           </div>
-          <div className="text-xl font-mono font-medium text-emerald-600 dark:text-emerald-400 mt-1">
-            {totalAvailable} <span className="text-xs text-muted-foreground font-sans">available</span>
+          <div className="text-xl font-sans font-semibold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
+            {totalAvailable} <span className="text-xs text-muted-foreground font-sans font-normal">available</span>
           </div>
         </div>
       </div>
@@ -366,17 +366,17 @@ export function ProductVariantsManager({
 
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground font-sans mt-0.5">
                       <span className="inline-flex items-center gap-1">
-                        <span className="font-mono font-medium text-foreground">{cw.images.length}</span>{" "}
+                        <span className="font-sans font-semibold text-foreground tabular-nums">{cw.images.length}</span>{" "}
                         {cw.images.length === 1 ? "photo" : "photos"}
                       </span>
                       <span className="text-border">•</span>
                       <span className="inline-flex items-center gap-1">
-                        <span className="font-mono font-medium text-foreground">{cw.variants.length}</span>{" "}
+                        <span className="font-sans font-semibold text-foreground tabular-nums">{cw.variants.length}</span>{" "}
                         {cw.variants.length === 1 ? "SKU" : "SKUs"}
                       </span>
                       <span className="text-border">•</span>
                       <span className="inline-flex items-center gap-1">
-                        <span className="font-mono font-medium text-foreground">{cwAvailable}</span> available ({cwOnHand} on hand)
+                        <span className="font-sans font-semibold text-foreground tabular-nums">{cwAvailable}</span> available ({cwOnHand} on hand)
                       </span>
                     </div>
                   </div>

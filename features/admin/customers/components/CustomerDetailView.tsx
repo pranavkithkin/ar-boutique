@@ -240,7 +240,7 @@ export function CustomerDetailView({ customer: initialCustomer }: CustomerDetail
                       <div className="flex items-center gap-2.5">
                         <Link
                           href={`/admin/orders`}
-                          className="font-mono font-semibold text-xs text-primary hover:underline flex items-center gap-1"
+                          className="font-sans font-semibold text-xs text-primary hover:underline flex items-center gap-1 tabular-nums"
                         >
                           {ord.orderNumber}
                           <ExternalLink className="size-3" />

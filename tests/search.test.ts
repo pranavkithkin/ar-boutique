@@ -1,6 +1,5 @@
-import test from "node:test"
-import assert from "node:assert/strict"
-import { formatAED } from "../lib/money.ts"
+import { test, expect } from "vitest"
+import { formatAED } from "@/lib/money"
 
 // Mock product catalogue fixture matching Supabase schema
 const mockProducts = [
@@ -59,11 +58,11 @@ const mockProducts = [
 ]
 
 // Pure matching algorithm mirroring features/search/actions.ts
-function matchProducts(products, query) {
+function matchProducts(products: any[], query: string) {
   const sanitized = (query || "").trim().toLowerCase()
   if (!sanitized) return []
 
-  const results = []
+  const results: any[] = []
 
   for (const product of products) {
     let matched = false
@@ -115,9 +114,9 @@ function matchProducts(products, query) {
     }
 
     if (matched) {
-      const activeVars = (primaryCw?.product_variants || []).filter((v) => v.is_active)
+      const activeVars = (primaryCw?.product_variants || []).filter((v: any) => v.is_active)
       const priceFils = activeVars.length > 0
-        ? Math.min(...activeVars.map((v) => v.price_fils))
+        ? Math.min(...activeVars.map((v: any) => v.price_fils))
         : 0
 
       results.push({
@@ -143,39 +142,39 @@ function matchProducts(products, query) {
 
 test("search: matches products by full or partial name", () => {
   const res = matchProducts(mockProducts, "Kurta")
-  assert.equal(res.length, 1)
-  assert.equal(res[0].name, "Kurta AR4124")
-  assert.equal(res[0].formattedPrice, "AED 110")
+  expect(res).toHaveLength(1)
+  expect(res[0].name).toBe("Kurta AR4124")
+  expect(res[0].formattedPrice).toBe("AED 110")
 })
 
 test("search: matches products by client style code", () => {
   const res = matchProducts(mockProducts, "J0478")
-  assert.equal(res.length, 1)
-  assert.equal(res[0].name, "Set AR0478")
-  assert.equal(res[0].styleCode, "J0478")
+  expect(res).toHaveLength(1)
+  expect(res[0].name).toBe("Set AR0478")
+  expect(res[0].styleCode).toBe("J0478")
 })
 
 test("search: matches products by colour name", () => {
   const res = matchProducts(mockProducts, "Sea green")
-  assert.equal(res.length, 1)
-  assert.equal(res[0].name, "Set AR0478")
-  assert.equal(res[0].colourName, "Sea green")
+  expect(res).toHaveLength(1)
+  expect(res[0].name).toBe("Set AR0478")
+  expect(res[0].colourName).toBe("Sea green")
 })
 
 test("search: matches products by category", () => {
   const res = matchProducts(mockProducts, "Dress")
-  assert.equal(res.length, 1)
-  assert.equal(res[0].name, "Dress AR0395")
-  assert.equal(res[0].categoryName, "Dress")
+  expect(res).toHaveLength(1)
+  expect(res[0].name).toBe("Dress AR0395")
+  expect(res[0].categoryName).toBe("Dress")
 })
 
 test("search: case-insensitive and trims whitespace", () => {
   const res = matchProducts(mockProducts, "   sEa GrEeN  ")
-  assert.equal(res.length, 1)
-  assert.equal(res[0].name, "Set AR0478")
+  expect(res).toHaveLength(1)
+  expect(res[0].name).toBe("Set AR0478")
 })
 
 test("search: empty query returns empty array", () => {
   const res = matchProducts(mockProducts, "   ")
-  assert.equal(res.length, 0)
+  expect(res).toHaveLength(0)
 })

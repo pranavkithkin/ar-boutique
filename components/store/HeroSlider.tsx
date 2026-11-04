@@ -10,21 +10,25 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel"
 
-export function HeroSlider() {
+export interface HeroSlideItem {
+  id: string | number
+  imageSrc: string
+  alt: string
+  mobileImageSrc?: string
+  href: string
+}
+
+interface HeroSliderProps {
+  slides?: HeroSlideItem[]
+}
+
+export function HeroSlider({ slides }: HeroSliderProps) {
   const pluginAutoplay = React.useMemo(
-    () => Autoplay({ delay: 3000, stopOnInteraction: false }),
+    () => Autoplay({ delay: 3500, stopOnInteraction: false }),
     []
   )
 
-  type Slide = {
-    id: number
-    imageSrc: string
-    alt: string
-    mobileImageSrc?: string
-    href: string
-  }
-
-  const slides: Slide[] = [
+  const defaultSlides: HeroSlideItem[] = [
     {
       id: 1,
       imageSrc: "/images/hero_traditions_desktop.png",
@@ -32,19 +36,9 @@ export function HeroSlider() {
       alt: "Timeless Traditions Fashion Heritage",
       href: "/collections",
     },
-    // {
-    //   id: 2,
-    //   imageSrc: "/images/hero_boutique_desktop.png",
-    //   alt: "Timeless Boutique Fashion Collection",
-    //   href: "/collections",
-    // },
-    // {
-    //   id: 3,
-    //   imageSrc: "/images/hero_elegance_desktop.png",
-    //   alt: "Timeless Style, Modern Elegance",
-    //   href: "/collections",
-    // }
   ]
+
+  const activeSlides = slides && slides.length > 0 ? slides : defaultSlides
 
   return (
     <section className="relative w-full">
@@ -54,7 +48,7 @@ export function HeroSlider() {
         opts={{ loop: true }}
       >
         <CarouselContent>
-          {slides.map((slide) => (
+          {activeSlides.map((slide) => (
             <CarouselItem key={slide.id}>
               <Link
                 href={slide.href}

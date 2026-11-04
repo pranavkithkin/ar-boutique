@@ -84,6 +84,7 @@ Done when: customers sign up and can only ever see their own data.
 - [ ] TASK-045 Clerk as Supabase third-party auth; `createCustomerClient()` and `requireCustomer()`
 - [ ] TASK-046 Migration: `customers` + RLS on `auth.jwt()->>'sub'`; pgTAP test that customer A can't read customer B
 - [ ] TASK-047 `/api/webhooks/clerk`: verify signature; upsert and anonymise `customers`
+- [x] TASK-126 Customer Wishlist: Zustand persistent store (`features/wishlist/store.ts`), heart button triggers on product cards (`ProductCard.tsx`) & PDP (`ProductInfo.tsx`), header badge counter with mobile menu integration (`StoreHeader.tsx`), dedicated "My Wishlist" account tab (`WishlistTab.tsx`, `AccountNav.tsx`, `AccountView.tsx`), and unit test suite (`tests/wishlist.test.ts`)
 
 ## Phase 6: Cart and Checkout
 Done when: a shopper pays in Stripe test mode and the order is Confirmed and Paid with stock deducted exactly once, and a signed-in shopper places a COD order that holds stock.
@@ -102,6 +103,7 @@ Done when: a shopper pays in Stripe test mode and the order is Confirmed and Pai
 - [x] TASK-117 COD settings and `getCodEligibility()` (signed in, maximum, open orders, refusals per account and phone, turned off per customer, COD off)
 - [x] TASK-118 `place_cod_order()` and the `placeCheckoutOrderAction` action (reservation until `confirm_by`, server re-pricing, inventory verification, customer sync, and audit logging)
 - [x] TASK-119 COD order received page `/checkout/received/[orderNumber]` per `docs/DESIGN.md` (prominent cash amount, concierge phone/WhatsApp confirmation notice)
+- [x] TASK-127 Coupons & Promo Codes: database schema & validation engine (percentage, fixed fils, free shipping, min spend, max discount cap, global & per-customer limits, scheduling), checkout bag integration with instant recalculation & chip UI, server-side redemption recording upon order placement, admin coupon manager (`/admin/coupons`) with live metrics and redemptions audit history, and unit test suite (`tests/coupons.test.ts`)
 - [ ] TASK-059 Tests: race for the last unit of a SKU (card and COD), selling one size leaves the other sizes alone, abandoned checkout releases stock, webhook replay is a no-op, edited browser price ignored
 
 ## Phase 7: Emails and Invoices
@@ -118,7 +120,7 @@ Done when: the admin moves an order to Delivered (a COD order through confirm, s
 - [x] TASK-066 Admin order detail: items with colour, size and SKU, customer, address, payment method and payment, COD details (deadline, cash collected, payout), timeline, internal notes; actions shown per status
 - [x] TASK-067 Packed and Delivered actions through a Postgres function (sets `delivered_at`, logs the event); Shipped comes in TASK-121 and the COD actions in TASK-120 and TASK-122
 - [x] TASK-068 Resend confirmation email and 1-click download bilingual invoice PDF from the admin order detail and customer account orders tab
-- [ ] TASK-069 My orders: list and detail for customers, with every status from ADR-035 and the tracking number
+- [x] TASK-069 My orders: list and detail for customers, with every status from ADR-035 and the tracking number
 - [ ] TASK-070 Link guest orders to the account by verified email (Clerk webhook + first account visit)
 - [ ] TASK-120 Admin: confirm or cancel COD orders (with cancellation email via `OrderCancelledEmail`); dashboard queue with the time left
 - [x] TASK-121 Shipped status for orders with courier and tracking number + automated `OrderShippedEmail` dispatch with tracking details
@@ -134,7 +136,7 @@ Done when: a customer submits a return with photos and the admin approves, recei
 - [x] TASK-075 Signed uploads for return photos into Cloudinary (ownership + eligibility check); size and type checked after upload; viewed via signed URLs that strip metadata
 - [x] TASK-076 `submit_return()` function + action: re-check every rule, verify photo keys, assign RET number
 - [x] TASK-077 Return emails: confirmation to customer (`ReturnRequestedEmail`) and alert to admin on return submission
-- [ ] TASK-078 Customer return page: timeline, instructions, refund status, cancel
+- [x] TASK-078 Customer return page: timeline, instructions, refund status, cancel
 - [x] TASK-079 Admin returns queue with filters and new badge
 - [x] TASK-080 Admin return detail: items, reasons, photos through 1-hour private links, customer history
 - [x] TASK-081 Approve (instructions template) and reject (reason) with automated `ReturnDecisionEmail` dispatch
@@ -164,6 +166,8 @@ Done when: the admin changes banners, publishes posts, and policy pages are live
 Done when: the admin sees today's numbers and can change store settings without a developer.
 - [x] TASK-095 Admin dashboard: KPIs (today, 7 days, 30 days), queues (COD to confirm, to pack, to ship, open returns, low-stock SKUs), COD cash reconciliation, interactive line/bar revenue trends, and recent activity feed.
 - [x] TASK-096 Settings page: store details, TRN, VAT, delivery fee, return window, return expiry, low-stock threshold, announcement bar text, notification emails, return instructions template, COD settings (on or off, fee, maximum order value, hours to confirm, refused parcels before blocking)
+- [x] TASK-126 Coupons / Promo Codes (Item 12): Checkout discount codes with real-time server validation, spend threshold & cap enforcement, and admin coupon manager (`/admin/coupons`).
+- [x] TASK-127 Customer Product Reviews & Ratings (Item 13): Star ratings, sizing feedback (true to size/runs small/large), verified buyer verification, customer submission modal, PDP reviews summary & breakdown, and boutique admin moderation queue (`/admin/reviews`).
 
 ## Phase 13: SEO, Analytics and Monitoring
 Done when: pages are indexable, ecommerce events fire once, and alerts reach the team.

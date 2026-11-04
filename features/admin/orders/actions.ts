@@ -352,3 +352,77 @@ export async function resendOrderConfirmationEmailAction(
     return { success: false, error: msg }
   }
 }
+
+export type ResendEmailTemplate = "confirmation" | "shipped" | "cancelled"
+
+export interface ResendOrderEmailInput {
+  orderId: string
+  emailType: ResendEmailTemplate
+  recipientEmail?: string
+  updateOrderEmail?: boolean
+  courier?: string
+  trackingNumber?: string
+  cancellationReason?: string
+}
+
+/**
+ * Enhanced action to resend customer notification emails (Confirmation, Shipped, or Cancelled)
+ * with recipient confirmation/override and optional database email synchronisation.
+ */
+export async function resendOrderEmailAction(
+  input: ResendOrderEmailInput
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const adminDb = createAdminClient()
+    const targetEmail = input.recipientEmail?.trim()
+
+    if (targetEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(targetEmail)) {
+        return { success: false, error: "Please provide a valid recipient email address." }
+      }
+
+      if (input.updateOrderEmail) {
+        await adminDb
+          .from("orders")
+          .update({
+            email: targetEmail.toLowerCase(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", input.orderId)
+      }
+    }
+
+    let result: { success: boolean; error?: string }
+
+    if (input.emailType === "confirmation") {
+      result = await sendOrderConfirmationEmail(input.orderId, targetEmail)
+    } else if (input.emailType === "shipped") {
+      result = await sendOrderShippedEmail(
+        input.orderId,
+        input.courier,
+        input.trackingNumber,
+        targetEmail
+      )
+    } else if (input.emailType === "cancelled") {
+      result = await sendOrderCancelledEmail(
+        input.orderId,
+        input.cancellationReason,
+        targetEmail
+      )
+    } else {
+      return { success: false, error: "Unknown email template." }
+    }
+
+    if (!result.success) {
+      return { success: false, error: result.error || "Failed to dispatch email via Resend." }
+    }
+
+    revalidatePath(`/admin/orders/${input.orderId}`)
+    return { success: true }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error dispatching email"
+    return { success: false, error: msg }
+  }
+}
+

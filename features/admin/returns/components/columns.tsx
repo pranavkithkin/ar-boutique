@@ -142,7 +142,7 @@ export const returnColumns: ColumnDef<AdminReturnListItem>[] = [
     header: "Claimed Value",
     cell: ({ row }) => {
       return (
-        <span className="text-xs font-mono font-medium text-foreground">
+        <span className="text-xs font-sans font-semibold text-foreground tabular-nums">
           {formatAED(row.original.total_refund_fils)}
         </span>
       )

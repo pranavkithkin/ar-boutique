@@ -251,11 +251,20 @@ export function ReturnsTab({
                       </span>
                     )}
 
-                    <div className="font-mono text-xs">
-                      <span className="text-muted-foreground mr-2">Estimated Refund:</span>
-                      <strong className="text-foreground font-semibold">
-                        {formatAED(ret.totalRefundFils)}
-                      </strong>
+                    <div className="flex items-center gap-3">
+                      <div className="font-mono text-xs">
+                        <span className="text-muted-foreground mr-2">Estimated Refund:</span>
+                        <strong className="text-foreground font-semibold">
+                          {formatAED(ret.totalRefundFils)}
+                        </strong>
+                      </div>
+                      <Link
+                        href={`/account/returns/${ret.returnNumber}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-foreground text-background font-medium rounded-xs hover:bg-foreground/90 transition-colors text-xs font-sans"
+                      >
+                        <span>Timeline & Details</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -425,6 +434,8 @@ export function ReturnsTab({
         orders={orders}
         preselectedOrderId={effectiveModalOrderId}
         onReturnSubmitted={handleReturnSubmitted}
+        existingReturns={returnsList}
+        customerEmail={customerEmail}
       />
     </div>
   )

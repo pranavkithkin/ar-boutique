@@ -38,3 +38,25 @@ export interface BannerFormData {
   starts_at?: string | null
   ends_at?: string | null
 }
+
+export interface StorefrontPromoBanner {
+  id: string
+  imageSrc: string
+  imageAlt: string
+  imageFit?: "cover" | "contain"
+  eyebrow: string
+  title: string
+  description: string
+  buttonText: string
+  buttonHref: string
+}
+
+export interface StorefrontHeroSlide {
+  id: string
+  imageSrc: string
+  mobileImageSrc?: string
+  alt: string
+  href: string
+}
+
+

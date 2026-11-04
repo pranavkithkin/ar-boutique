@@ -282,9 +282,9 @@ export function AddressesTab({
 
       {/* Add / Edit Address Dialog Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-lg bg-card text-foreground">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-sans font-semibold tracking-tight">
+        <DialogContent className="sm:max-w-[480px] max-h-[85vh] overflow-y-auto bg-card text-foreground p-5 sm:p-6 rounded-xs shadow-xl">
+          <DialogHeader className="pb-1">
+            <DialogTitle className="text-base sm:text-lg font-sans font-semibold tracking-tight">
               {editingAddress ? "Edit Delivery Address" : "Add New UAE Address"}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
@@ -293,7 +293,7 @@ export function AddressesTab({
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-            <FieldGroup className="gap-3.5">
+            <FieldGroup className="gap-3">
               {/* Address Label */}
               <Controller
                 name="label"
@@ -343,7 +343,7 @@ export function AddressesTab({
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground whitespace-nowrap truncate">
                         Phone Number (+971) *
                       </FieldLabel>
                       <Input
@@ -363,7 +363,7 @@ export function AddressesTab({
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground whitespace-nowrap truncate">
                         Emirate *
                       </FieldLabel>
                       <select
@@ -391,7 +391,7 @@ export function AddressesTab({
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground whitespace-nowrap truncate">
                         Area / District *
                       </FieldLabel>
                       <Input
@@ -411,7 +411,7 @@ export function AddressesTab({
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground whitespace-nowrap truncate">
                         Street Address *
                       </FieldLabel>
                       <Input
@@ -434,8 +434,8 @@ export function AddressesTab({
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                        Villa or Building Name *
+                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground whitespace-nowrap truncate">
+                        Villa / Building *
                       </FieldLabel>
                       <Input
                         {...field}
@@ -454,7 +454,7 @@ export function AddressesTab({
                   control={control}
                   render={({ field }) => (
                     <Field>
-                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                      <FieldLabel className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground whitespace-nowrap truncate">
                         Apt / Suite (Optional)
                       </FieldLabel>
                       <Input
@@ -511,7 +511,7 @@ export function AddressesTab({
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 text-xs text-muted-foreground hover:text-foreground font-medium"
+                className="px-4 py-2 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
               >
                 Cancel
               </button>

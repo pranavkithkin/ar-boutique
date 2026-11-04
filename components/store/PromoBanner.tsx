@@ -32,6 +32,7 @@ export function PromoBanner({ imageSrc, imageAlt, imageFit = "cover", eyebrow, t
           className={preservePortrait
             ? "object-contain object-center"
             : "object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"}
+          unoptimized={imageSrc.startsWith("/")}
         />
       </div>
       <div className="w-full md:w-[40%] h-auto md:h-full py-12 px-6 md:p-12 flex flex-col items-center justify-center text-center">

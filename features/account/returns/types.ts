@@ -27,6 +27,25 @@ export interface CustomerReturnPhoto {
   caption?: string
 }
 
+export interface CustomerReturnEvent {
+  id: string
+  eventType: string
+  fromStatus: ReturnStatus | null
+  toStatus: ReturnStatus | null
+  note: string | null
+  createdAt: string
+}
+
+export interface CustomerRefund {
+  id: string
+  amountFils: number
+  method: "card" | "bank_transfer"
+  status: "pending" | "succeeded" | "failed"
+  bankTransferDate?: string | null
+  bankTransferReference?: string | null
+  createdAt: string
+}
+
 export interface CustomerReturnRequest {
   id: string
   returnNumber: string
@@ -40,6 +59,8 @@ export interface CustomerReturnRequest {
   rejectionReason?: string
   items: CustomerReturnItem[]
   photos?: CustomerReturnPhoto[]
+  events?: CustomerReturnEvent[]
+  refunds?: CustomerRefund[]
   bankName?: string
   accountHolderName?: string
   iban?: string

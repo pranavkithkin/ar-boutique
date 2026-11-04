@@ -65,7 +65,7 @@ export function AttributesClientContainer({
         >
           <Palette className="size-3.5" />
           <span>Boutique Colours</span>
-          <span className="ml-1 text-[10px] font-mono px-1.5 py-0.2 bg-muted border border-border">
+          <span className="ml-1 text-[10px] font-sans font-medium tabular-nums px-1.5 py-0.2 bg-muted border border-border">
             {initialColours.length}
           </span>
         </button>
@@ -81,7 +81,7 @@ export function AttributesClientContainer({
         >
           <Ruler className="size-3.5" />
           <span>Garment Sizes</span>
-          <span className="ml-1 text-[10px] font-mono px-1.5 py-0.2 bg-muted border border-border">
+          <span className="ml-1 text-[10px] font-sans font-medium tabular-nums px-1.5 py-0.2 bg-muted border border-border">
             {initialSizes.length}
           </span>
         </button>

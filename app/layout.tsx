@@ -6,6 +6,8 @@ import { fontSans, fontHeading, fontMono } from "@/lib/fonts";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { isClerkConfigured } from "@/lib/clerk";
 
+import { CookieConsentBanner } from "@/components/store/CookieConsentBanner";
+
 export const metadata: Metadata = {
   title: "AR Boutique",
   description: "Timeless style meets modern elegance. Designed for the way you live.",
@@ -35,7 +37,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       )}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <NuqsAdapter>{children}</NuqsAdapter>
+        <NuqsAdapter>
+          {children}
+          <CookieConsentBanner />
+        </NuqsAdapter>
       </body>
     </html>
   );

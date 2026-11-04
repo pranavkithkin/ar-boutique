@@ -12,6 +12,8 @@ import {
 	BookOpenIcon,
 	PaletteIcon,
 	UsersIcon,
+	TicketPercentIcon,
+	StarIcon,
 } from "lucide-react";
 
 export type SidebarNavItem = {
@@ -29,7 +31,7 @@ export type SidebarNavGroup = {
 
 export const navGroups: SidebarNavGroup[] = [
 	{
-		label: "Boutique",
+		label: "Main",
 		items: [
 			{
 				title: "Overview",
@@ -37,7 +39,32 @@ export const navGroups: SidebarNavGroup[] = [
 				icon: <LayoutGridIcon />,
 			},
 			{
-				title: "Products Management",
+				title: "Customer Orders",
+				path: "/admin/orders",
+				icon: <ShoppingBagIcon />,
+			},
+			{
+				title: "Returns & Exchanges",
+				path: "/admin/returns",
+				icon: <RotateCcwIcon />,
+			},
+			{
+				title: "Customers",
+				path: "/admin/customers",
+				icon: <UsersIcon />,
+			},
+			{
+				title: "Product Reviews",
+				path: "/admin/reviews",
+				icon: <StarIcon />,
+			},
+		],
+	},
+	{
+		label: "Catalogue",
+		items: [
+			{
+				title: "Products",
 				path: "/admin/products",
 				icon: <PackageIcon />,
 			},
@@ -56,25 +83,20 @@ export const navGroups: SidebarNavGroup[] = [
 				path: "/admin/stock",
 				icon: <BoxesIcon />,
 			},
+		],
+	},
+	{
+		label: "Store Configuration",
+		items: [
 			{
-				title: "Customer Orders",
-				path: "/admin/orders",
-				icon: <ShoppingBagIcon />,
-			},
-			{
-				title: "Customers",
-				path: "/admin/customers",
-				icon: <UsersIcon />,
-			},
-			{
-				title: "Returns & Exchanges",
-				path: "/admin/returns",
-				icon: <RotateCcwIcon />,
-			},
-			{
-				title: "Banners & Carousel",
+				title: "Banners & Promos",
 				path: "/admin/banners",
 				icon: <ImageIcon />,
+			},
+			{
+				title: "Promo Codes & Discounts",
+				path: "/admin/coupons",
+				icon: <TicketPercentIcon />,
 			},
 			{
 				title: "Payment Methods",

@@ -9,7 +9,9 @@ import {
   RotateCcw,
   LogOut,
   ChevronRight,
+  Heart,
 } from "lucide-react"
+import { useWishlistStore } from "@/features/wishlist/store"
 
 interface AccountNavProps {
   activeTab: AccountTab
@@ -26,6 +28,14 @@ export function AccountNav({
   addressesCount,
   onSignOut,
 }: AccountNavProps) {
+  const [mounted, setMounted] = React.useState(false)
+  const wishlistItems = useWishlistStore((state) => state.items)
+  const wishlistCount = wishlistItems.length
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const navItems: Array<{
     id: AccountTab
     label: string
@@ -37,6 +47,12 @@ export function AccountNav({
       label: "Orders & Tracking",
       icon: Package,
       badge: ordersCount,
+    },
+    {
+      id: "wishlist",
+      label: "My Wishlist",
+      icon: Heart,
+      badge: mounted && wishlistCount > 0 ? wishlistCount : undefined,
     },
     {
       id: "addresses",

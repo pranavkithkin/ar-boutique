@@ -160,7 +160,7 @@ export async function getCheckoutInitialDataAction(): Promise<CheckoutPageData> 
         // Active open COD order check
         if (
           ord.payment_method === "cod" &&
-          ["awaiting_confirmation", "confirmed", "processing", "packed", "shipped"].includes(
+          ["awaiting_confirmation", "pending", "confirmed", "processing", "packed", "shipped"].includes(
             ord.status
           )
         ) {
@@ -247,9 +247,13 @@ async function generateOrderNumber(supabase: ReturnType<typeof createAdminClient
  * - Evaluates Cash on Delivery eligibility rules (max order value, settings status)
  * - Inserts the order, line item snapshots, and initial timeline audit row
  */
+import { calculateCouponDiscount } from "@/features/coupons/service"
+import type { Coupon } from "@/features/coupons/types"
+
 export async function placeCheckoutOrderAction(
   formData: CheckoutFormValues,
-  cartItems: CartItem[]
+  cartItems: CartItem[],
+  couponCode?: string
 ): Promise<PlaceOrderResult> {
   try {
     if (!cartItems || cartItems.length === 0) {
@@ -345,13 +349,49 @@ export async function placeCheckoutOrderAction(
       }
     })
 
-    // 5. Compute delivery & COD fees
-    const deliveryFeeFils =
+    // 5. Evaluate Promo Code / Coupon (if provided)
+    let discountFils = 0
+    let appliedCoupon: Coupon | null = null
+    let appliedDeliveryFeeFils =
       subtotalFils >= settings.free_delivery_over_fils ? 0 : settings.delivery_fee_fils
 
+    if (couponCode && couponCode.trim()) {
+      const normalizedCode = couponCode.toUpperCase().trim()
+      const { data: dbCoupon } = await supabase
+        .from("coupons")
+        .select("*")
+        .ilike("code", normalizedCode)
+        .maybeSingle()
+
+      if (dbCoupon) {
+        const cleanEmail = data.email.toLowerCase().trim()
+        const { count: custRedemptions } = await supabase
+          .from("coupon_redemptions")
+          .select("id", { count: "exact", head: true })
+          .eq("coupon_id", dbCoupon.id)
+          .ilike("customer_email", cleanEmail)
+
+        const evalResult = calculateCouponDiscount({
+          subtotalFils,
+          deliveryFeeFils: appliedDeliveryFeeFils,
+          coupon: dbCoupon as Coupon,
+          customerRedemptionsCount: custRedemptions || 0,
+        })
+
+        if (evalResult.valid) {
+          appliedCoupon = dbCoupon as Coupon
+          discountFils = evalResult.discountFils
+          if (evalResult.freeShipping) {
+            appliedDeliveryFeeFils = 0
+          }
+        }
+      }
+    }
+
+    const deliveryFeeFils = appliedDeliveryFeeFils
     const isCod = data.paymentMethod === "cod"
     const codFeeFils = isCod ? settings.cod_fee_fils : 0
-    const totalFils = subtotalFils + deliveryFeeFils + codFeeFils
+    const totalFils = Math.max(0, subtotalFils - discountFils) + deliveryFeeFils + codFeeFils
     const vatFils = calculateVatPortion(totalFils)
 
     // 6. Validate Payment Method availability rules
@@ -380,7 +420,7 @@ export async function placeCheckoutOrderAction(
         const hasOpen = customerPastOrders.some(
           (o) =>
             o.payment_method === "cod" &&
-            ["awaiting_confirmation", "confirmed", "processing", "packed", "shipped"].includes(o.status)
+            ["awaiting_confirmation", "pending", "confirmed", "processing", "packed", "shipped"].includes(o.status)
         )
         if (hasOpen) {
           return {
@@ -432,10 +472,11 @@ export async function placeCheckoutOrderAction(
         apartment: data.apartment || null,
         landmark: data.landmark || null,
         internal_notes: data.instructions ? `Customer delivery notes: ${data.instructions}` : null,
-        status: isCod ? "awaiting_confirmation" : "confirmed",
+        status: isCod ? "pending" : "confirmed",
         payment_method: data.paymentMethod,
-        payment_status: isCod ? "unpaid" : "paid",
+        payment_status: isCod ? "pending" : "paid",
         subtotal_fils: subtotalFils,
+        discount_fils: discountFils,
         delivery_fee_fils: deliveryFeeFils,
         cod_fee_fils: codFeeFils,
         vat_fils: vatFils,
@@ -500,15 +541,38 @@ export async function placeCheckoutOrderAction(
       order_id: orderId,
       event_type: isCod ? "cod_order_placed" : "card_order_placed",
       from_status: null,
-      to_status: isCod ? "awaiting_confirmation" : "confirmed",
+      to_status: isCod ? "pending" : "confirmed",
       note: isCod
         ? `Order placed via Cash on Delivery. Awaiting phone or WhatsApp confirmation within ${confirmHours} hours.`
         : "Order placed and confirmed successfully via Card payment.",
       actor_sub: clerkUserId || "storefront_shopper",
     })
 
-    // 13. Sync customer profile in `customers` table
+    // 13. If promo code was applied, record redemption and increment coupon usage
     const cleanEmail = data.email.toLowerCase().trim()
+    if (appliedCoupon) {
+      try {
+        await supabase.from("coupon_redemptions").insert({
+          coupon_id: appliedCoupon.id,
+          order_id: orderId,
+          customer_email: cleanEmail,
+          clerk_user_id: clerkUserId,
+          discount_fils: discountFils,
+        })
+
+        await supabase
+          .from("coupons")
+          .update({
+            usage_count: (appliedCoupon.usage_count || 0) + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", appliedCoupon.id)
+      } catch (couponRedeemErr) {
+        console.warn("Failed to record coupon redemption:", couponRedeemErr)
+      }
+    }
+
+    // 14. Sync customer profile in `customers` table
     try {
       await supabase.from("customers").upsert(
         {

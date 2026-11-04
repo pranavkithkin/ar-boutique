@@ -91,7 +91,46 @@ export function BannerPreviewModal({
 
           {/* Interactive Screen Simulation */}
           <div className="flex items-center justify-center p-4 sm:p-8 bg-neutral-900/90 rounded-none border border-border/80">
-            {device === "desktop" ? (
+            {banner.placement === "promo" && device === "desktop" ? (
+              /* Promo Split Banner Frame */
+              <div className="flex flex-col md:flex-row w-full max-w-4xl h-auto md:h-[340px] bg-accent overflow-hidden rounded-xs border border-border shadow-xl">
+                <div className="relative w-full md:w-[60%] h-[240px] md:h-full overflow-hidden bg-muted">
+                  {currentImg ? (
+                    <Image
+                      src={currentImg}
+                      alt={banner.title}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                      No creative uploaded
+                    </div>
+                  )}
+                </div>
+                <div className="w-full md:w-[40%] h-auto md:h-full p-8 flex flex-col items-center justify-center text-center">
+                  {banner.eyebrow && (
+                    <p className="text-[10px] font-semibold uppercase tracking-widest mb-3 text-foreground/70">
+                      {banner.eyebrow}
+                    </p>
+                  )}
+                  <h2 className="font-heading text-2xl lg:text-3xl leading-tight font-normal mb-3 text-foreground">
+                    {banner.title}
+                  </h2>
+                  {banner.subtitle && (
+                    <p className="text-xs text-foreground/80 mb-6 max-w-[220px]">
+                      {banner.subtitle}
+                    </p>
+                  )}
+                  {banner.button_label && (
+                    <span className="px-6 py-2.5 bg-foreground text-background uppercase tracking-widest text-[10px] font-semibold">
+                      {banner.button_label}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : device === "desktop" ? (
               /* Desktop Frame */
               <div className="relative w-full aspect-[8/3] max-w-4xl bg-neutral-950 overflow-hidden shadow-2xl border border-white/10 flex items-center">
                 {currentImg ? (

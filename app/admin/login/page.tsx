@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function AdminLoginPage() {
   return (
-    <main className="min-h-screen flex flex-col justify-center py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-background">
+    <main data-surface="admin" className="min-h-screen flex flex-col justify-center py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-background font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center text-center">
         <Link
           href="/"
@@ -36,7 +36,7 @@ export default function AdminLoginPage() {
             Staff Portal
           </span>
         </div>
-        <h1 className="font-heading text-2xl sm:text-3xl text-foreground font-normal tracking-tight">
+        <h1 className="font-sans text-2xl sm:text-3xl text-foreground font-semibold tracking-tight">
           Admin Sign In
         </h1>
         <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto font-sans leading-relaxed">

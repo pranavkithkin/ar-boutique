@@ -15,6 +15,8 @@ interface EditBannerPageProps {
   params: Promise<{ id: string }>
 }
 
+import { Suspense } from "react"
+
 export default async function AdminEditBannerPage({ params }: EditBannerPageProps) {
   const supabase = await createClient()
   const {
@@ -32,7 +34,9 @@ export default async function AdminEditBannerPage({ params }: EditBannerPageProp
 
   return (
     <AppShell>
-      <BannerForm mode="edit" initialBanner={banner} />
+      <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Loading banner form...</div>}>
+        <BannerForm mode="edit" initialBanner={banner} />
+      </Suspense>
     </AppShell>
   )
 }

@@ -151,13 +151,13 @@ export function StockTable({
                   </td>
 
                   {/* Price */}
-                  <td className="py-3.5 px-3 text-right font-mono text-muted-foreground">
+                  <td className="py-3.5 px-3 text-right font-sans font-medium text-muted-foreground tabular-nums">
                     {formatAED(item.price_fils)}
                   </td>
 
                   {/* On Hand */}
                   <td className="py-3.5 px-3 text-right">
-                    <span className="font-mono text-xs font-semibold text-foreground">
+                    <span className="font-sans text-xs font-semibold text-foreground tabular-nums">
                       {item.on_hand}
                     </span>
                   </td>
@@ -165,18 +165,18 @@ export function StockTable({
                   {/* Reserved */}
                   <td className="py-3.5 px-3 text-right">
                     {item.reserved > 0 ? (
-                      <span className="font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">
+                      <span className="font-sans text-xs font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
                         {item.reserved} held
                       </span>
                     ) : (
-                      <span className="font-mono text-xs text-muted-foreground">0</span>
+                      <span className="font-sans text-xs text-muted-foreground tabular-nums">0</span>
                     )}
                   </td>
 
                   {/* Available Stock & Status */}
                   <td className="py-3.5 px-4 text-center">
                     <div className="inline-flex flex-col items-center">
-                      <span className="font-mono text-sm font-bold text-foreground">
+                      <span className="font-sans text-sm font-semibold text-foreground tabular-nums">
                         {item.available}
                       </span>
                       {item.status === "in_stock" && (
@@ -264,15 +264,15 @@ export function StockTable({
         <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/20 text-xs font-sans">
           <div className="text-muted-foreground">
             Showing{" "}
-            <span className="font-mono font-medium text-foreground">
+            <span className="font-sans font-semibold text-foreground tabular-nums">
               {(pagination.page - 1) * pagination.pageSize + 1}
             </span>{" "}
             to{" "}
-            <span className="font-mono font-medium text-foreground">
+            <span className="font-sans font-semibold text-foreground tabular-nums">
               {Math.min(pagination.page * pagination.pageSize, pagination.total)}
             </span>{" "}
             of{" "}
-            <span className="font-mono font-medium text-foreground">
+            <span className="font-sans font-semibold text-foreground tabular-nums">
               {pagination.total}
             </span>{" "}
             SKUs
@@ -290,7 +290,7 @@ export function StockTable({
               <ChevronLeft className="size-3" />
               <span>Previous</span>
             </Button>
-            <span className="text-[11px] font-mono text-muted-foreground">
+            <span className="text-[11px] font-sans text-muted-foreground tabular-nums">
               Page {pagination.page} of {pagination.totalPages}
             </span>
             <Button

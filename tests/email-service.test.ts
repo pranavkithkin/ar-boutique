@@ -1,6 +1,5 @@
-import assert from "node:assert/strict"
-import test from "node:test"
-import { formatAED, calculateVatPortion } from "../lib/money.ts"
+import { test, expect } from "vitest"
+import { formatAED, calculateVatPortion } from "@/lib/money"
 
 test("email recipient and subject line generation logic for COD orders", () => {
   const isCod = true
@@ -9,7 +8,7 @@ test("email recipient and subject line generation logic for COD orders", () => {
     ? `Cash on Delivery Order #${orderNumber} Received - AR Boutique`
     : `Order Confirmation #${orderNumber} - AR Boutique`
 
-  assert.equal(subject, "Cash on Delivery Order #AR-1045 Received - AR Boutique")
+  expect(subject).toBe("Cash on Delivery Order #AR-1045 Received - AR Boutique")
 })
 
 test("email recipient and subject line generation logic for Card orders", () => {
@@ -19,7 +18,7 @@ test("email recipient and subject line generation logic for Card orders", () => 
     ? `Cash on Delivery Order #${orderNumber} Received - AR Boutique`
     : `Order Confirmation #${orderNumber} - AR Boutique`
 
-  assert.equal(subject, "Order Confirmation #AR-1046 - AR Boutique")
+  expect(subject).toBe("Order Confirmation #AR-1046 - AR Boutique")
 })
 
 test("email pricing arithmetic correctly splits VAT and delivery fee", () => {
@@ -28,11 +27,11 @@ test("email pricing arithmetic correctly splits VAT and delivery fee", () => {
   const subtotalFils = totalFils - deliveryFeeFils
   const vatFils = calculateVatPortion(totalFils)
 
-  assert.equal(subtotalFils, 125000)
-  assert.equal(formatAED(totalFils), "AED 1,250")
-  assert.equal(formatAED(subtotalFils), "AED 1,250")
-  assert.equal(vatFils, Math.round((125000 * 5) / 105))
-  assert.equal(formatAED(vatFils), "AED 59.52")
+  expect(subtotalFils).toBe(125000)
+  expect(formatAED(totalFils)).toBe("AED 1,250")
+  expect(formatAED(subtotalFils)).toBe("AED 1,250")
+  expect(vatFils).toBe(Math.round((125000 * 5) / 105))
+  expect(formatAED(vatFils)).toBe("AED 59.52")
 })
 
 test("email structured address correctly formats UAE emirates", () => {
@@ -51,8 +50,8 @@ test("email structured address correctly formats UAE emirates", () => {
     `${address.area}, ${address.emirate}, UAE`,
   ].filter(Boolean)
 
-  assert.equal(formattedLines.length, 4)
-  assert.equal(formattedLines[3], "Jumeirah 1, Dubai, UAE")
+  expect(formattedLines).toHaveLength(4)
+  expect(formattedLines[3]).toBe("Jumeirah 1, Dubai, UAE")
 })
 
 test("order shipped email subject and tracking generation", () => {
@@ -61,15 +60,15 @@ test("order shipped email subject and tracking generation", () => {
   const trackingNumber = "CR-992100"
 
   const subject = `Your AR Boutique Order #${orderNumber} has Shipped`
-  assert.equal(subject, "Your AR Boutique Order #AR-1048 has Shipped")
-  assert.ok(trackingNumber.length > 5)
-  assert.ok(courier.includes("Careem"))
+  expect(subject).toBe("Your AR Boutique Order #AR-1048 has Shipped")
+  expect(trackingNumber.length).toBeGreaterThan(5)
+  expect(courier).toContain("Careem")
 })
 
 test("order cancelled email subject", () => {
   const orderNumber = "AR-1049"
   const subject = `Order #${orderNumber} Cancellation - AR Boutique`
-  assert.equal(subject, "Order #AR-1049 Cancellation - AR Boutique")
+  expect(subject).toBe("Order #AR-1049 Cancellation - AR Boutique")
 })
 
 test("return requested and decision email subjects", () => {
@@ -78,9 +77,9 @@ test("return requested and decision email subjects", () => {
   const appSubject = `Return Approved: Instructions for Return #${returnNumber} - AR Boutique`
   const rejSubject = `Update on Return Request #${returnNumber} - AR Boutique`
 
-  assert.equal(reqSubject, "Return Request Received #RET-1010 - AR Boutique")
-  assert.equal(appSubject, "Return Approved: Instructions for Return #RET-1010 - AR Boutique")
-  assert.equal(rejSubject, "Update on Return Request #RET-1010 - AR Boutique")
+  expect(reqSubject).toBe("Return Request Received #RET-1010 - AR Boutique")
+  expect(appSubject).toBe("Return Approved: Instructions for Return #RET-1010 - AR Boutique")
+  expect(rejSubject).toBe("Update on Return Request #RET-1010 - AR Boutique")
 })
 
 test("refund confirmation email subject and formatting for card and bank transfer", () => {
@@ -88,8 +87,8 @@ test("refund confirmation email subject and formatting for card and bank transfe
   const amountAed = formatAED(amountFils)
   const subject = `Refund Processed: ${amountAed} - AR Boutique`
 
-  assert.equal(subject, "Refund Processed: AED 1,850 - AR Boutique")
+  expect(subject).toBe("Refund Processed: AED 1,850 - AR Boutique")
 
   const bankReference = "TRF-99201"
-  assert.equal(bankReference.startsWith("TRF-"), true)
+  expect(bankReference.startsWith("TRF-")).toBe(true)
 })

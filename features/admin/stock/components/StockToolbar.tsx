@@ -130,9 +130,9 @@ export function StockToolbar({
           <div className="text-[10px] font-sans font-medium uppercase tracking-[0.1em] text-muted-foreground">
             Total Inventory Units
           </div>
-          <div className="text-xl font-mono font-medium text-foreground mt-1">
+          <div className="text-xl font-sans font-semibold text-foreground mt-1 tabular-nums">
             {summary.total_on_hand}{" "}
-            <span className="text-xs text-muted-foreground font-sans">on hand</span>
+            <span className="text-xs text-muted-foreground font-sans font-normal">on hand</span>
           </div>
         </div>
 
@@ -140,9 +140,9 @@ export function StockToolbar({
           <div className="text-[10px] font-sans font-medium uppercase tracking-[0.1em] text-muted-foreground">
             Reserved for Orders
           </div>
-          <div className="text-xl font-mono font-medium text-amber-600 dark:text-amber-400 mt-1">
+          <div className="text-xl font-sans font-semibold text-amber-600 dark:text-amber-400 mt-1 tabular-nums">
             {summary.total_reserved}{" "}
-            <span className="text-xs text-muted-foreground font-sans">held</span>
+            <span className="text-xs text-muted-foreground font-sans font-normal">held</span>
           </div>
         </div>
 
@@ -150,9 +150,9 @@ export function StockToolbar({
           <div className="text-[10px] font-sans font-medium uppercase tracking-[0.1em] text-muted-foreground">
             Available to Sell
           </div>
-          <div className="text-xl font-mono font-medium text-emerald-600 dark:text-emerald-400 mt-1">
+          <div className="text-xl font-sans font-semibold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
             {summary.total_available}{" "}
-            <span className="text-xs text-muted-foreground font-sans">units</span>
+            <span className="text-xs text-muted-foreground font-sans font-normal">units</span>
           </div>
         </div>
 
@@ -161,7 +161,7 @@ export function StockToolbar({
             Catalogue Health
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-sm font-mono font-semibold text-foreground">
+            <span className="text-sm font-sans font-semibold text-foreground tabular-nums">
               {summary.total_skus} SKUs
             </span>
             {summary.low_stock_count > 0 && (
@@ -198,7 +198,7 @@ export function StockToolbar({
                 {tab.icon}
                 <span>{tab.label}</span>
                 <span
-                  className={`text-[10px] font-mono px-1 py-0.2 rounded-none ${
+                  className={`text-[10px] font-sans font-medium px-1.5 py-0.2 rounded-none tabular-nums ${
                     isActive
                       ? "bg-primary-foreground/20 text-primary-foreground"
                       : "bg-muted text-muted-foreground"

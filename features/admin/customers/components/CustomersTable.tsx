@@ -146,7 +146,7 @@ export function CustomersTable({
                   {/* Contact */}
                   <TableCell className="py-3.5">
                     <div className="space-y-0.5 text-xs font-sans">
-                      <p className="text-foreground font-mono truncate">{c.email}</p>
+                      <p className="text-foreground font-sans truncate">{c.email}</p>
                       <p className="text-muted-foreground text-[11px]">{c.phone || "—"}</p>
                     </div>
                   </TableCell>

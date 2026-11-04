@@ -10,7 +10,6 @@ import {
   reorderBannersAction,
   seedInitialBannersAction,
 } from "../actions"
-import { BannerPreviewModal } from "./BannerPreviewModal"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -19,7 +18,6 @@ import {
   Plus,
   ArrowUp,
   ArrowDown,
-  Eye,
   Pencil,
   Trash2,
   ImageIcon,
@@ -44,9 +42,6 @@ export function BannersClientView({ initialBanners }: BannersClientViewProps) {
 
   const [activeTab, setActiveTab] = React.useState<"all" | BannerPlacement>("all")
   const [searchQuery, setSearchQuery] = React.useState("")
-
-  const [previewOpen, setPreviewOpen] = React.useState(false)
-  const [previewBanner, setPreviewBanner] = React.useState<AdminBannerItem | null>(null)
 
   const [isLoading, setIsLoading] = React.useState(false)
   const [statusMsg, setStatusMsg] = React.useState<{ text: string; type: "ok" | "err" } | null>(null)
@@ -76,6 +71,7 @@ export function BannersClientView({ initialBanners }: BannersClientViewProps) {
 
   const heroCount = banners.filter((b) => b.placement === "hero" && b.is_active).length
   const promoCount = banners.filter((b) => b.placement === "promo" && b.is_active).length
+  const existingPromo = banners.find((b) => b.placement === "promo")
 
   const handleToggleActive = async (id: string, currentActive: boolean) => {
     const nextState = !currentActive
@@ -177,16 +173,42 @@ export function BannersClientView({ initialBanners }: BannersClientViewProps) {
             </Button>
           )}
 
-          <Link
-            href="/admin/banners/new"
-            className={cn(
-              buttonVariants(),
-              "rounded-none h-9 text-xs px-4 uppercase tracking-wider font-medium font-sans inline-flex items-center"
-            )}
-          >
-            <Plus className="size-3.5 mr-1.5" />
-            Add New Banner
-          </Link>
+          {activeTab === "promo" ? (
+            existingPromo ? (
+              <Link
+                href={`/admin/banners/${existingPromo.id}`}
+                className={cn(
+                  buttonVariants(),
+                  "rounded-none h-9 text-xs px-4 uppercase tracking-wider font-semibold font-sans inline-flex items-center"
+                )}
+              >
+                <Pencil className="size-3.5 mr-1.5" />
+                Edit Promo Banner
+              </Link>
+            ) : (
+              <Link
+                href="/admin/banners/new?type=promo"
+                className={cn(
+                  buttonVariants(),
+                  "rounded-none h-9 text-xs px-4 uppercase tracking-wider font-semibold font-sans inline-flex items-center"
+                )}
+              >
+                <Plus className="size-3.5 mr-1.5" />
+                Add Promo Banner
+              </Link>
+            )
+          ) : (
+            <Link
+              href="/admin/banners/new?type=hero"
+              className={cn(
+                buttonVariants(),
+                "rounded-none h-9 text-xs px-4 uppercase tracking-wider font-semibold font-sans inline-flex items-center"
+              )}
+            >
+              <Plus className="size-3.5 mr-1.5" />
+              Add Hero Slide
+            </Link>
+          )}
         </div>
       </div>
 
@@ -243,7 +265,7 @@ export function BannersClientView({ initialBanners }: BannersClientViewProps) {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Promo Banners ({banners.filter((b) => b.placement === "promo").length})
+            Promo Banner ({banners.filter((b) => b.placement === "promo").length})
           </button>
         </div>
 
@@ -266,7 +288,7 @@ export function BannersClientView({ initialBanners }: BannersClientViewProps) {
           <span className="text-[11px] font-sans uppercase tracking-[0.08em] text-muted-foreground">
             Total Banners
           </span>
-          <div className="text-xl font-mono font-semibold text-foreground">
+          <div className="text-xl font-sans font-semibold text-foreground tabular-nums">
             {banners.length}
           </div>
         </div>
@@ -275,17 +297,21 @@ export function BannersClientView({ initialBanners }: BannersClientViewProps) {
           <span className="text-[11px] font-sans uppercase tracking-[0.08em] text-muted-foreground">
             Live in Hero Carousel
           </span>
-          <div className="text-xl font-mono font-semibold text-primary">
-            {heroCount} active
+          <div className="text-xl font-sans font-semibold text-primary tabular-nums">
+            {heroCount} <span className="text-xs font-normal text-muted-foreground font-sans">active</span>
           </div>
         </div>
 
         <div className="p-4 border border-border bg-card rounded-none space-y-1">
           <span className="text-[11px] font-sans uppercase tracking-[0.08em] text-muted-foreground">
-            Live in Promo Section
+            Promo Banner Status
           </span>
-          <div className="text-xl font-mono font-semibold text-primary">
-            {promoCount} active
+          <div className="text-xl font-sans font-semibold text-primary tabular-nums">
+            {promoCount > 0 ? (
+              <span className="text-emerald-600 dark:text-emerald-400">1 Active</span>
+            ) : (
+              <span className="text-muted-foreground">Not Configured</span>
+            )}
           </div>
         </div>
       </div>
@@ -393,7 +419,7 @@ export function BannersClientView({ initialBanners }: BannersClientViewProps) {
                     {/* Creative Previews */}
                     <div className="flex items-center gap-2.5 shrink-0">
                       {/* Desktop Preview */}
-                      <div className="relative w-36 sm:w-44 aspect-[8/3] bg-neutral-900 border border-border overflow-hidden">
+                      <div className={`relative ${isHero ? "w-36 sm:w-44 aspect-[8/3]" : "w-28 sm:w-32 aspect-[3/2]"} bg-neutral-900 border border-border overflow-hidden`}>
                         {banner.desktop_image_url ? (
                           <Image
                             src={banner.desktop_image_url}
@@ -404,33 +430,35 @@ export function BannersClientView({ initialBanners }: BannersClientViewProps) {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[9px] text-muted-foreground">
-                            No Desktop
+                            No Photo
                           </div>
                         )}
                         <span className="absolute bottom-1 right-1 px-1 py-0.5 text-[8px] font-mono bg-black/80 text-white uppercase tracking-wider">
-                          8:3 Desktop
+                          {isHero ? "8:3 Desktop" : "3:2 Photo"}
                         </span>
                       </div>
 
-                      {/* Mobile Preview */}
-                      <div className="relative w-12 sm:w-14 aspect-[4/5] bg-neutral-900 border border-border overflow-hidden">
-                        {banner.mobile_image_url ? (
-                          <Image
-                            src={banner.mobile_image_url}
-                            alt={banner.title}
-                            fill
-                            unoptimized
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground">
-                            No Mob
-                          </div>
-                        )}
-                        <span className="absolute bottom-1 right-1 px-1 py-0.5 text-[7px] font-mono bg-black/80 text-white uppercase tracking-wider">
-                          4:5
-                        </span>
-                      </div>
+                      {/* Mobile Preview for Hero */}
+                      {isHero && (
+                        <div className="relative w-12 sm:w-14 aspect-[4/5] bg-neutral-900 border border-border overflow-hidden">
+                          {banner.mobile_image_url ? (
+                            <Image
+                              src={banner.mobile_image_url}
+                              alt={banner.title}
+                              fill
+                              unoptimized
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground">
+                              No Mob
+                            </div>
+                          )}
+                          <span className="absolute bottom-1 right-1 px-1 py-0.5 text-[7px] font-mono bg-black/80 text-white uppercase tracking-wider">
+                            4:5
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Content Details */}
@@ -493,21 +521,6 @@ export function BannersClientView({ initialBanners }: BannersClientViewProps) {
                       {banner.is_active ? "● Active" : "○ Inactive"}
                     </button>
 
-                    {/* Preview Button */}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setPreviewBanner(banner)
-                        setPreviewOpen(true)
-                      }}
-                      className="rounded-none h-8 text-xs font-sans"
-                    >
-                      <Eye className="size-3.5 mr-1 text-muted-foreground" />
-                      Preview
-                    </Button>
-
                     {/* Edit Button */}
                     <Link
                       href={`/admin/banners/${banner.id}`}
@@ -538,12 +551,6 @@ export function BannersClientView({ initialBanners }: BannersClientViewProps) {
         </div>
       )}
 
-      {/* ── Visual Live Preview Modal ── */}
-      <BannerPreviewModal
-        open={previewOpen}
-        onOpenChange={setPreviewOpen}
-        banner={previewBanner}
-      />
     </div>
   )
 }

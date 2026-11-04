@@ -1,6 +1,9 @@
 "use server"
 
 import "server-only"
+import { auth, currentUser } from "@clerk/nextjs/server"
+import { isClerkConfigured } from "@/lib/clerk"
+import { getCurrentCustomerAction } from "@/features/auth/actions"
 import { createAdminClient } from "@/lib/supabase/server"
 import type { AccountAddress, AccountOrder, AccountOrderItem, AccountUserProfile } from "./types"
 
@@ -89,7 +92,7 @@ function mapRawOrderToAccountOrder(order: any): AccountOrder {
     status,
     statusLabel,
     trackingNumber: order.tracking_number || undefined,
-    courierName: order.courier_name || undefined,
+    courierName: order.courier || order.courier_name || undefined,
     paymentMethod: order.payment_method === "cod" ? "cod" : "card",
     subtotalFils: order.subtotal_fils || 0,
     deliveryFeeFils: order.delivery_fee_fils || 0,
@@ -154,7 +157,7 @@ export async function getCustomerAccountDataAction(
         vat_fils,
         total_fils,
         tracking_number,
-        courier_name,
+        courier,
         order_items (
           id,
           product_name,
@@ -292,7 +295,7 @@ export async function trackGuestOrderAction(
         vat_fils,
         total_fils,
         tracking_number,
-        courier_name,
+        courier,
         order_items (
           id,
           product_name,
@@ -324,3 +327,110 @@ export async function trackGuestOrderAction(
     return { success: false, error: msg }
   }
 }
+
+/**
+ * Retrieve a single order by ID or order number, verifying customer authorization.
+ */
+export async function getCustomerOrderDetailsAction(
+  orderIdOrNumber: string,
+  userEmail?: string
+): Promise<{ success: boolean; order?: AccountOrder; error?: string }> {
+  const cleanParam = orderIdOrNumber.trim()
+  if (!cleanParam) {
+    return { success: false, error: "Order reference is required" }
+  }
+
+  // 1. Resolve authorized user email
+  let authorizedEmail = userEmail?.toLowerCase().trim()
+
+  if (!authorizedEmail) {
+    if (isClerkConfigured()) {
+      try {
+        const { userId } = await auth()
+        if (userId) {
+          const clerkUser = await currentUser()
+          authorizedEmail = clerkUser?.primaryEmailAddress?.emailAddress?.toLowerCase().trim()
+        }
+      } catch {
+        // Ignore
+      }
+    }
+
+    if (!authorizedEmail) {
+      try {
+        const session = await getCurrentCustomerAction()
+        authorizedEmail = session?.email?.toLowerCase().trim()
+      } catch {
+        // Ignore
+      }
+    }
+  }
+
+  if (!authorizedEmail) {
+    return { success: false, error: "Authentication required to view order details" }
+  }
+
+  try {
+    const adminDb = createAdminClient()
+
+    let query = adminDb
+      .from("orders")
+      .select(`
+        id,
+        order_number,
+        created_at,
+        email,
+        customer_name,
+        phone,
+        emirate,
+        area,
+        street_address,
+        building,
+        apartment,
+        landmark,
+        status,
+        payment_method,
+        payment_status,
+        subtotal_fils,
+        delivery_fee_fils,
+        vat_fils,
+        total_fils,
+        tracking_number,
+        courier,
+        order_items (
+          id,
+          product_name,
+          colour_name,
+          style_code,
+          size_label,
+          sku,
+          quantity,
+          unit_price_fils,
+          total_fils,
+          media_key
+        )
+      `)
+      .ilike("email", authorizedEmail)
+
+    // Match by UUID or order_number
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanParam)
+    if (isUuid) {
+      query = query.eq("id", cleanParam)
+    } else {
+      query = query.ilike("order_number", cleanParam)
+    }
+
+    const { data: rawOrder, error } = await query.maybeSingle()
+
+    if (error || !rawOrder) {
+      return { success: false, error: "Order not found or unauthorized" }
+    }
+
+    const order = mapRawOrderToAccountOrder(rawOrder)
+    return { success: true, order }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to load order"
+    return { success: false, error: msg }
+  }
+}
+

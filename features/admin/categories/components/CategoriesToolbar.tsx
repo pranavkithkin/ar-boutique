@@ -33,7 +33,7 @@ export function CategoriesToolbar({
             <h1 className="text-2xl font-bold tracking-tight text-foreground font-sans">
               Categories
             </h1>
-            <Badge variant="outline" className="text-xs font-mono font-normal">
+            <Badge variant="outline" className="text-xs font-sans font-medium tabular-nums">
               {totalCount} {totalCount === 1 ? "category" : "categories"}
             </Badge>
           </div>

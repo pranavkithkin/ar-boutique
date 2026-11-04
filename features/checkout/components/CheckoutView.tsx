@@ -15,6 +15,8 @@ import {
   type CheckoutFormValues,
 } from "../schemas"
 import { placeCheckoutOrderAction } from "../actions"
+import { validateCouponAction } from "@/features/coupons/actions"
+import type { ValidateCouponResult } from "@/features/coupons/types"
 import type { CheckoutConfig, CustomerCheckoutContext, SavedAddressCandidate } from "../types"
 import {
   CreditCard,
@@ -27,6 +29,8 @@ import {
   AlertCircle,
   Loader2,
   Sparkles,
+  Tag,
+  X,
 } from "lucide-react"
 
 interface CheckoutViewProps {
@@ -50,11 +54,18 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
   const [selectedSavedId, setSelectedSavedId] = React.useState<string | null>(defaultServerAddr?.id || null)
   const [submitError, setSubmitError] = React.useState<string | null>(null)
 
+  // Promo code state
+  const [couponInput, setCouponInput] = React.useState("")
+  const [isApplyingCoupon, setIsApplyingCoupon] = React.useState(false)
+  const [couponError, setCouponError] = React.useState<string | null>(null)
+  const [appliedCoupon, setAppliedCoupon] = React.useState<ValidateCouponResult | null>(null)
+
   const {
     register,
     handleSubmit,
     control,
     setValue,
+    getValues,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormValues>({
@@ -148,12 +159,42 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
     return cartItems.reduce((acc, item) => acc + item.priceFils * item.quantity, 0)
   }, [cartItems])
 
-  const isFreeDelivery = subtotalFils >= config.freeDeliveryThresholdFils
+  const couponDiscountFils = appliedCoupon && appliedCoupon.valid ? appliedCoupon.discountFils || 0 : 0
+  const isFreeDelivery = subtotalFils >= config.freeDeliveryThresholdFils || appliedCoupon?.freeShipping === true
   const deliveryFeeFils = isFreeDelivery ? 0 : config.deliveryFeeFils
   const isCodSelected = currentPaymentMethod === "cod"
   const codFeeFils = isCodSelected ? config.codFeeFils : 0
-  const estimatedTotalFils = subtotalFils + deliveryFeeFils + codFeeFils
+  const estimatedTotalFils = Math.max(0, subtotalFils - couponDiscountFils) + deliveryFeeFils + codFeeFils
   const vatPortionFils = calculateVatPortion(estimatedTotalFils)
+
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!couponInput.trim()) return
+
+    setIsApplyingCoupon(true)
+    setCouponError(null)
+
+    try {
+      const email = getValues("email") || customerContext?.email
+      const res = await validateCouponAction(couponInput, subtotalFils, email)
+      if (res.valid) {
+        setAppliedCoupon(res)
+        setCouponInput("")
+        setCouponError(null)
+      } else {
+        setCouponError(res.error || "Invalid promo code.")
+      }
+    } catch {
+      setCouponError("Could not validate promo code. Please try again.")
+    } finally {
+      setIsApplyingCoupon(false)
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponError(null)
+  }
 
   // Evaluate payment methods availability rules
   const isCardAvailable = config.cardEnabled !== false
@@ -192,7 +233,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
     }
 
     try {
-      const result = await placeCheckoutOrderAction(values, cartItems)
+      const result = await placeCheckoutOrderAction(values, cartItems, appliedCoupon?.code)
 
       if (!result.success || !result.redirectUrl) {
         setSubmitError(result.error || "Failed to complete checkout. Please review your details.")
@@ -755,6 +796,72 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                 ))}
               </div>
 
+              {/* Promo Code Input & Display */}
+              <div className="pt-2 border-t border-border/60">
+                {appliedCoupon && appliedCoupon.valid ? (
+                  <div className="p-2.5 rounded-xs bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs animate-in fade-in">
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <div>
+                        <span className="font-mono font-semibold tracking-wider text-emerald-700 dark:text-emerald-300">
+                          {appliedCoupon.code}
+                        </span>
+                        {appliedCoupon.freeShipping ? (
+                          <span className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 ml-1.5">
+                            (Free Shipping)
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 ml-1.5">
+                            (-{formatAED(couponDiscountFils)})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="p-1 text-muted-foreground hover:text-foreground transition-colors rounded-xs"
+                      title="Remove promo code"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Tag className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={couponInput}
+                          onChange={(e) => {
+                            setCouponInput(e.target.value.toUpperCase())
+                            if (couponError) setCouponError(null)
+                          }}
+                          placeholder="PROMO CODE"
+                          className="w-full h-9 pl-9 pr-3 text-xs uppercase font-mono tracking-wider bg-background border border-input rounded-xs focus:outline-hidden focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+                      <StoreButton
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={isApplyingCoupon || !couponInput.trim()}
+                        className="h-9 px-4 text-xs uppercase tracking-wider font-semibold"
+                      >
+                        {isApplyingCoupon ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          "Apply"
+                        )}
+                      </StoreButton>
+                    </div>
+                    {couponError && (
+                      <p className="text-[11px] text-destructive mt-1.5">{couponError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Price Calculation Breakdown */}
               <div className="border-t border-border/60 pt-4 space-y-2.5 text-xs">
                 <div className="flex justify-between items-baseline">
@@ -763,6 +870,18 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                     {formatAED(subtotalFils)}
                   </span>
                 </div>
+
+                {couponDiscountFils > 0 && (
+                  <div className="flex justify-between items-baseline text-emerald-600 dark:text-emerald-400">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Tag className="w-3.5 h-3.5" />
+                      <span>Promo Discount ({appliedCoupon?.code})</span>
+                    </span>
+                    <span className="font-semibold tabular-nums">
+                      -{formatAED(couponDiscountFils)}
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">UAE Doorstep Delivery</span>

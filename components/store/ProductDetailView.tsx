@@ -9,11 +9,16 @@ import { ProductInfo } from "./ProductInfo"
 interface ProductDetailViewProps {
   product: ProductDetail
   initialColourSlug?: string
+  reviewSummary?: {
+    averageRating: number
+    totalCount: number
+  }
 }
 
 export function ProductDetailView({
   product,
   initialColourSlug,
+  reviewSummary,
 }: ProductDetailViewProps) {
   // Find matching initial colourway or default to first
   const initialColourway = React.useMemo(() => {
@@ -65,6 +70,7 @@ export function ProductDetailView({
           title={product.name}
           activeColourway={currentColourway}
           onSelectColourway={handleSelectColourway}
+          reviewSummary={reviewSummary}
         />
       }
     />

@@ -4,7 +4,7 @@ export function ProductCardSkeleton() {
   return (
     <div className="flex flex-col w-full">
       {/* 2:3 Aspect Ratio Image Skeleton */}
-      <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted rounded-none">
+      <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted rounded-lg">
         <Skeleton className="h-full w-full" />
       </div>
 

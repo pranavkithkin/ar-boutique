@@ -116,7 +116,7 @@ export function DashboardRevenueChart({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="text-xs text-muted-foreground font-mono">
+            <div className="text-xs text-muted-foreground font-sans font-medium tabular-nums">
               Total AED {Math.round(kpis.grossRevenueFils / 100).toLocaleString()}
             </div>
             <div className="inline-flex items-center p-0.5 border border-border bg-muted/40 rounded-xs">
@@ -190,7 +190,7 @@ export function DashboardRevenueChart({
                             <span className="text-muted-foreground">
                               {name === "revenueAed" ? "Net Revenue" : "Orders"}
                             </span>
-                            <span className="font-mono font-semibold text-foreground">
+                            <span className="font-sans font-medium text-foreground tabular-nums">
                               {name === "revenueAed"
                                 ? `AED ${Number(value).toLocaleString()}`
                                 : value}
@@ -248,7 +248,7 @@ export function DashboardRevenueChart({
                             <span className="text-muted-foreground">
                               {name === "revenueAed" ? "Net Revenue" : "Orders"}
                             </span>
-                            <span className="font-mono font-semibold text-foreground">
+                            <span className="font-sans font-medium text-foreground tabular-nums">
                               {name === "revenueAed"
                                 ? `AED ${Number(value).toLocaleString()}`
                                 : value}
@@ -289,7 +289,7 @@ export function DashboardRevenueChart({
                 <CreditCard className="size-3.5 text-muted-foreground" />
                 Stripe Card
               </span>
-              <span className="font-mono text-muted-foreground">
+              <span className="font-sans font-medium text-muted-foreground tabular-nums">
                 {formatAED(kpis.cardRevenueFils)} ({cardPct}%)
               </span>
             </div>
@@ -308,7 +308,7 @@ export function DashboardRevenueChart({
                 <Banknote className="size-3.5 text-muted-foreground" />
                 Cash on Delivery (COD)
               </span>
-              <span className="font-mono text-muted-foreground">
+              <span className="font-sans font-medium text-muted-foreground tabular-nums">
                 {formatAED(kpis.codRevenueFils)} ({codPct}%)
               </span>
             </div>

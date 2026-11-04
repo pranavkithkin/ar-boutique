@@ -51,7 +51,7 @@ export function StockMatrixGrid({
               {allSizeLabels.map((sizeLabel) => (
                 <th
                   key={sizeLabel}
-                  className="py-3 px-2 text-center min-w-[76px] font-mono"
+                  className="py-3 px-2 text-center min-w-[76px] font-sans font-semibold"
                 >
                   Size {sizeLabel}
                 </th>
@@ -153,10 +153,10 @@ export function StockMatrixGrid({
                           className={`w-full py-1 px-1.5 border rounded-none text-center transition-all cursor-pointer ${cellBg}`}
                           title={`SKU: ${variant.sku}\nOn Hand: ${variant.on_hand}\nReserved: ${variant.reserved}\nAvailable: ${variant.available}\nClick to adjust stock`}
                         >
-                          <div className={`font-mono text-xs ${badgeClass}`}>
+                          <div className={`font-sans text-xs font-semibold tabular-nums ${badgeClass}`}>
                             {variant.available}
                           </div>
-                          <div className="text-[9px] font-mono text-muted-foreground flex items-center justify-center gap-1">
+                          <div className="text-[9px] font-sans text-muted-foreground flex items-center justify-center gap-1 tabular-nums">
                             <span>{variant.on_hand}</span>
                             {variant.reserved > 0 && (
                               <span className="text-amber-600 font-semibold">
@@ -170,25 +170,25 @@ export function StockMatrixGrid({
                   })}
 
                   {/* Total On Hand */}
-                  <td className="py-3 px-3 text-right font-mono text-xs font-semibold text-foreground">
+                  <td className="py-3 px-3 text-right font-sans text-xs font-semibold text-foreground tabular-nums">
                     {row.total_on_hand}
                   </td>
 
                   {/* Total Reserved */}
                   <td className="py-3 px-3 text-right">
                     {row.total_reserved > 0 ? (
-                      <span className="font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">
+                      <span className="font-sans text-xs font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
                         {row.total_reserved} held
                       </span>
                     ) : (
-                      <span className="font-mono text-xs text-muted-foreground">0</span>
+                      <span className="font-sans text-xs text-muted-foreground tabular-nums">0</span>
                     )}
                   </td>
 
                   {/* Total Available */}
                   <td className="py-3 px-3 text-center">
                     <span
-                      className={`font-mono text-xs font-bold px-2 py-0.5 rounded-none ${
+                      className={`font-sans text-xs font-semibold px-2 py-0.5 rounded-none tabular-nums ${
                         row.total_available === 0
                           ? "bg-destructive/10 text-destructive"
                           : row.total_available <= 5

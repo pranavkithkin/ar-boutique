@@ -53,7 +53,7 @@ export function ProductAccordions({ product }: { product: ProductType }) {
       {/* 1. Specifications & Details (Open by default) */}
       {hasAnyDetails && (
         <AccordionItem value="details" className="border-t border-border">
-          <AccordionTrigger className="text-sm sm:text-[15px] font-heading font-medium tracking-wide text-foreground hover:no-underline py-4">
+          <AccordionTrigger className="text-sm sm:text-[15px] font-sans font-medium tracking-normal text-foreground hover:no-underline py-4">
             Details & Specifications
           </AccordionTrigger>
           <AccordionContent className="pb-6 pt-1">
@@ -149,7 +149,7 @@ export function ProductAccordions({ product }: { product: ProductType }) {
       {/* 2. Description (Only rendered if available) */}
       {hasDescription && (
         <AccordionItem value="description" className="border-t border-border">
-          <AccordionTrigger className="text-sm sm:text-[15px] font-heading font-medium tracking-wide text-foreground hover:no-underline py-4">
+          <AccordionTrigger className="text-sm sm:text-[15px] font-sans font-medium tracking-normal text-foreground hover:no-underline py-4">
             Description
           </AccordionTrigger>
           <AccordionContent className="text-sm leading-relaxed text-muted-foreground pb-5 pt-1 font-sans">
@@ -160,7 +160,7 @@ export function ProductAccordions({ product }: { product: ProductType }) {
 
       {/* 3. Wash Care */}
       <AccordionItem value="wash" className="border-t border-border">
-        <AccordionTrigger className="text-sm sm:text-[15px] font-heading font-medium tracking-wide text-foreground hover:no-underline py-4">
+        <AccordionTrigger className="text-sm sm:text-[15px] font-sans font-medium tracking-normal text-foreground hover:no-underline py-4">
           Wash Care
         </AccordionTrigger>
         <AccordionContent className="text-sm leading-relaxed text-muted-foreground pb-5 pt-1 space-y-2">
@@ -185,7 +185,7 @@ export function ProductAccordions({ product }: { product: ProductType }) {
 
       {/* 4. Delivery & Returns */}
       <AccordionItem value="shipping" className="border-t border-border">
-        <AccordionTrigger className="text-sm sm:text-[15px] font-heading font-medium tracking-wide text-foreground hover:no-underline py-4">
+        <AccordionTrigger className="text-sm sm:text-[15px] font-sans font-medium tracking-normal text-foreground hover:no-underline py-4">
           Delivery & Returns
         </AccordionTrigger>
         <AccordionContent className="text-sm leading-relaxed text-muted-foreground pb-5 pt-1 space-y-2.5">
@@ -212,7 +212,7 @@ export function ProductAccordions({ product }: { product: ProductType }) {
 
       {/* 5. Colour Disclaimer */}
       <AccordionItem value="color" className="border-t border-border border-b-0">
-        <AccordionTrigger className="text-sm sm:text-[15px] font-heading font-medium tracking-wide text-foreground hover:no-underline py-4">
+        <AccordionTrigger className="text-sm sm:text-[15px] font-sans font-medium tracking-normal text-foreground hover:no-underline py-4">
           Colour Disclaimer
         </AccordionTrigger>
         <AccordionContent className="text-sm leading-relaxed text-muted-foreground pb-5 pt-1">

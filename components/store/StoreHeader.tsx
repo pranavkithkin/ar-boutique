@@ -4,10 +4,11 @@ import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { Search, User, ShoppingBag, Menu } from "lucide-react"
+import { Search, User, ShoppingBag, Menu, Heart } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { CartDrawer } from "@/features/cart/components/CartDrawer"
 import { useCartStore } from "@/features/cart/store"
+import { useWishlistStore } from "@/features/wishlist/store"
 import { CategoryMenu, useMenuCategories } from "@/components/store/CategoryMenu"
 import { SearchModal } from "@/components/store/SearchModal"
 import { JOURNAL_ENABLED } from "@/lib/journal"
@@ -32,7 +33,17 @@ export function StoreHeader() {
   const openCart = useCartStore((state) => state.openCart)
   const cartItems = useCartStore((state) => state.items)
   const totalItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0)
+  const wishlistItems = useWishlistStore((state) => state.items)
+  const wishlistCount = wishlistItems.length
+  const syncWithDatabase = useWishlistStore((state) => state.syncWithDatabase)
+  const isWishlistInitialized = useWishlistStore((state) => state.isInitialized)
   const mounted = React.useSyncExternalStore(subscribeToHydration, () => true, () => false)
+
+  React.useEffect(() => {
+    if (!isWishlistInitialized) {
+      void syncWithDatabase()
+    }
+  }, [isWishlistInitialized, syncWithDatabase])
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -97,6 +108,10 @@ export function StoreHeader() {
                 <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">About</Link>
                 <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Contact Us</Link>
                 <div className="mt-8 flex flex-col gap-4 border-t border-border pt-8">
+                  <Link href="/account?tab=wishlist" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-muted-foreground hover:text-foreground">
+                    <Heart className="h-5 w-5" strokeWidth={1.5} />
+                    <span>My Wishlist {mounted && wishlistCount > 0 ? `(${wishlistCount})` : ""}</span>
+                  </Link>
                   <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-muted-foreground hover:text-foreground">
                     <User className="h-5 w-5" />
                     Account
@@ -182,6 +197,18 @@ export function StoreHeader() {
           >
             <Search className="h-5 w-5" strokeWidth={1.5} />
           </button>
+          <Link
+            href="/account?tab=wishlist"
+            aria-label="My Wishlist"
+            className="relative hidden sm:flex h-11 w-11 shrink-0 items-center justify-center hover:opacity-75"
+          >
+            <Heart className="h-5 w-5" strokeWidth={1.5} />
+            {mounted && wishlistCount > 0 && (
+              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground font-semibold tabular-nums">
+                {wishlistCount}
+              </span>
+            )}
+          </Link>
           <Link href="/account" aria-label="Account" className="hidden sm:flex h-11 w-11 shrink-0 items-center justify-center">
             <User className="h-5 w-5" strokeWidth={1.5} />
           </Link>

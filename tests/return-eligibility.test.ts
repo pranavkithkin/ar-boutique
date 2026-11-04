@@ -1,10 +1,9 @@
-import test from "node:test"
-import assert from "node:assert/strict"
+import { test, expect } from "vitest"
 import {
   evaluateOrderReturnEligibility,
   RETURN_WINDOW_DAYS,
-} from "../features/account/returns/eligibility.ts"
-import { customerReturnFormSchema } from "../features/account/returns/schemas.ts"
+} from "@/features/account/returns/eligibility"
+import { customerReturnFormSchema } from "@/features/account/returns/schemas"
 
 test("evaluateOrderReturnEligibility: approves delivered orders within 7 days", () => {
   const now = new Date("2026-10-19T10:00:00Z")
@@ -23,11 +22,11 @@ test("evaluateOrderReturnEligibility: approves delivered orders within 7 days", 
   }
 
   const result = evaluateOrderReturnEligibility(order, [], now)
-  assert.equal(result.isEligible, true)
-  assert.equal(result.daysRemaining, 4)
-  assert.equal(result.items.length, 2)
-  assert.equal(result.items[0].isEligible, true)
-  assert.equal(result.items[0].maxReturnableQuantity, 2)
+  expect(result.isEligible).toBe(true)
+  expect(result.daysRemaining).toBe(4)
+  expect(result.items).toHaveLength(2)
+  expect(result.items[0].isEligible).toBe(true)
+  expect(result.items[0].maxReturnableQuantity).toBe(2)
 })
 
 test("evaluateOrderReturnEligibility: rejects non-delivered orders", () => {
@@ -43,9 +42,9 @@ test("evaluateOrderReturnEligibility: rejects non-delivered orders", () => {
   }
 
   const result = evaluateOrderReturnEligibility(order, [], now)
-  assert.equal(result.isEligible, false)
-  assert.match(result.ineligibleReason, /transit|delivered/)
-  assert.equal(result.items[0].isEligible, false)
+  expect(result.isEligible).toBe(false)
+  expect(result.ineligibleReason).toMatch(/transit|delivered/)
+  expect(result.items[0].isEligible).toBe(false)
 })
 
 test("evaluateOrderReturnEligibility: rejects delivered orders after 7-day window", () => {
@@ -62,9 +61,9 @@ test("evaluateOrderReturnEligibility: rejects delivered orders after 7-day windo
   }
 
   const result = evaluateOrderReturnEligibility(order, [], now)
-  assert.equal(result.isEligible, false)
-  assert.match(result.ineligibleReason, /expired/)
-  assert.equal(result.daysRemaining, 0)
+  expect(result.isEligible).toBe(false)
+  expect(result.ineligibleReason).toMatch(/expired/)
+  expect(result.daysRemaining).toBe(0)
 })
 
 test("evaluateOrderReturnEligibility: excludes final sale pieces and calculates returned quantities", () => {
@@ -90,12 +89,12 @@ test("evaluateOrderReturnEligibility: excludes final sale pieces and calculates 
   ]
 
   const result = evaluateOrderReturnEligibility(order, existing, now)
-  assert.equal(result.isEligible, true) // item_partial has 2 left
-  assert.equal(result.items[0].isEligible, false) // final sale
-  assert.match(result.items[0].ineligibleReason, /Final Sale/)
-  assert.equal(result.items[1].isEligible, false) // already returned
-  assert.equal(result.items[2].isEligible, true)
-  assert.equal(result.items[2].maxReturnableQuantity, 2)
+  expect(result.isEligible).toBe(true)
+  expect(result.items[0].isEligible).toBe(false)
+  expect(result.items[0].ineligibleReason).toMatch(/Final Sale/)
+  expect(result.items[1].isEligible).toBe(false)
+  expect(result.items[2].isEligible).toBe(true)
+  expect(result.items[2].maxReturnableQuantity).toBe(2)
 })
 
 test("customerReturnFormSchema: validates COD UAE bank transfer requirements", () => {
@@ -119,7 +118,7 @@ test("customerReturnFormSchema: validates COD UAE bank transfer requirements", (
     accountHolderName: "Vivek VR",
     iban: "AE120260000001234567890",
   })
-  assert.equal(validCod.success, true)
+  expect(validCod.success).toBe(true)
 
   // Invalid COD missing IBAN
   const invalidCod = customerReturnFormSchema.safeParse({
@@ -141,8 +140,8 @@ test("customerReturnFormSchema: validates COD UAE bank transfer requirements", (
     accountHolderName: "Vivek VR",
     iban: "12345", // invalid
   })
-  assert.equal(invalidCod.success, false)
-  assert.ok(invalidCod.error.issues.some((i) => i.path.includes("iban")))
+  expect(invalidCod.success).toBe(false)
+  expect(invalidCod.error?.issues.some((i) => i.path.includes("iban"))).toBe(true)
 
   // Valid Card submission (bank details not required)
   const validCard = customerReturnFormSchema.safeParse({
@@ -161,5 +160,5 @@ test("customerReturnFormSchema: validates COD UAE bank transfer requirements", (
       },
     ],
   })
-  assert.equal(validCard.success, true)
+  expect(validCard.success).toBe(true)
 })

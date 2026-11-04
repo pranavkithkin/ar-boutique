@@ -3,7 +3,13 @@
 import crypto from "crypto"
 import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/server"
-import { AdminBannerItem, BannerMutationResponse, BannerPlacement } from "./types"
+import {
+  AdminBannerItem,
+  BannerMutationResponse,
+  BannerPlacement,
+  StorefrontPromoBanner,
+  StorefrontHeroSlide,
+} from "./types"
 
 function getCloudinaryUrl(mediaKey?: string | null, width = 1600): string | null {
   if (!mediaKey) return null
@@ -177,8 +183,11 @@ export async function getAdminBannerById(id: string): Promise<AdminBannerItem | 
  */
 export async function createBannerAction(formData: FormData): Promise<BannerMutationResponse> {
   try {
-    const title = (formData.get("title") as string | null)?.trim()
+    let title = (formData.get("title") as string | null)?.trim()
     const placement = ((formData.get("placement") as string | null) || "hero") as BannerPlacement
+    if (!title) {
+      title = placement === "hero" ? "Hero Carousel Slide" : "Promo Banner"
+    }
     const eyebrow = (formData.get("eyebrow") as string | null)?.trim() || null
     const subtitle = (formData.get("subtitle") as string | null)?.trim() || null
     const button_label = (formData.get("button_label") as string | null)?.trim() || null
@@ -191,14 +200,25 @@ export async function createBannerAction(formData: FormData): Promise<BannerMuta
     const desktopFile = formData.get("desktop_file") as File | null
     const mobileFile = formData.get("mobile_file") as File | null
 
-    if (!title) {
-      return { success: false, error: "Banner title is required." }
-    }
-
     const sort = sortRaw ? parseInt(sortRaw, 10) : 0
     const is_active = isActiveRaw === "false" ? false : true
 
     const supabase = createAdminClient()
+
+    // Strictly enforce single promo banner rule
+    if (placement === "promo") {
+      const { data: existingPromo } = await supabase
+        .from("banners")
+        .select("id")
+        .eq("placement", "promo")
+        .limit(1)
+        .maybeSingle()
+
+      if (existingPromo?.id) {
+        return await updateBannerAction(existingPromo.id, formData)
+      }
+    }
+
     const tempId = `ban_${Date.now()}`
 
     let desktop_image_key: string | null = null
@@ -237,6 +257,7 @@ export async function createBannerAction(formData: FormData): Promise<BannerMuta
     }
 
     revalidatePath("/admin/banners")
+    revalidatePath("/")
     return { success: true, bannerId: inserted?.id }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to create banner."
@@ -255,8 +276,11 @@ export async function updateBannerAction(
   try {
     if (!id) return { success: false, error: "Banner ID is required." }
 
-    const title = (formData.get("title") as string | null)?.trim()
+    let title = (formData.get("title") as string | null)?.trim()
     const placement = ((formData.get("placement") as string | null) || "hero") as BannerPlacement
+    if (!title) {
+      title = placement === "hero" ? "Hero Carousel Slide" : "Promo Banner"
+    }
     const eyebrow = (formData.get("eyebrow") as string | null)?.trim() || null
     const subtitle = (formData.get("subtitle") as string | null)?.trim() || null
     const button_label = (formData.get("button_label") as string | null)?.trim() || null
@@ -268,10 +292,6 @@ export async function updateBannerAction(
 
     const desktopFile = formData.get("desktop_file") as File | null
     const mobileFile = formData.get("mobile_file") as File | null
-
-    if (!title) {
-      return { success: false, error: "Banner title is required." }
-    }
 
     const supabase = createAdminClient()
     const { data: current } = await supabase
@@ -327,6 +347,7 @@ export async function updateBannerAction(
     }
 
     revalidatePath("/admin/banners")
+    revalidatePath("/")
     return { success: true, bannerId: id }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to update banner."
@@ -357,6 +378,7 @@ export async function toggleBannerActiveAction(
     }
 
     revalidatePath("/admin/banners")
+    revalidatePath("/")
     return { success: true }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to toggle banner status."
@@ -388,6 +410,7 @@ export async function deleteBannerAction(id: string): Promise<{ success: boolean
     }
 
     revalidatePath("/admin/banners")
+    revalidatePath("/")
     return { success: true }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to delete banner."
@@ -412,6 +435,7 @@ export async function reorderBannersAction(
 
     await Promise.all(updates)
     revalidatePath("/admin/banners")
+    revalidatePath("/")
     return { success: true }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to reorder banners."
@@ -440,30 +464,6 @@ export async function seedInitialBannersAction(): Promise<{ success: boolean; co
         is_active: true,
       },
       {
-        placement: "hero",
-        eyebrow: "Artisan Craftsmanship",
-        title: "Royal Velvet & Silk",
-        subtitle: "Exquisite Festive Formals Handcrafted in UAE Ateliers",
-        button_label: "Explore Collection",
-        button_link: "/collections",
-        desktop_image_key: "/images/hero_silk_desktop.png",
-        mobile_image_key: "/images/hero_silk_mobile.png",
-        sort: 1,
-        is_active: true,
-      },
-      {
-        placement: "hero",
-        eyebrow: "Contemporary Haute Couture",
-        title: "Modern Luxury",
-        subtitle: "Sophisticated Cuts with Classic Atelier Refinement",
-        button_label: "Discover Now",
-        button_link: "/collections",
-        desktop_image_key: "/images/hero_modern_desktop.png",
-        mobile_image_key: "/images/hero_modern_mobile.png",
-        sort: 2,
-        is_active: true,
-      },
-      {
         placement: "promo",
         eyebrow: "Personal Atelier Styling",
         title: "Bespoke Bridal & Occasion Wear",
@@ -483,9 +483,119 @@ export async function seedInitialBannersAction(): Promise<{ success: boolean; co
     }
 
     revalidatePath("/admin/banners")
+    revalidatePath("/")
     return { success: true, count: data?.length || 0 }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to seed default banners."
     return { success: false, error: msg }
   }
 }
+
+/**
+ * Fetch active promo banners for storefront display
+ */
+export async function getStorefrontPromoBanners(): Promise<StorefrontPromoBanner[]> {
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from("banners")
+      .select("*")
+      .eq("placement", "promo")
+      .eq("is_active", true)
+      .order("sort", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(1)
+
+    if (error || !data || data.length === 0) {
+      return [
+        {
+          id: "default-summer-refresh",
+          imageSrc: "/images/promo_banner_summer.png",
+          imageAlt: "Summer Refresh",
+          imageFit: "cover",
+          eyebrow: "LIMITED TIME ONLY",
+          title: "Summer Refresh",
+          description: "Enjoy up to 30% off selected styles.",
+          buttonText: "SHOP THE SALE",
+          buttonHref: "/collections",
+        },
+      ]
+    }
+
+    return data.map((b) => ({
+      id: b.id,
+      imageSrc: getCloudinaryUrl(b.desktop_image_key, 1600) || "/images/promo_banner_summer.png",
+      imageAlt: b.title || "Summer Refresh",
+      imageFit: "cover",
+      eyebrow: b.eyebrow || "LIMITED TIME ONLY",
+      title: b.title || "Summer Refresh",
+      description: b.subtitle || "Enjoy up to 30% off selected styles.",
+      buttonText: b.button_label || "SHOP THE SALE",
+      buttonHref: b.button_link || "/collections",
+    }))
+  } catch (err) {
+    console.error("getStorefrontPromoBanners exception:", err)
+    return [
+      {
+        id: "default-summer-refresh",
+        imageSrc: "/images/promo_banner_summer.png",
+        imageAlt: "Summer Refresh",
+        imageFit: "cover",
+        eyebrow: "LIMITED TIME ONLY",
+        title: "Summer Refresh",
+        description: "Enjoy up to 30% off selected styles.",
+        buttonText: "SHOP THE SALE",
+        buttonHref: "/collections",
+      },
+    ]
+  }
+}
+
+/**
+ * Fetch active hero slides for storefront display
+ */
+export async function getStorefrontHeroSlides(): Promise<StorefrontHeroSlide[]> {
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from("banners")
+      .select("*")
+      .eq("placement", "hero")
+      .eq("is_active", true)
+      .order("sort", { ascending: true })
+      .order("created_at", { ascending: false })
+
+    if (error || !data || data.length === 0) {
+      return [
+        {
+          id: "default-hero-traditions",
+          imageSrc: "/images/hero_traditions_desktop.png",
+          mobileImageSrc: "/images/hero_traditions_mobile.png",
+          alt: "Timeless Traditions Fashion Heritage",
+          href: "/collections",
+        },
+      ]
+    }
+
+    return data.map((b) => ({
+      id: b.id,
+      imageSrc: getCloudinaryUrl(b.desktop_image_key, 2400) || "/images/hero_traditions_desktop.png",
+      mobileImageSrc: getCloudinaryUrl(b.mobile_image_key, 1200) || undefined,
+      alt: b.title || "AR Boutique Fashion Collection",
+      href: b.button_link || "/collections",
+    }))
+  } catch (err) {
+    console.error("getStorefrontHeroSlides exception:", err)
+    return [
+      {
+        id: "default-hero-traditions",
+        imageSrc: "/images/hero_traditions_desktop.png",
+        mobileImageSrc: "/images/hero_traditions_mobile.png",
+        alt: "Timeless Traditions Fashion Heritage",
+        href: "/collections",
+      },
+    ]
+  }
+}
+
+

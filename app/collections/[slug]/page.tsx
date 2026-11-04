@@ -12,8 +12,10 @@ import {
 } from "@/components/ui/breadcrumb"
 import { ProductDetailView } from "@/components/store/ProductDetailView"
 import { ProductCard } from "@/components/store/ProductCard"
+import { ProductReviewsSection } from "@/components/store/reviews/ProductReviewsSection"
 import { getProductBySlug } from "@/lib/product-detail"
 import { getProductsPage } from "@/lib/products"
+import { getProductReviewsAction } from "@/features/reviews/actions"
 
 export default async function ProductPage({
   params,
@@ -29,6 +31,9 @@ export default async function ProductPage({
   if (!product) {
     notFound()
   }
+
+  // Fetch approved customer reviews and summary
+  const reviewsData = await getProductReviewsAction(slug)
 
   // Recommended products: fetch next 5 items from the database
   const { products: recommended } = await getProductsPage({ limit: 5 })
@@ -66,12 +71,21 @@ export default async function ProductPage({
           <ProductDetailView
             product={product}
             initialColourSlug={colour}
+            reviewSummary={reviewsData.breakdown}
+          />
+
+          {/* Client Reviews & Ratings with Boutique Moderation */}
+          <ProductReviewsSection
+            productSlug={product.slug}
+            productName={product.name}
+            initialData={reviewsData}
+            maxReviews={4}
           />
 
           {/* Recommended Products */}
           {filteredRecommended.length > 0 && (
             <div className="mt-24 pt-16 border-t border-border">
-              <h2 className="font-heading text-2xl sm:text-3xl text-foreground text-center mb-10">
+              <h2 className="font-sans font-semibold text-2xl sm:text-3xl text-foreground text-center mb-10 tracking-tight">
                 You May Also Like
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">

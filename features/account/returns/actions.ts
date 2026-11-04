@@ -250,6 +250,248 @@ export async function getCustomerReturnsAction(
 }
 
 /**
+ * Fetch a single customer return request with full timeline events, items, photos, and refunds.
+ */
+export async function getCustomerReturnDetailsAction(
+  returnIdentifier: string,
+  customerEmail: string
+): Promise<{ success: boolean; returnRequest?: CustomerReturnRequest; error?: string }> {
+  const cleanEmail = customerEmail.toLowerCase().trim()
+  const cleanId = returnIdentifier.trim()
+
+  if (!cleanEmail || !cleanId) {
+    return { success: false, error: "Return identifier and customer email required." }
+  }
+
+  try {
+    const adminDb = createAdminClient()
+
+    let query = adminDb
+      .from("return_requests")
+      .select(
+        `
+        id,
+        return_number,
+        order_id,
+        status,
+        customer_comment,
+        admin_instructions,
+        rejection_reason,
+        bank_name,
+        account_holder_name,
+        iban,
+        created_at,
+        email,
+        orders (
+          order_number
+        ),
+        return_items (
+          id,
+          order_item_id,
+          variant_id,
+          product_name,
+          colour_name,
+          size_label,
+          sku,
+          quantity,
+          unit_price_fils,
+          refund_amount_fils,
+          reason,
+          condition,
+          media_key
+        ),
+        return_photos (
+          id,
+          media_key,
+          caption
+        ),
+        return_events (
+          id,
+          event_type,
+          from_status,
+          to_status,
+          note,
+          actor_sub,
+          created_at
+        )
+      `
+      )
+      .ilike("email", cleanEmail)
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId)
+    if (isUuid) {
+      query = query.eq("id", cleanId)
+    } else {
+      query = query.ilike("return_number", cleanId)
+    }
+
+    const { data: rawReturn, error } = await query.maybeSingle()
+
+    if (error || !rawReturn) {
+      console.warn("Return lookup failed:", error || "not found")
+      return { success: false, error: "Return request not found or unauthorized." }
+    }
+
+    // Also fetch any issued refunds for this return
+    const { data: refundsData } = await adminDb
+      .from("refunds")
+      .select("id, amount_fils, method, status, bank_transfer_date, bank_transfer_reference, created_at")
+      .eq("return_id", rawReturn.id)
+      .order("created_at", { ascending: false })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items: CustomerReturnItem[] = (rawReturn.return_items || []).map((it: any) => ({
+      id: it.id,
+      orderItemId: it.order_item_id,
+      variantId: it.variant_id || undefined,
+      productName: it.product_name,
+      colourName: it.colour_name,
+      sizeLabel: it.size_label,
+      sku: it.sku,
+      quantity: it.quantity,
+      unitPriceFils: it.unit_price_fils,
+      refundAmountFils: it.refund_amount_fils,
+      reason: it.reason,
+      condition: it.condition || undefined,
+      mediaKey: it.media_key || undefined,
+    }))
+
+    const totalRefundFils = items.reduce(
+      (sum, it) => sum + (it.refundAmountFils || it.unitPriceFils * it.quantity),
+      0
+    )
+
+    // Format events chronologically
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const events = (rawReturn.return_events || []).map((ev: any) => ({
+      id: ev.id,
+      eventType: ev.event_type,
+      fromStatus: ev.from_status,
+      toStatus: ev.to_status,
+      note: ev.note,
+      createdAt: formatDate(ev.created_at),
+    })).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const refunds = (refundsData || []).map((rf: any) => ({
+      id: rf.id,
+      amountFils: rf.amount_fils,
+      method: rf.method,
+      status: rf.status,
+      bankTransferDate: rf.bank_transfer_date ? formatDate(rf.bank_transfer_date) : null,
+      bankTransferReference: rf.bank_transfer_reference,
+      createdAt: formatDate(rf.created_at),
+    }))
+
+    const returnRequest: CustomerReturnRequest = {
+      id: rawReturn.id,
+      returnNumber: rawReturn.return_number || `RET-${rawReturn.id.slice(0, 4)}`,
+      orderId: rawReturn.order_id,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      orderNumber: (rawReturn.orders as any)?.order_number || "Order",
+      status: rawReturn.status,
+      statusLabel: mapStatusToLabel(rawReturn.status),
+      createdAt: formatDate(rawReturn.created_at),
+      customerComment: rawReturn.customer_comment || undefined,
+      adminInstructions: rawReturn.admin_instructions || undefined,
+      rejectionReason: rawReturn.rejection_reason || undefined,
+      bankName: rawReturn.bank_name || undefined,
+      accountHolderName: rawReturn.account_holder_name || undefined,
+      iban: rawReturn.iban || undefined,
+      totalRefundFils,
+      items,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      photos: (rawReturn.return_photos || []).map((p: any) => ({
+        id: p.id,
+        mediaKey: p.media_key,
+        caption: p.caption || undefined,
+      })),
+      events,
+      refunds,
+    }
+
+    return { success: true, returnRequest }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to load return details"
+    console.error("getCustomerReturnDetailsAction error:", msg)
+    return { success: false, error: msg }
+  }
+}
+
+/**
+ * Allow a customer to cancel an unapproved/pending return request.
+ */
+export async function cancelCustomerReturnAction(
+  returnId: string,
+  customerEmail: string
+): Promise<{ success: boolean; error?: string }> {
+  const cleanEmail = customerEmail.toLowerCase().trim()
+  if (!returnId || !cleanEmail) {
+    return { success: false, error: "Invalid cancellation request." }
+  }
+
+  try {
+    const adminDb = createAdminClient()
+
+    // 1. Verify return ownership and state
+    const { data: ret, error: fetchErr } = await adminDb
+      .from("return_requests")
+      .select("id, status, email, return_number")
+      .eq("id", returnId)
+      .ilike("email", cleanEmail)
+      .maybeSingle()
+
+    if (fetchErr || !ret) {
+      return { success: false, error: "Return request not found or unauthorized." }
+    }
+
+    if (ret.status !== "requested") {
+      return {
+        success: false,
+        error: `Cannot cancel return in '${ret.status}' status. Only pending requests can be cancelled.`,
+      }
+    }
+
+    const nowIso = new Date().toISOString()
+
+    // 2. Update status to rejected with close_reason 'cancelled_by_customer'
+    const { error: updateErr } = await adminDb
+      .from("return_requests")
+      .update({
+        status: "rejected",
+        rejection_reason: "Cancelled by customer online.",
+        close_reason: "Customer withdrew return request",
+        updated_at: nowIso,
+      })
+      .eq("id", returnId)
+
+    if (updateErr) {
+      return { success: false, error: "Failed to update return status." }
+    }
+
+    // 3. Log event
+    await adminDb.from("return_events").insert({
+      return_id: returnId,
+      event_type: "return_cancelled_by_customer",
+      from_status: "requested",
+      to_status: "rejected",
+      note: "Customer cancelled the return request from their account portal.",
+      actor_sub: cleanEmail,
+      created_at: nowIso,
+    })
+
+    revalidatePath("/account")
+    revalidatePath("/admin/returns")
+    revalidatePath(`/account/returns/${ret.return_number}`)
+
+    return { success: true }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Cancellation failed"
+    return { success: false, error: msg }
+  }
+}
+
+/**
  * Generate gapless sequential return number: RET-1001, RET-1002, etc.
  */
 async function getNextReturnNumber(): Promise<string> {
@@ -479,7 +721,7 @@ export async function submitCustomerReturnAction(
         quantity: it.quantity,
         reason: it.reason,
         refund_amount_fils: refundAmountFils,
-        condition: "pending",
+        condition: "pending_inspection",
         is_restocked: false,
         created_at: nowIso,
       }
@@ -491,6 +733,7 @@ export async function submitCustomerReturnAction(
 
     if (itemsErr) {
       console.error("Failed to insert return_items:", itemsErr)
+      await adminDb.from("return_requests").delete().eq("id", returnId)
       return { success: false, error: "Failed to record return items." }
     }
 

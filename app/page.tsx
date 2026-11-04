@@ -10,6 +10,10 @@ import { PromoBanner } from "@/components/store/PromoBanner"
 import { BlogCard } from "@/features/blog/components/BlogCard"
 import { StoreFooter } from "@/components/store/StoreFooter"
 import { getProductsPage } from "@/lib/products"
+import {
+  getStorefrontPromoBanners,
+  getStorefrontHeroSlides,
+} from "@/features/admin/banners/actions"
 import { JOURNAL_ENABLED } from "@/lib/journal"
 import {
   AnimatedSection,
@@ -67,6 +71,10 @@ export default async function Home() {
     sort: "newest",
   })
 
+  // Fetch active hero slides & promo banner(s) configured in admin panel
+  const heroSlides = await getStorefrontHeroSlides()
+  const promoBanners = await getStorefrontPromoBanners()
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <AnnouncementBar />
@@ -74,7 +82,7 @@ export default async function Home() {
 
       <main className="flex-1 lg:-mt-20">
         <FadeIn delay={0.05}>
-          <HeroSlider />
+          <HeroSlider slides={heroSlides} />
         </FadeIn>
 
         {/* Shop by Category Section */}
@@ -143,21 +151,26 @@ export default async function Home() {
           </AnimatedDiv>
         </AnimatedSection>
 
-        {/* Promo Banner Section: reuse the client's existing collection photo. */}
-        <AnimatedSection delay={0.08} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 mb-6 md:mt-10 md:mb-8">
-          <div className="flex flex-col w-full gap-4 md:gap-6">
-            <PromoBanner
-              imageSrc="/images/promo_banner_summer.png"
-              imageAlt="Sunny Garden Bouquet - Summer Refresh"
-              imageFit="cover"
-              eyebrow="LIMITED TIME ONLY"
-              title="Summer Refresh"
-              description="Enjoy up to 30% off selected styles."
-              buttonText="SHOP THE SALE"
-              buttonHref="/collections"
-            />
-          </div>
-        </AnimatedSection>
+        {/* Promo Banner Section: dynamically connected to admin panel */}
+        {promoBanners.length > 0 && (
+          <AnimatedSection delay={0.08} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 mb-6 md:mt-10 md:mb-8">
+            <div className="flex flex-col w-full gap-4 md:gap-6">
+              {promoBanners.map((banner) => (
+                <PromoBanner
+                  key={banner.id}
+                  imageSrc={banner.imageSrc}
+                  imageAlt={banner.imageAlt}
+                  imageFit={banner.imageFit || "cover"}
+                  eyebrow={banner.eyebrow}
+                  title={banner.title}
+                  description={banner.description}
+                  buttonText={banner.buttonText}
+                  buttonHref={banner.buttonHref}
+                />
+              ))}
+            </div>
+          </AnimatedSection>
+        )}
 
         {/* Journal Section */}
         {JOURNAL_ENABLED && (

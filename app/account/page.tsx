@@ -1,8 +1,14 @@
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
-import { auth } from "@clerk/nextjs/server"
+import { auth, currentUser } from "@clerk/nextjs/server"
 import { isClerkConfigured } from "@/lib/clerk"
 import { getCurrentCustomerAction } from "@/features/auth/actions"
+import { getCustomerAccountDataAction } from "@/features/account/actions"
+import type {
+  AccountUserProfile,
+  AccountOrder,
+  AccountAddress,
+} from "@/features/account/types"
 import { AnnouncementBar } from "@/components/store/AnnouncementBar"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
@@ -23,17 +29,72 @@ export const metadata: Metadata = {
 }
 
 export default async function AccountPage() {
+  let email: string | undefined
+  let fullName: string | undefined
+  let phone: string | undefined
+
   if (isClerkConfigured()) {
-    const { userId } = await auth()
-    if (!userId) {
-      redirect("/sign-in?redirect=/account")
-    }
-  } else {
-    const customer = await getCurrentCustomerAction()
-    if (!customer) {
-      redirect("/sign-in?redirect=/account")
+    try {
+      const { userId } = await auth()
+      if (userId) {
+        const clerkUser = await currentUser()
+        if (clerkUser) {
+          email = clerkUser.primaryEmailAddress?.emailAddress
+          fullName = `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || undefined
+          phone = clerkUser.primaryPhoneNumber?.phoneNumber || undefined
+        }
+      }
+    } catch (authErr) {
+      console.warn("Clerk auth resolution in AccountPage:", authErr)
     }
   }
+
+  // Fallback to customer session cookie if Clerk session is not present
+  if (!email) {
+    try {
+      const customer = await getCurrentCustomerAction()
+      if (customer) {
+        email = customer.email
+        fullName = `${customer.firstName} ${customer.lastName}`.trim() || undefined
+        phone = customer.phone || undefined
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  // If unauthenticated, redirect to sign-in
+  if (!email) {
+    redirect("/sign-in?redirect=/account")
+  }
+
+  // Server-side hydration of customer profile, orders, and addresses
+  let initialProfile: AccountUserProfile = {
+    id: "",
+    firstName: fullName?.split(" ")[0] || "",
+    lastName: fullName?.split(" ").slice(1).join(" ") || "",
+    email: email,
+    phone: phone || "",
+    memberSince: "2026",
+    tier: "Member",
+    preferredLanguage: "en",
+    notifyWhatsApp: true,
+    notifyEmail: true,
+  }
+  let initialOrders: AccountOrder[] = []
+  let initialAddresses: AccountAddress[] = []
+
+  try {
+    const accountData = await getCustomerAccountDataAction(email, { fullName, phone })
+    if (accountData.success) {
+      if (accountData.profile) initialProfile = accountData.profile
+      if (accountData.orders) initialOrders = accountData.orders
+      if (accountData.addresses) initialAddresses = accountData.addresses
+    }
+  } catch (err) {
+    console.error("Failed to load customer account data on server:", err)
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <AnnouncementBar />
@@ -66,8 +127,12 @@ export default async function AccountPage() {
           </div>
         </section>
 
-        {/* Interactive Account Workspace */}
-        <AccountView />
+        {/* Interactive Account Workspace with server-hydrated data */}
+        <AccountView
+          initialProfile={initialProfile}
+          initialOrders={initialOrders}
+          initialAddresses={initialAddresses}
+        />
       </main>
 
       <StoreFooter />

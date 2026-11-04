@@ -138,14 +138,14 @@ export function CategoriesTable({
                   {cat.product_count > 0 ? (
                     <Link
                       href={`/admin/products?category=${cat.id}`}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-muted/50 hover:bg-muted text-xs font-mono font-medium text-foreground border border-border transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-muted/50 hover:bg-muted text-xs font-sans font-semibold text-foreground border border-border transition-colors tabular-nums"
                       title="Filter catalogue by this category"
                     >
                       <Package className="h-3 w-3 text-muted-foreground" />
                       <span>{cat.product_count}</span>
                     </Link>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-mono text-muted-foreground/60">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-sans text-muted-foreground/60 tabular-nums">
                       0
                     </span>
                   )}
@@ -165,7 +165,7 @@ export function CategoriesTable({
                       <ArrowUp className="h-3 w-3" />
                     </Button>
 
-                    <span className="text-xs font-mono font-semibold w-7 text-center">
+                    <span className="text-xs font-sans font-semibold w-7 text-center tabular-nums">
                       {cat.sort}
                     </span>
 

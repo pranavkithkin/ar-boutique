@@ -5,13 +5,13 @@ import { AppSidebar } from "@/components/app-sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
 	return (
-		<SidebarProvider className={cn("[--app-wrapper-max-width:80rem]")}>
+		<SidebarProvider className={cn("[--app-wrapper-max-width:80rem]")} data-surface="admin">
 			<AppSidebar />
-			<SidebarInset>
+			<SidebarInset className="font-sans antialiased text-foreground">
 				<AppHeader />
 				<div
 					className={cn(
-						"flex flex-1 flex-col p-4 md:p-6",
+						"flex flex-1 flex-col p-4 md:p-6 font-sans",
 						"mx-auto w-full max-w-(--app-wrapper-max-width)"
 					)}
 				>

@@ -1,15 +1,36 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { Ruler, Minus, Plus, Check, Clock, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { STORE_CONTACT } from "@/lib/contact"
+
+function WhatsAppIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+      <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
+    </svg>
+  )
+}
 import { ProductAccordions } from "./ProductAccordions"
 import { ProductTrustStrip } from "./ProductTrustStrip"
 import { SizeChartModal } from "./SizeChartModal"
+import { WishlistButton } from "@/features/wishlist/components/WishlistButton"
 import { StickyAddToCart } from "./StickyAddToCart"
 import { useCartStore } from "@/features/cart/store"
 import { formatAED } from "@/lib/money"
+import { StarRating } from "./reviews/StarRating"
 import type { ProductDetail, ProductColourway, ProductVariantSize } from "@/lib/product-detail"
 
 export interface ProductType {
@@ -41,6 +62,10 @@ interface ProductInfoProps {
   title: string
   activeColourway?: ProductColourway | null
   onSelectColourway?: (colourway: ProductColourway) => void
+  reviewSummary?: {
+    averageRating: number
+    totalCount: number
+  }
 }
 
 export function ProductInfo({
@@ -48,6 +73,7 @@ export function ProductInfo({
   title,
   activeColourway: controlledColourway,
   onSelectColourway,
+  reviewSummary,
 }: ProductInfoProps) {
   const colourways = (product as ProductDetail).colourways || []
   const hasMultipleColours = colourways.length > 1
@@ -71,7 +97,7 @@ export function ProductInfo({
       sku: s.sku,
       priceFils: s.priceFils || 9000,
       compareAtFils: null,
-      status: (s.status as any) || "in_stock",
+      status: (s.status as ProductVariantSize["status"]) || "in_stock",
       unitsLeft: s.unitsLeft ?? null,
       isAvailable: s.isAvailable !== false,
       sort: idx,
@@ -127,6 +153,16 @@ export function ProductInfo({
   const activeImage =
     activeColourway?.images?.[0] || product.images?.[0] || "/images/placeholder.jpg"
 
+  // Pre-filled WhatsApp inquiry text with product title, SKU, colour, and size
+  const selectedSizeText =
+    selectedSize?.name && selectedSize.name !== "One Size"
+      ? `, Size: ${selectedSize.name}`
+      : ""
+  const whatsappInquiryText = `Hello AR Boutique Concierge, I would like to inquire about "${product.name}" (SKU: ${currentSku}, Colour: ${currentColourName}${selectedSizeText}). Is this piece currently available?`
+  const whatsappInquiryHref = `${STORE_CONTACT.whatsappHref}?text=${encodeURIComponent(
+    whatsappInquiryText
+  )}`
+
   const handleAddToCart = () => {
     if (!isAvailable) return
 
@@ -156,7 +192,7 @@ export function ProductInfo({
   return (
     <div className="bg-secondary/50 rounded-xs p-6 sm:p-8 lg:p-10 flex flex-col min-h-full">
       {/* Title */}
-      <h1 className="font-heading text-3xl sm:text-4xl text-foreground leading-tight mb-2">
+      <h1 className="font-sans font-semibold text-2xl sm:text-3xl lg:text-[32px] text-foreground leading-snug tracking-tight mb-2">
         {title}
       </h1>
 
@@ -171,6 +207,23 @@ export function ProductInfo({
             <span>Colour: <strong className="text-foreground font-medium">{currentColourName}</strong></span>
           </>
         )}
+      </div>
+
+      {/* Reviews Rating Anchor */}
+      <div className="mb-4">
+        <a
+          href="#product-reviews"
+          className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group"
+        >
+          <StarRating rating={reviewSummary?.averageRating || 5} size="sm" />
+          <span className="font-sans font-medium text-foreground/80 group-hover:text-foreground underline-offset-4 group-hover:underline">
+            {reviewSummary && reviewSummary.totalCount > 0
+              ? `${reviewSummary.averageRating.toFixed(1)} (${reviewSummary.totalCount} ${
+                  reviewSummary.totalCount === 1 ? "review" : "reviews"
+                })`
+              : "Be the first to review"}
+          </span>
+        </a>
       </div>
 
       {/* Price Header */}
@@ -386,7 +439,32 @@ export function ProductInfo({
               <span>Sold Out</span>
             )}
           </Button>
+
+          <WishlistButton
+            product={{
+              productId: product.id,
+              slug: product.slug || product.id,
+              name: product.name,
+              price: formatAED(priceFils),
+              imageSrc: activeColourway?.images?.[0] || product.images?.[0] || "",
+              colourName: currentColourName,
+            }}
+            size="lg"
+            className="h-12 w-12 border border-border bg-background hover:border-foreground shrink-0 rounded-none transition-colors"
+          />
         </div>
+
+        {/* WhatsApp Product Inquiry Button (Item 6) */}
+        <a
+          href={whatsappInquiryHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 w-full h-11 border border-border bg-background hover:bg-muted/40 hover:border-foreground/40 text-foreground text-xs uppercase font-medium tracking-wider flex items-center justify-center gap-2 transition-colors rounded-none"
+          aria-label={`Inquire about ${product.name} on WhatsApp`}
+        >
+          <WhatsAppIcon className="w-4 h-4" />
+          <span>Inquire on WhatsApp</span>
+        </a>
       </div>
 
       {/* Tax & Delivery Footnote */}

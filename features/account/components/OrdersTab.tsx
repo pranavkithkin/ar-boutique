@@ -4,6 +4,7 @@ import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AccountOrder } from "../types"
+import type { CustomerReturnRequest } from "../returns/types"
 import { formatAED } from "@/lib/money"
 import { STORE_CONTACT } from "@/lib/contact"
 import { Badge } from "@/components/ui/badge"
@@ -22,13 +23,19 @@ import {
   Clock,
   MessageCircle,
   MapPin,
+  RotateCcw,
+  FileText,
+  ArrowRight,
 } from "lucide-react"
 
 interface OrdersTabProps {
   orders: AccountOrder[]
+  returnsList?: CustomerReturnRequest[]
+  onRequestReturn?: (orderId: string) => void
+  onViewReturn?: (returnId: string) => void
 }
 
-export function OrdersTab({ orders }: OrdersTabProps) {
+export function OrdersTab({ orders, returnsList, onRequestReturn, onViewReturn }: OrdersTabProps) {
   const [filter, setFilter] = React.useState<"all" | "active" | "delivered">("all")
   const [selectedOrderForTracking, setSelectedOrderForTracking] =
     React.useState<AccountOrder | null>(null)
@@ -159,9 +166,13 @@ export function OrdersTab({ orders }: OrdersTabProps) {
                     <span className="block text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
                       Order Number
                     </span>
-                    <span className="text-sm font-semibold text-foreground tracking-wide">
-                      {order.orderNumber}
-                    </span>
+                    <Link
+                      href={`/account/orders/${order.orderNumber}`}
+                      className="text-sm font-semibold text-foreground tracking-wide hover:underline inline-flex items-center gap-1 group"
+                    >
+                      <span>{order.orderNumber}</span>
+                      <ArrowRight className="h-3 w-3 text-primary group-hover:translate-x-0.5 transition-transform" />
+                    </Link>
                   </div>
                   <div>
                     <span className="block text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
@@ -202,19 +213,25 @@ export function OrdersTab({ orders }: OrdersTabProps) {
                     className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="relative h-16 w-14 shrink-0 bg-muted/30 overflow-hidden border border-border/50 rounded-xs">
+                      <Link
+                        href={`/account/orders/${order.orderNumber}`}
+                        className="relative h-16 w-14 shrink-0 bg-muted/30 overflow-hidden border border-border/50 rounded-xs group block"
+                      >
                         <Image
                           src={item.imageSrc}
                           alt={item.productName}
                           fill
                           sizes="56px"
-                          className="object-cover object-center"
+                          className="object-cover object-top group-hover:scale-105 transition-transform duration-300"
                         />
-                      </div>
+                      </Link>
                       <div>
-                        <h4 className="text-sm font-sans text-foreground font-medium">
+                        <Link
+                          href={`/account/orders/${order.orderNumber}`}
+                          className="text-sm font-sans text-foreground font-medium hover:underline block"
+                        >
                           {item.productName}
-                        </h4>
+                        </Link>
                         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
                           <span>Style: <strong className="font-mono text-foreground font-normal">{item.styleCode}</strong></span>
                           <span>•</span>
@@ -246,6 +263,53 @@ export function OrdersTab({ orders }: OrdersTabProps) {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/account/orders/${order.orderNumber}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-foreground text-background font-medium rounded-xs hover:bg-foreground/90 transition-colors text-xs"
+                  >
+                    <span>View Details</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                  <a
+                    href={`/api/invoices/${order.id}?print=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border text-foreground font-medium rounded-xs hover:bg-muted/40 transition-colors text-xs"
+                    title="Download Official Bilingual Tax Invoice (PDF)"
+                  >
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                    Tax Invoice PDF
+                  </a>
+                  {(() => {
+                    const existingReturn = returnsList?.find(
+                      (r) => r.orderId === order.id && r.status !== "rejected"
+                    )
+                    if (existingReturn) {
+                      return (
+                        <Link
+                          href={`/account/returns/${existingReturn.returnNumber}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border text-foreground font-medium rounded-xs hover:bg-muted transition-colors text-xs"
+                          title={`Return Reference: ${existingReturn.returnNumber}`}
+                        >
+                          <RotateCcw className="h-3.5 w-3.5 text-emerald-600" />
+                          <span>Return {existingReturn.statusLabel || "Requested"}</span>
+                        </Link>
+                      )
+                    }
+                    if (order.status === "delivered" && onRequestReturn) {
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => onRequestReturn(order.id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border text-foreground font-medium rounded-xs hover:bg-muted/40 transition-colors text-xs"
+                        >
+                          <RotateCcw className="h-3.5 w-3.5 text-primary" />
+                          Request Return
+                        </button>
+                      )
+                    }
+                    return null
+                  })()}
                   {order.status === "shipped" && (
                     <button
                       onClick={() => setSelectedOrderForTracking(order)}

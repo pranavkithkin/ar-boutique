@@ -36,7 +36,8 @@ export function ProductsToolbar({
       setIsExporting(true)
       const res = await fetch("/api/admin/catalogue-export")
       if (!res.ok) {
-        throw new Error("Export failed with status " + res.status)
+        const errorData = await res.json().catch(() => null)
+        throw new Error(errorData?.error || `Export failed with status ${res.status}`)
       }
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
@@ -49,7 +50,8 @@ export function ProductsToolbar({
       window.URL.revokeObjectURL(url)
     } catch (err) {
       console.error("Export error:", err)
-      alert("Failed to export catalogue. Please try again.")
+      const message = err instanceof Error ? err.message : "Failed to export catalogue. Please try again."
+      alert(message)
     } finally {
       setIsExporting(false)
     }

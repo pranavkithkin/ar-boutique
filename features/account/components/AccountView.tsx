@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   AccountTab,
   AccountAddress,
@@ -26,12 +27,16 @@ import { OrdersTab } from "./OrdersTab"
 import { AddressesTab } from "./AddressesTab"
 import { ProfileTab } from "./ProfileTab"
 import { ReturnsTab } from "./ReturnsTab"
+import { WishlistTab } from "./WishlistTab"
 
-import { Loader2 } from "lucide-react"
+import { UserCheck } from "lucide-react"
+import { StoreButton } from "@/components/store/StoreButton"
 
 import { isClerkConfigured } from "@/lib/clerk"
 import { useUser } from "@clerk/nextjs"
 import { getCustomerAccountDataAction } from "../actions"
+import { getCustomerReturnsAction } from "../returns/actions"
+import type { CustomerReturnRequest } from "../returns/types"
 import { logoutCustomerAction } from "@/features/auth/actions"
 
 function ClerkSessionBridge({
@@ -63,17 +68,77 @@ function ClerkSessionBridge({
   return null
 }
 
-export function AccountView() {
+interface AccountViewProps {
+  initialProfile?: AccountUserProfile
+  initialOrders?: AccountOrder[]
+  initialAddresses?: AccountAddress[]
+}
+
+export function AccountView({
+  initialProfile,
+  initialOrders = [],
+  initialAddresses = [],
+}: AccountViewProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const clerkEnabled = isClerkConfigured()
-  const [activeTab, setActiveTab] = React.useState<AccountTab>("orders")
-  const [isSignedIn, setIsSignedIn] = React.useState(false)
+
+  const initialTabParam = searchParams.get("tab") as AccountTab | null
+  const initialOrderIdParam = searchParams.get("orderId") || undefined
+
+  const [activeTab, setActiveTab] = React.useState<AccountTab>(
+    initialTabParam === "orders" ||
+      initialTabParam === "addresses" ||
+      initialTabParam === "profile" ||
+      initialTabParam === "returns" ||
+      initialTabParam === "wishlist"
+      ? initialTabParam
+      : "orders"
+  )
+  const [isSignedIn, setIsSignedIn] = React.useState(Boolean(initialProfile?.email))
   const [isLoading, setIsLoading] = React.useState(false)
 
-  // Real data state (zero dummy data)
-  const [profile, setProfile] = React.useState<AccountUserProfile>(EMPTY_PROFILE)
-  const [addresses, setAddresses] = React.useState<AccountAddress[]>([])
-  const [orders, setOrders] = React.useState<AccountOrder[]>([])
+  // Real data state (hydrated from server props)
+  const [profile, setProfile] = React.useState<AccountUserProfile>(
+    initialProfile || EMPTY_PROFILE
+  )
+  const [addresses, setAddresses] = React.useState<AccountAddress[]>(initialAddresses)
+  const [orders, setOrders] = React.useState<AccountOrder[]>(initialOrders)
+  const [returnsList, setReturnsList] = React.useState<CustomerReturnRequest[]>([])
+  const [returnTargetOrderId, setReturnTargetOrderId] = React.useState<string | undefined>(
+    initialOrderIdParam
+  )
+
+  // Sync tab with URL search parameter if user navigates back/forward
+  React.useEffect(() => {
+    const tab = searchParams.get("tab") as AccountTab | null
+    if (
+      tab &&
+      (tab === "orders" ||
+        tab === "addresses" ||
+        tab === "profile" ||
+        tab === "returns" ||
+        tab === "wishlist")
+    ) {
+      setActiveTab(tab)
+    }
+    const orderId = searchParams.get("orderId")
+    if (orderId) {
+      setReturnTargetOrderId(orderId)
+    }
+  }, [searchParams])
+
+  const refreshReturns = React.useCallback(async (email: string) => {
+    if (!email) return
+    try {
+      const res = await getCustomerReturnsAction(email)
+      if (res.success && res.returns) {
+        setReturnsList(res.returns)
+      }
+    } catch {
+      // Ignore
+    }
+  }, [])
 
   // Fetch live orders & profile from Supabase
   const loadAccountData = React.useCallback(
@@ -83,7 +148,10 @@ export function AccountView() {
     ) => {
       setIsLoading(true)
       try {
-        const res = await getCustomerAccountDataAction(email, fallbackInfo)
+        const [res, returnsRes] = await Promise.all([
+          getCustomerAccountDataAction(email, fallbackInfo),
+          getCustomerReturnsAction(email),
+        ])
         if (res.success) {
           if (res.profile) setProfile(res.profile)
           if (res.orders) setOrders(res.orders)
@@ -91,6 +159,9 @@ export function AccountView() {
             setAddresses(res.addresses)
           }
           setIsSignedIn(true)
+        }
+        if (returnsRes.success && returnsRes.returns) {
+          setReturnsList(returnsRes.returns)
         }
       } catch (err) {
         console.warn("Failed to load live account data:", err)
@@ -101,8 +172,9 @@ export function AccountView() {
     []
   )
 
-  // Check initial local cache & sync
+  // Check initial local cache & sync if no server profile provided
   React.useEffect(() => {
+    if (initialProfile?.email) return
     try {
       const savedProfile = localStorage.getItem("ar_account_profile")
       if (savedProfile) {
@@ -127,19 +199,28 @@ export function AccountView() {
     } catch {
       // Ignore
     }
-  }, [loadAccountData])
+  }, [initialProfile?.email, loadAccountData])
 
   const handleClerkUserDetected = React.useCallback(
     (info: { email: string; fullName: string; phone?: string | null }) => {
+      // Avoid redundant re-fetching if data already hydrated for this email
+      if (profile.email === info.email && orders.length > 0) {
+        setIsSignedIn(true)
+        return
+      }
       loadAccountData(info.email, {
         fullName: info.fullName,
         phone: info.phone,
       })
     },
-    [loadAccountData]
+    [loadAccountData, profile.email, orders.length]
   )
 
   const handleUnauthenticated = React.useCallback(() => {
+    // If server already verified the user session, stay signed in
+    if (initialProfile?.email) {
+      return
+    }
     // Check if localStorage has a real session
     try {
       const savedProfile = localStorage.getItem("ar_account_profile")
@@ -154,7 +235,7 @@ export function AccountView() {
       // Ignore
     }
     setIsSignedIn(false)
-  }, [loadAccountData])
+  }, [initialProfile?.email, loadAccountData])
 
 
   const handleSignOut = async () => {
@@ -190,29 +271,27 @@ export function AccountView() {
     }
   }
 
-  // If unauthenticated, redirect directly to /sign-in
-  React.useEffect(() => {
-    if (!isSignedIn && !isLoading) {
-      const timer = setTimeout(() => {
-        router.replace("/sign-in?redirect=/account")
-      }, 50)
-      return () => clearTimeout(timer)
-    }
-  }, [isSignedIn, isLoading, router])
-
   if (!isSignedIn) {
     return (
-      <div className="max-w-[800px] mx-auto px-4 py-28 flex flex-col items-center justify-center text-center space-y-3">
+      <div className="max-w-[800px] mx-auto px-4 py-28 flex flex-col items-center justify-center text-center space-y-4">
         {clerkEnabled && (
           <ClerkSessionBridge
             onUserDetected={handleClerkUserDetected}
             onUnauthenticated={handleUnauthenticated}
           />
         )}
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        <p className="text-xs text-muted-foreground uppercase tracking-widest font-sans">
-          Redirecting to Sign In...
+        <div className="size-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+          <UserCheck className="size-6" />
+        </div>
+        <h3 className="text-lg font-sans font-semibold text-foreground">Sign In to Your Account</h3>
+        <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
+          Access your orders, track doorstep deliveries, and manage saved UAE addresses.
         </p>
+        <Link href="/sign-in?redirect=/account">
+          <StoreButton className="text-xs uppercase tracking-widest px-6 h-10">
+            Sign In to Continue
+          </StoreButton>
+        </Link>
       </div>
     )
   }
@@ -290,7 +369,19 @@ export function AccountView() {
 
         {/* Tab Content Panel */}
         <main className="flex-1 w-full min-w-0">
-          {activeTab === "orders" && <OrdersTab orders={orders} />}
+          {activeTab === "orders" && (
+            <OrdersTab
+              orders={orders}
+              returnsList={returnsList}
+              onRequestReturn={(orderId) => {
+                setReturnTargetOrderId(orderId)
+                setActiveTab("returns")
+              }}
+              onViewReturn={() => {
+                setActiveTab("returns")
+              }}
+            />
+          )}
           {activeTab === "addresses" && (
             <AddressesTab
               addresses={addresses}
@@ -303,7 +394,15 @@ export function AccountView() {
               onUpdateProfile={handleUpdateProfile}
             />
           )}
-          {activeTab === "returns" && <ReturnsTab />}
+          {activeTab === "returns" && (
+            <ReturnsTab
+              orders={orders}
+              customerEmail={profile.email}
+              preselectedOrderId={returnTargetOrderId}
+              onClearPreselectedOrder={() => setReturnTargetOrderId(undefined)}
+            />
+          )}
+          {activeTab === "wishlist" && <WishlistTab />}
         </main>
       </div>
     </div>

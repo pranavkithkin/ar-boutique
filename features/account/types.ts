@@ -1,4 +1,4 @@
-export type AccountTab = "orders" | "addresses" | "profile" | "returns"
+export type AccountTab = "orders" | "addresses" | "profile" | "returns" | "wishlist"
 
 export interface AccountAddress {
   id: string

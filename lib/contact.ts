@@ -11,4 +11,8 @@ export const STORE_CONTACT = {
   emailHref: "mailto:concierge@arboutique.ae",
   atelier: "Dubai Design District (d3), UAE",
   atelierHref: "https://maps.google.com/?q=Dubai+Design+District",
+  instagram: "@arboutique.ae",
+  instagramHref: "https://instagram.com/arboutique.ae",
+  facebook: "AR Boutique UAE",
+  facebookHref: "https://facebook.com/arboutique.ae",
 } as const

@@ -92,17 +92,17 @@ export function DashboardActionQueues({ queues }: DashboardActionQueuesProps) {
               </div>
 
               <div className="my-2 flex items-baseline justify-between">
-                <span className="text-2xl font-mono font-semibold text-foreground">
+                <span className="text-2xl font-sans font-semibold text-foreground tracking-tight tabular-nums">
                   {q.count}
                 </span>
                 {q.count > 0 && (
-                  <span className={`text-[10px] font-mono px-1.5 py-0.5 border ${q.badgeColor}`}>
+                  <span className={`text-[10px] font-sans font-medium px-1.5 py-0.5 border ${q.badgeColor}`}>
                     Action req.
                   </span>
                 )}
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground font-sans">
                 <span className="truncate">{q.desc}</span>
                 <ArrowRight className="size-3 shrink-0 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
               </div>
@@ -132,7 +132,7 @@ export function DashboardActionQueues({ queues }: DashboardActionQueuesProps) {
             <div className="text-[10px] font-sans uppercase tracking-wider text-muted-foreground">
               In-Transit / Unremitted
             </div>
-            <div className="text-sm font-mono font-semibold text-amber-600 dark:text-amber-400">
+            <div className="text-sm font-sans font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
               {formatAED(queues.codCashOutstandingFils)}
             </div>
           </div>
@@ -141,7 +141,7 @@ export function DashboardActionQueues({ queues }: DashboardActionQueuesProps) {
             <div className="text-[10px] font-sans uppercase tracking-wider text-muted-foreground">
               Remitted / Settled
             </div>
-            <div className="text-sm font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+            <div className="text-sm font-sans font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
               {formatAED(queues.codCashCollectedFils)}
             </div>
           </div>

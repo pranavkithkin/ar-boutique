@@ -15,7 +15,9 @@ import {
   type CheckoutFormValues,
 } from "../schemas"
 import { placeCheckoutOrderAction } from "../actions"
-import type { CheckoutConfig, SavedAddressCandidate } from "../types"
+import { validateCouponAction } from "@/features/coupons/actions"
+import type { ValidateCouponResult } from "@/features/coupons/types"
+import type { CheckoutConfig, CustomerCheckoutContext, SavedAddressCandidate } from "../types"
 import {
   CreditCard,
   Banknote,
@@ -27,101 +29,123 @@ import {
   AlertCircle,
   Loader2,
   Sparkles,
+  Tag,
+  X,
 } from "lucide-react"
 
 interface CheckoutViewProps {
   config: CheckoutConfig
+  customerContext?: CustomerCheckoutContext
 }
 
-export function CheckoutView({ config }: CheckoutViewProps) {
+export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
   const router = useRouter()
   const cartItems = useCartStore((state) => state.items)
   const clearCart = useCartStore((state) => state.clearCart)
 
+  const initialServerAddresses = React.useMemo(
+    () => customerContext?.savedAddresses || [],
+    [customerContext?.savedAddresses]
+  )
+  const defaultServerAddr = initialServerAddresses.find((a) => a.isDefault) || initialServerAddresses[0]
+
   const [mounted, setMounted] = React.useState(false)
-  const [savedAddresses, setSavedAddresses] = React.useState<SavedAddressCandidate[]>([])
-  const [selectedSavedId, setSelectedSavedId] = React.useState<string | null>(null)
+  const [savedAddresses, setSavedAddresses] = React.useState<SavedAddressCandidate[]>(initialServerAddresses)
+  const [selectedSavedId, setSelectedSavedId] = React.useState<string | null>(defaultServerAddr?.id || null)
   const [submitError, setSubmitError] = React.useState<string | null>(null)
+
+  // Promo code state
+  const [couponInput, setCouponInput] = React.useState("")
+  const [isApplyingCoupon, setIsApplyingCoupon] = React.useState(false)
+  const [couponError, setCouponError] = React.useState<string | null>(null)
+  const [appliedCoupon, setAppliedCoupon] = React.useState<ValidateCouponResult | null>(null)
 
   const {
     register,
     handleSubmit,
     control,
     setValue,
+    getValues,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
     defaultValues: {
-      fullName: "",
-      email: "",
-      phone: "+971 ",
-      emirate: "Dubai",
-      area: "",
-      street: "",
-      building: "",
-      apartment: "",
-      landmark: "",
+      fullName: defaultServerAddr?.recipientName || customerContext?.fullName || "",
+      email: customerContext?.email || "",
+      phone: defaultServerAddr?.phone || customerContext?.phone || "+971 ",
+      emirate:
+        defaultServerAddr?.emirate && (UAE_EMIRATES as readonly string[]).includes(defaultServerAddr.emirate)
+          ? (defaultServerAddr.emirate as (typeof UAE_EMIRATES)[number])
+          : "Dubai",
+      area: defaultServerAddr?.area || "",
+      street: defaultServerAddr?.street || "",
+      building: defaultServerAddr?.building || "",
+      apartment: defaultServerAddr?.apartment || "",
+      landmark: defaultServerAddr?.landmark || "",
       instructions: "",
-      paymentMethod: "card",
+      paymentMethod: config.cardEnabled !== false ? "card" : config.codEnabled ? "cod" : "card",
       saveAddress: false,
     },
   })
 
   const currentPaymentMethod = watch("paymentMethod")
 
-  // Load saved addresses from localStorage on mount (synced from Account page)
+  // Load saved addresses from localStorage on mount (synced from Account page as fallback)
   React.useEffect(() => {
     setMounted(true)
     try {
-      const storedAddresses = localStorage.getItem("ar_account_addresses")
-      if (storedAddresses) {
-        const parsed: SavedAddressCandidate[] = JSON.parse(storedAddresses)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setSavedAddresses(parsed)
-          // Automatically pick default address if available
-          const defaultAddr = parsed.find((a) => a.isDefault) || parsed[0]
-          if (defaultAddr) {
-            setSelectedSavedId(defaultAddr.id)
-            setValue("fullName", defaultAddr.recipientName || "")
-            setValue("phone", defaultAddr.phone || "+971 ")
-            if (UAE_EMIRATES.includes(defaultAddr.emirate as any)) {
-              setValue("emirate", defaultAddr.emirate as any)
+      if (initialServerAddresses.length === 0) {
+        const storedAddresses = localStorage.getItem("ar_account_addresses")
+        if (storedAddresses) {
+          const parsed: SavedAddressCandidate[] = JSON.parse(storedAddresses)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setSavedAddresses(parsed)
+            const defaultAddr = parsed.find((a) => a.isDefault) || parsed[0]
+            if (defaultAddr) {
+              setSelectedSavedId(defaultAddr.id)
+              setValue("fullName", defaultAddr.recipientName || "")
+              setValue("phone", defaultAddr.phone || "+971 ")
+              if ((UAE_EMIRATES as readonly string[]).includes(defaultAddr.emirate)) {
+                setValue("emirate", defaultAddr.emirate as (typeof UAE_EMIRATES)[number])
+              }
+              setValue("area", defaultAddr.area || "")
+              setValue("street", defaultAddr.street || "")
+              setValue("building", defaultAddr.building || "")
+              setValue("apartment", defaultAddr.apartment || "")
+              setValue("landmark", defaultAddr.landmark || "")
             }
-            setValue("area", defaultAddr.area || "")
-            setValue("street", defaultAddr.street || "")
-            setValue("building", defaultAddr.building || "")
-            setValue("apartment", defaultAddr.apartment || "")
-            setValue("landmark", defaultAddr.landmark || "")
           }
         }
       }
 
-      // If user profile is saved, prefill email if still empty
-      const storedProfile = localStorage.getItem("ar_account_profile")
-      if (storedProfile) {
-        const parsedProfile = JSON.parse(storedProfile)
-        if (parsedProfile.email) {
-          setValue("email", parsedProfile.email)
-        }
-        if (!storedAddresses && parsedProfile.firstName) {
-          setValue("fullName", `${parsedProfile.firstName} ${parsedProfile.lastName}`.trim())
-          if (parsedProfile.phone) {
-            setValue("phone", parsedProfile.phone)
+      // Fallback prefill from localStorage profile if customer context wasn't available
+      if (!customerContext?.email) {
+        const storedProfile = localStorage.getItem("ar_account_profile")
+        if (storedProfile) {
+          const parsedProfile = JSON.parse(storedProfile)
+          if (parsedProfile.email) {
+            setValue("email", parsedProfile.email)
+          }
+          if (initialServerAddresses.length === 0 && parsedProfile.firstName) {
+            setValue("fullName", `${parsedProfile.firstName} ${parsedProfile.lastName}`.trim())
+            if (parsedProfile.phone) {
+              setValue("phone", parsedProfile.phone)
+            }
           }
         }
       }
     } catch {
       // Ignore localStorage access issues
     }
-  }, [setValue])
+  }, [customerContext, initialServerAddresses, setValue])
 
   const handleSelectSavedAddress = (addr: SavedAddressCandidate) => {
     setSelectedSavedId(addr.id)
     setValue("fullName", addr.recipientName)
     setValue("phone", addr.phone)
-    if (UAE_EMIRATES.includes(addr.emirate as any)) {
-      setValue("emirate", addr.emirate as any)
+    if ((UAE_EMIRATES as readonly string[]).includes(addr.emirate)) {
+      setValue("emirate", addr.emirate as (typeof UAE_EMIRATES)[number])
     }
     setValue("area", addr.area)
     setValue("street", addr.street)
@@ -135,32 +159,81 @@ export function CheckoutView({ config }: CheckoutViewProps) {
     return cartItems.reduce((acc, item) => acc + item.priceFils * item.quantity, 0)
   }, [cartItems])
 
-  const isFreeDelivery = subtotalFils >= config.freeDeliveryThresholdFils
+  const couponDiscountFils = appliedCoupon && appliedCoupon.valid ? appliedCoupon.discountFils || 0 : 0
+  const isFreeDelivery = subtotalFils >= config.freeDeliveryThresholdFils || appliedCoupon?.freeShipping === true
   const deliveryFeeFils = isFreeDelivery ? 0 : config.deliveryFeeFils
   const isCodSelected = currentPaymentMethod === "cod"
   const codFeeFils = isCodSelected ? config.codFeeFils : 0
-  const estimatedTotalFils = subtotalFils + deliveryFeeFils + codFeeFils
+  const estimatedTotalFils = Math.max(0, subtotalFils - couponDiscountFils) + deliveryFeeFils + codFeeFils
   const vatPortionFils = calculateVatPortion(estimatedTotalFils)
 
-  // Evaluate COD availability rules
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!couponInput.trim()) return
+
+    setIsApplyingCoupon(true)
+    setCouponError(null)
+
+    try {
+      const email = getValues("email") || customerContext?.email
+      const res = await validateCouponAction(couponInput, subtotalFils, email)
+      if (res.valid) {
+        setAppliedCoupon(res)
+        setCouponInput("")
+        setCouponError(null)
+      } else {
+        setCouponError(res.error || "Invalid promo code.")
+      }
+    } catch {
+      setCouponError("Could not validate promo code. Please try again.")
+    } finally {
+      setIsApplyingCoupon(false)
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponError(null)
+  }
+
+  // Evaluate payment methods availability rules
+  const isCardAvailable = config.cardEnabled !== false
   const isCodEligibleByAmount = estimatedTotalFils <= config.codMaxOrderFils
-  const isCodAvailable = config.codEnabled && isCodEligibleByAmount
+  const isServerCodEligible = customerContext ? customerContext.codEligibility.eligible : true
+  const isCodAvailable = config.codEnabled && isCodEligibleByAmount && isServerCodEligible
+
+  // Auto-switch payment method if selected one is unavailable
+  React.useEffect(() => {
+    if (!isCardAvailable && isCodAvailable && currentPaymentMethod === "card") {
+      setValue("paymentMethod", "cod")
+    } else if (!isCodAvailable && isCardAvailable && currentPaymentMethod === "cod") {
+      setValue("paymentMethod", "card")
+    }
+  }, [isCardAvailable, isCodAvailable, currentPaymentMethod, setValue])
 
   const onSubmit = async (values: CheckoutFormValues) => {
     setSubmitError(null)
 
-    // Check COD rules before submitting
+    // Check payment method availability before submitting
+    if (values.paymentMethod === "card" && !isCardAvailable) {
+      setSubmitError("Online card payment is currently disabled. Please select Cash on Delivery.")
+      return
+    }
+
     if (values.paymentMethod === "cod" && !isCodAvailable) {
-      setSubmitError(
-        !config.codEnabled
-          ? "Cash on delivery is currently turned off."
-          : `Cash on delivery is only available for orders up to AED ${config.codMaxOrderFils / 100}.`
-      )
+      const reason = !config.codEnabled
+        ? "Cash on delivery is currently turned off in store settings."
+        : customerContext && !customerContext.isSignedIn
+        ? "Please sign in to your account to place a Cash on Delivery order."
+        : customerContext?.codEligibility.reason
+        ? customerContext.codEligibility.reason
+        : `Cash on delivery is only available for orders up to AED ${config.codMaxOrderFils / 100}.`
+      setSubmitError(reason)
       return
     }
 
     try {
-      const result = await placeCheckoutOrderAction(values, cartItems)
+      const result = await placeCheckoutOrderAction(values, cartItems, appliedCoupon?.code)
 
       if (!result.success || !result.redirectUrl) {
         setSubmitError(result.error || "Failed to complete checkout. Please review your details.")
@@ -190,13 +263,20 @@ export function CheckoutView({ config }: CheckoutViewProps) {
         }
       }
 
-      // Clear shopping bag after order is recorded
-      clearCart()
-
-      // Redirect to confirmed destination
-      router.push(result.redirectUrl)
-    } catch (err: any) {
-      setSubmitError(err?.message || "An unexpected network error occurred. Please try again.")
+      if (values.paymentMethod === "cod") {
+        // Clear shopping bag after COD order is recorded
+        clearCart()
+        router.push(result.redirectUrl)
+      } else {
+        // For card payment:
+        // Do NOT clear cart yet! If the customer goes to the Stripe portal and cancels or navigates back,
+        // their cart must remain intact.
+        // The cart will be cleared on /checkout/success once payment is confirmed.
+        window.location.href = result.redirectUrl
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "An unexpected network error occurred. Please try again."
+      setSubmitError(msg)
     }
   }
 
@@ -218,7 +298,7 @@ export function CheckoutView({ config }: CheckoutViewProps) {
         <div className="h-16 w-16 mx-auto rounded-full bg-muted flex items-center justify-center text-muted-foreground mb-4">
           <ShoppingBag className="w-8 h-8 opacity-60" />
         </div>
-        <h2 className="text-2xl font-sans font-semibold tracking-tight text-foreground">
+        <h2 className="text-2xl sm:text-3xl font-sans font-semibold tracking-tight text-foreground">
           Your shopping bag is empty
         </h2>
         <p className="text-xs text-muted-foreground mt-2 max-w-sm mx-auto leading-relaxed">
@@ -239,7 +319,7 @@ export function CheckoutView({ config }: CheckoutViewProps) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       {/* Top Header */}
       <div className="mb-8 pb-6 border-b border-border/70">
-        <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="text-[11px] font-sans font-medium uppercase tracking-[0.2em] text-muted-foreground">
           Express Boutique Checkout
         </span>
         <h1 className="text-2xl sm:text-3xl font-sans font-semibold tracking-tight text-foreground mt-1">
@@ -300,7 +380,7 @@ export function CheckoutView({ config }: CheckoutViewProps) {
             {/* Delivery Address Form */}
             <div className="bg-card border border-border rounded-xs p-5 sm:p-7 shadow-xs space-y-5">
               <div className="border-b border-border/60 pb-3">
-                <h2 className="text-base font-sans font-semibold tracking-tight text-foreground">
+                <h2 className="text-xl sm:text-2xl font-sans font-semibold tracking-tight text-foreground">
                   1. Shipping Destination
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -482,7 +562,7 @@ export function CheckoutView({ config }: CheckoutViewProps) {
             {/* Payment Choice Section */}
             <div className="bg-card border border-border rounded-xs p-5 sm:p-7 shadow-xs space-y-5">
               <div className="border-b border-border/60 pb-3">
-                <h2 className="text-base font-sans font-semibold tracking-tight text-foreground">
+                <h2 className="text-xl sm:text-2xl font-sans font-semibold tracking-tight text-foreground">
                   2. Payment Method
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -497,27 +577,43 @@ export function CheckoutView({ config }: CheckoutViewProps) {
                   <div className="space-y-3">
                     {/* Option 1: Card, Apple Pay, Google Pay */}
                     <label
-                      className={`block p-4 rounded-xs border cursor-pointer transition-all ${
-                        field.value === "card"
-                          ? "border-primary bg-secondary/30 shadow-xs ring-1 ring-primary/20"
-                          : "border-border bg-background hover:border-border/80"
+                      className={`block p-4 rounded-xs border transition-all ${
+                        !isCardAvailable
+                          ? "opacity-60 cursor-not-allowed bg-muted/40 border-border"
+                          : field.value === "card"
+                          ? "border-primary bg-secondary/30 shadow-xs ring-1 ring-primary/20 cursor-pointer"
+                          : "border-border bg-background hover:border-border/80 cursor-pointer"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <input
                             type="radio"
+                            disabled={!isCardAvailable}
                             checked={field.value === "card"}
-                            onChange={() => field.onChange("card")}
-                            className="h-4 w-4 text-primary border-input focus:ring-ring mt-0.5"
+                            onChange={() => isCardAvailable && field.onChange("card")}
+                            className="h-4 w-4 text-primary border-input focus:ring-ring mt-0.5 disabled:opacity-50"
                           />
                           <div>
-                            <span className="block text-xs font-semibold text-foreground">
-                              Card, Apple Pay or Google Pay
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-foreground">
+                                Card, Apple Pay or Google Pay
+                              </span>
+                              {!isCardAvailable && (
+                                <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20">
+                                  Unavailable
+                                </span>
+                              )}
+                            </div>
                             <span className="block text-[11px] text-muted-foreground mt-0.5">
                               Instant & secure payment via Stripe. Visa, Mastercard, AMEX accepted.
                             </span>
+
+                            {!isCardAvailable && (
+                              <p className="text-[11px] text-destructive mt-1.5 font-medium">
+                                Online card payments are currently paused in store settings.
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -563,11 +659,38 @@ export function CheckoutView({ config }: CheckoutViewProps) {
 
                             {/* Eligibility feedback message if disabled */}
                             {!isCodAvailable && (
-                              <p className="text-[11px] text-destructive mt-1.5 font-medium">
-                                {!config.codEnabled
-                                  ? "Cash on delivery is currently paused in store settings."
-                                  : `Available only for orders up to AED ${config.codMaxOrderFils / 100} (Current total: ${formatAED(estimatedTotalFils)}).`}
-                              </p>
+                              <div className="text-[11px] text-destructive mt-1.5 font-medium">
+                                {!config.codEnabled ? (
+                                  <span>Cash on delivery is currently paused in store settings.</span>
+                                ) : customerContext && !customerContext.isSignedIn ? (
+                                  <span className="flex items-center gap-1.5">
+                                    <span>Sign in to your account to pay with Cash on Delivery.</span>
+                                    <Link
+                                      href="/sign-in?redirect=/checkout"
+                                      className="underline font-semibold hover:text-foreground"
+                                    >
+                                      Sign in
+                                    </Link>
+                                  </span>
+                                ) : customerContext?.codEligibility.isBlocked ? (
+                                  <span>
+                                    {customerContext.codEligibility.reason ||
+                                      "Cash on delivery has been restricted for this account."}
+                                  </span>
+                                ) : customerContext?.codEligibility.hasOpenCodOrder ? (
+                                  <span>
+                                    {customerContext.codEligibility.reason ||
+                                      "You already have an active Cash on Delivery order in progress."}
+                                  </span>
+                                ) : !isCodEligibleByAmount ? (
+                                  <span>
+                                    Available only for orders up to AED {config.codMaxOrderFils / 100} (Current total:{" "}
+                                    {formatAED(estimatedTotalFils)}).
+                                  </span>
+                                ) : (
+                                  <span>Cash on delivery is currently unavailable.</span>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>
@@ -575,6 +698,14 @@ export function CheckoutView({ config }: CheckoutViewProps) {
                         <Banknote className="w-5 h-5 text-muted-foreground shrink-0" />
                       </div>
                     </label>
+
+                    {/* Notice if both methods are unavailable */}
+                    {!isCardAvailable && !isCodAvailable && (
+                      <div className="p-3.5 rounded-xs bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2 mt-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>All checkout payment methods are temporarily paused by store administration. Please check back shortly.</span>
+                      </div>
+                    )}
                   </div>
                 )}
               />
@@ -596,22 +727,24 @@ export function CheckoutView({ config }: CheckoutViewProps) {
             <div>
               <StoreButton
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || (!isCardAvailable && !isCodAvailable)}
                 className="w-full h-13 uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-sm font-semibold"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing Order...</span>
+                    <span>{isCodSelected ? "Processing Order..." : "Redirecting to Payment..."}</span>
                   </>
+                ) : !isCardAvailable && !isCodAvailable ? (
+                  <span>Checkout Temporarily Paused</span>
                 ) : isCodSelected ? (
                   <>
-                    <span>Place Order ({formatAED(estimatedTotalFils)} on delivery)</span>
+                    <span>Place Order · {formatAED(estimatedTotalFils)}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 ) : (
                   <>
-                    <span>Pay {formatAED(estimatedTotalFils)} with Card</span>
+                    <span>Continue to Payment · {formatAED(estimatedTotalFils)}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -627,10 +760,10 @@ export function CheckoutView({ config }: CheckoutViewProps) {
           <div className="lg:col-span-5 lg:sticky lg:top-28 space-y-6">
             <div className="bg-card border border-border rounded-xs p-5 sm:p-6 shadow-xs space-y-5">
               <div className="border-b border-border/60 pb-3 flex items-center justify-between">
-                <h3 className="text-base font-sans font-semibold tracking-tight text-foreground">
+                <h3 className="text-lg sm:text-xl font-sans font-semibold tracking-tight text-foreground">
                   Order Summary
                 </h3>
-                <span className="text-xs font-mono text-muted-foreground">
+                <span className="text-xs font-sans text-muted-foreground">
                   {cartItems.reduce((acc, i) => acc + i.quantity, 0)} piece(s)
                 </span>
               </div>
@@ -655,7 +788,7 @@ export function CheckoutView({ config }: CheckoutViewProps) {
                       <p className="text-[11px] text-muted-foreground mt-0.5">
                         {item.colourName} • Size: {item.sizeLabel}
                       </p>
-                      <p className="text-[10px] font-mono text-muted-foreground/80 mt-0.5">
+                      <p className="text-[10px] font-sans text-muted-foreground/80 mt-0.5">
                         SKU: {item.sku}
                       </p>
                       <div className="flex items-center justify-between mt-1 text-xs">
@@ -669,6 +802,72 @@ export function CheckoutView({ config }: CheckoutViewProps) {
                 ))}
               </div>
 
+              {/* Promo Code Input & Display */}
+              <div className="pt-2 border-t border-border/60">
+                {appliedCoupon && appliedCoupon.valid ? (
+                  <div className="p-2.5 rounded-xs bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs animate-in fade-in">
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <div>
+                        <span className="font-sans font-semibold tracking-wider text-emerald-700 dark:text-emerald-300">
+                          {appliedCoupon.code}
+                        </span>
+                        {appliedCoupon.freeShipping ? (
+                          <span className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 ml-1.5">
+                            (Free Shipping)
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 ml-1.5">
+                            (-{formatAED(couponDiscountFils)})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="p-1 text-muted-foreground hover:text-foreground transition-colors rounded-xs"
+                      title="Remove promo code"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Tag className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={couponInput}
+                          onChange={(e) => {
+                            setCouponInput(e.target.value.toUpperCase())
+                            if (couponError) setCouponError(null)
+                          }}
+                          placeholder="PROMO CODE"
+                          className="w-full h-9 pl-9 pr-3 text-xs uppercase font-sans tracking-wider bg-background border border-input rounded-xs focus:outline-hidden focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+                      <StoreButton
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={isApplyingCoupon || !couponInput.trim()}
+                        className="h-9 px-4 text-xs uppercase tracking-wider font-semibold"
+                      >
+                        {isApplyingCoupon ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          "Apply"
+                        )}
+                      </StoreButton>
+                    </div>
+                    {couponError && (
+                      <p className="text-[11px] text-destructive mt-1.5">{couponError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Price Calculation Breakdown */}
               <div className="border-t border-border/60 pt-4 space-y-2.5 text-xs">
                 <div className="flex justify-between items-baseline">
@@ -677,6 +876,18 @@ export function CheckoutView({ config }: CheckoutViewProps) {
                     {formatAED(subtotalFils)}
                   </span>
                 </div>
+
+                {couponDiscountFils > 0 && (
+                  <div className="flex justify-between items-baseline text-emerald-600 dark:text-emerald-400">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Tag className="w-3.5 h-3.5" />
+                      <span>Promo Discount ({appliedCoupon?.code})</span>
+                    </span>
+                    <span className="font-semibold tabular-nums">
+                      -{formatAED(couponDiscountFils)}
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">UAE Doorstep Delivery</span>
@@ -702,8 +913,8 @@ export function CheckoutView({ config }: CheckoutViewProps) {
                 </div>
 
                 <div className="pt-3 border-t border-border flex justify-between items-baseline">
-                  <span className="text-sm font-semibold text-foreground">Total to Pay</span>
-                  <span className="text-xl font-semibold text-foreground tabular-nums font-sans">
+                  <span className="text-base font-sans font-semibold text-foreground">Total to Pay</span>
+                  <span className="text-2xl font-sans font-semibold text-foreground tabular-nums">
                     {formatAED(estimatedTotalFils)}
                   </span>
                 </div>

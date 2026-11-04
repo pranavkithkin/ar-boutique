@@ -20,13 +20,13 @@ export function DashboardKpiCards({ kpis }: DashboardKpiCardsProps) {
           </div>
         </div>
         <div>
-          <div className="text-2xl font-mono font-semibold text-foreground tracking-tight">
+          <div className="text-2xl font-sans font-semibold text-foreground tracking-tight tabular-nums">
             {formatAED(kpis.grossRevenueFils)}
           </div>
           <div className="mt-1 flex items-center gap-2 text-[11px] font-sans text-muted-foreground">
-            <span>Card: <strong className="font-mono text-foreground">{formatAED(kpis.cardRevenueFils)}</strong></span>
+            <span>Card: <strong className="font-sans font-semibold text-foreground tabular-nums">{formatAED(kpis.cardRevenueFils)}</strong></span>
             <span>•</span>
-            <span>COD: <strong className="font-mono text-foreground">{formatAED(kpis.codRevenueFils)}</strong></span>
+            <span>COD: <strong className="font-sans font-semibold text-foreground tabular-nums">{formatAED(kpis.codRevenueFils)}</strong></span>
           </div>
         </div>
       </div>
@@ -42,7 +42,7 @@ export function DashboardKpiCards({ kpis }: DashboardKpiCardsProps) {
           </div>
         </div>
         <div>
-          <div className="text-2xl font-mono font-semibold text-foreground tracking-tight">
+          <div className="text-2xl font-sans font-semibold text-foreground tracking-tight tabular-nums">
             {kpis.orderCount}
           </div>
           <div className="mt-1 text-[11px] font-sans text-muted-foreground">
@@ -62,7 +62,7 @@ export function DashboardKpiCards({ kpis }: DashboardKpiCardsProps) {
           </div>
         </div>
         <div>
-          <div className="text-2xl font-mono font-semibold text-foreground tracking-tight">
+          <div className="text-2xl font-sans font-semibold text-foreground tracking-tight tabular-nums">
             {formatAED(kpis.averageOrderValueFils)}
           </div>
           <div className="mt-1 text-[11px] font-sans text-muted-foreground">
@@ -82,11 +82,11 @@ export function DashboardKpiCards({ kpis }: DashboardKpiCardsProps) {
           </div>
         </div>
         <div>
-          <div className="text-2xl font-mono font-semibold text-foreground tracking-tight">
+          <div className="text-2xl font-sans font-semibold text-foreground tracking-tight tabular-nums">
             {kpis.activeProducts} <span className="text-sm font-sans font-normal text-muted-foreground">Products</span>
           </div>
           <div className="mt-1 text-[11px] font-sans text-muted-foreground">
-            <strong className="font-mono text-foreground">{kpis.totalSkus}</strong> total SKUs tracked
+            <strong className="font-sans font-semibold text-foreground tabular-nums">{kpis.totalSkus}</strong> total SKUs tracked
           </div>
         </div>
       </div>

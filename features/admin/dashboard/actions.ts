@@ -108,7 +108,10 @@ export async function getAdminDashboardData(
   let codCashOutstandingFils = 0
 
   for (const o of allOrders) {
-    if (o.payment_method === "cod" && o.status === "pending") {
+    if (
+      o.payment_method === "cod" &&
+      ["pending", "awaiting_confirmation"].includes(o.status)
+    ) {
       codToConfirm += 1
     }
     if (o.status === "confirmed") {
@@ -120,7 +123,9 @@ export async function getAdminDashboardData(
     if (o.payment_method === "cod") {
       if (o.payment_status === "paid" || o.status === "delivered") {
         codCashCollectedFils += o.cash_collected_fils || o.total_fils || 0
-      } else if (["shipped", "packed"].includes(o.status)) {
+      } else if (
+        ["awaiting_confirmation", "confirmed", "packed", "shipped"].includes(o.status)
+      ) {
         codCashOutstandingFils += o.total_fils || 0
       }
     }
@@ -139,7 +144,7 @@ export async function getAdminDashboardData(
   for (const o of filteredOrders) {
     const isCompleted =
       o.payment_status === "paid" ||
-      ["confirmed", "packed", "shipped", "delivered"].includes(o.status)
+      ["awaiting_confirmation", "confirmed", "packed", "shipped", "delivered"].includes(o.status)
 
     if (isCompleted) {
       grossRevenueFils += o.total_fils || 0
@@ -203,7 +208,7 @@ export async function getAdminDashboardData(
   const { count: activeProductsCount } = await adminDb
     .from("products")
     .select("id", { count: "exact", head: true })
-    .eq("is_published", true)
+    .eq("status", "published")
 
   // 7. Fetch Return Requests
   const { data: rawReturns } = await adminDb
@@ -252,7 +257,23 @@ export async function getAdminDashboardData(
   }))
 
   // 9. Generate Daily Revenue Chart Points
-  const chartDaysCount = period === "today" ? 1 : period === "30d" ? 30 : 7
+  let chartDaysCount = 7
+  if (period === "today") {
+    chartDaysCount = 1
+  } else if (period === "7d") {
+    chartDaysCount = 7
+  } else if (period === "30d") {
+    chartDaysCount = 30
+  } else if (period === "all") {
+    if (allOrders.length > 0) {
+      const earliestOrderTime = new Date(allOrders[allOrders.length - 1].created_at).getTime()
+      const diffDays = Math.ceil((now.getTime() - earliestOrderTime) / (24 * 60 * 60 * 1000))
+      chartDaysCount = Math.max(diffDays + 1, 7)
+    } else {
+      chartDaysCount = 30
+    }
+  }
+
   const chartMap = new Map<string, { label: string; revenueFils: number; orders: number }>()
 
   // Initialize all days in the window
@@ -270,7 +291,7 @@ export async function getAdminDashboardData(
       const entry = chartMap.get(dateKey)!
       const isCompleted =
         o.payment_status === "paid" ||
-        ["confirmed", "packed", "shipped", "delivered"].includes(o.status)
+        ["awaiting_confirmation", "confirmed", "packed", "shipped", "delivered"].includes(o.status)
       if (isCompleted) {
         entry.revenueFils += o.total_fils || 0
         entry.orders += 1

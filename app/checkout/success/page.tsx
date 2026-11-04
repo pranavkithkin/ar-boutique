@@ -7,19 +7,44 @@ import { StoreButton } from "@/components/store/StoreButton"
 import { Badge } from "@/components/ui/badge"
 import { createAdminClient } from "@/lib/supabase/server"
 import { formatAED } from "@/lib/money"
+import { ClearCartOnSuccess } from "@/features/checkout/components/ClearCartOnSuccess"
 import {
   CheckCircle2,
   Package,
   MapPin,
   Clock,
   ArrowRight,
-  ShieldCheck,
-  CreditCard,
 } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Order Confirmed | AR Boutique",
   description: "Your payment has been confirmed and your AR Boutique order is being processed.",
+}
+
+interface SuccessOrderItem {
+  id: string
+  product_name: string
+  colour_name?: string | null
+  size_label?: string | null
+  sku: string
+  unit_price_fils: number
+  quantity: number
+  total_fils: number
+}
+
+interface SuccessOrder {
+  id: string
+  order_number: string
+  customer_name: string
+  email: string
+  phone: string
+  building: string
+  apartment?: string | null
+  street_address: string
+  area: string
+  emirate: string
+  total_fils: number
+  order_items: SuccessOrderItem[]
 }
 
 interface SuccessPageProps {
@@ -32,7 +57,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
   const { orderNumber } = await searchParams
   const decodedOrderNumber = orderNumber ? decodeURIComponent(orderNumber) : null
 
-  let order: any = null
+  let order: SuccessOrder | null = null
   if (decodedOrderNumber) {
     const supabase = createAdminClient()
     const { data } = await supabase
@@ -54,11 +79,12 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
       )
       .eq("order_number", decodedOrderNumber)
       .maybeSingle()
-    order = data
+    order = (data as unknown) as SuccessOrder | null
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <ClearCartOnSuccess />
       <AnnouncementBar />
       <StoreHeader />
 
@@ -71,18 +97,18 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
 
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-2">
-              <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
+              <span className="text-[11px] font-sans font-medium uppercase tracking-[0.2em] text-muted-foreground">
                 Payment Authorized
               </span>
               <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30 text-[10px] uppercase font-semibold">
                 Confirmed & Paid
               </Badge>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-sans font-semibold tracking-tight text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-sans font-semibold tracking-tight text-foreground">
               Thank You for Your Order
             </h1>
             {decodedOrderNumber && (
-              <p className="text-base font-mono text-muted-foreground">
+              <p className="text-base font-sans font-medium text-muted-foreground">
                 Order #{decodedOrderNumber}
               </p>
             )}
@@ -113,7 +139,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                   {order.customer_name}
                 </p>
                 <p>{order.email}</p>
-                <p className="font-mono">{order.phone}</p>
+                <p className="font-sans">{order.phone}</p>
                 <div className="pt-2 border-t border-border/40 mt-2 space-y-0.5">
                   <p>
                     {order.building}
@@ -178,7 +204,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             </div>
 
             <div className="divide-y divide-border/50">
-              {order.order_items.map((item: any) => (
+              {order.order_items.map((item: SuccessOrderItem) => (
                 <div key={item.id} className="py-3 flex items-center justify-between gap-4">
                   <div>
                     <h4 className="text-xs font-semibold text-foreground">
@@ -187,12 +213,12 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                     <p className="text-[11px] text-muted-foreground mt-0.5">
                       {item.colour_name} • Size: {item.size_label || "Standard"} • Qty: {item.quantity}
                     </p>
-                    <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
+                    <p className="text-[10px] font-sans text-muted-foreground mt-0.5">
                       SKU: {item.sku}
                     </p>
                   </div>
 
-                  <span className="text-xs font-semibold text-foreground tabular-nums font-mono">
+                  <span className="text-xs font-semibold text-foreground tabular-nums font-sans">
                     {formatAED(item.total_fils)}
                   </span>
                 </div>
@@ -201,7 +227,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
 
             <div className="border-t border-border pt-4 flex justify-between font-semibold text-foreground text-sm">
               <span>Total Paid</span>
-              <span className="tabular-nums font-mono text-base">
+              <span className="tabular-nums font-sans text-base">
                 {formatAED(order.total_fils)}
               </span>
             </div>

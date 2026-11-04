@@ -1,13 +1,13 @@
-import type { CartItem } from "@/features/cart/types"
-import type { CheckoutFormValues } from "./schemas"
-
 export interface CheckoutConfig {
   deliveryFeeFils: number
   freeDeliveryThresholdFils: number
   vatRatePct: number
+  cardEnabled: boolean
   codEnabled: boolean
   codFeeFils: number
   codMaxOrderFils: number
+  codConfirmHours: number
+  codRefusedBlockCount: number
 }
 
 export interface CheckoutPricingBreakdown {
@@ -40,4 +40,28 @@ export interface SavedAddressCandidate {
   apartment?: string
   landmark?: string
   isDefault?: boolean
+}
+
+export interface CodEligibilityStatus {
+  eligible: boolean
+  reason?: string
+  isSignedIn: boolean
+  hasOpenCodOrder: boolean
+  isBlocked: boolean
+  refusalsCount: number
+  maxOrderFils: number
+}
+
+export interface CustomerCheckoutContext {
+  isSignedIn: boolean
+  email?: string
+  fullName?: string
+  phone?: string
+  savedAddresses: SavedAddressCandidate[]
+  codEligibility: CodEligibilityStatus
+}
+
+export interface CheckoutPageData {
+  config: CheckoutConfig
+  customerContext: CustomerCheckoutContext
 }

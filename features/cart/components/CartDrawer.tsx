@@ -62,7 +62,7 @@ export function CartDrawer() {
               <ShoppingBag className="w-8 h-8 stroke-[1.25]" />
             </div>
             <div className="flex flex-col gap-1 max-w-xs">
-              <h3 className="font-heading text-xl text-foreground">
+              <h3 className="font-heading text-xl font-normal text-foreground">
                 Your bag is empty
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -103,7 +103,7 @@ export function CartDrawer() {
                         <Link
                           href={`/collections/${item.productSlug}`}
                           onClick={closeCart}
-                          className="font-heading text-base text-foreground hover:opacity-75 transition-opacity line-clamp-1"
+                          className="font-sans text-sm font-medium text-foreground hover:opacity-75 transition-opacity line-clamp-1"
                         >
                           {item.productName}
                         </Link>
@@ -172,7 +172,7 @@ export function CartDrawer() {
                   <span className="text-muted-foreground uppercase text-xs tracking-wider">
                     Subtotal
                   </span>
-                  <span className="text-lg font-medium tabular-nums font-heading">
+                  <span className="text-lg font-heading font-normal tabular-nums text-foreground">
                     {formatAED(subtotalFils)}
                   </span>
                 </div>

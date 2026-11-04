@@ -79,6 +79,11 @@ export function StockSheetImportModal({
       }
 
       setPreview(res.preview)
+      if (res.preview.errorCount > 0) {
+        setActiveTab("errors")
+      } else {
+        setActiveTab("all")
+      }
     } catch {
       setErrorMessage("An unexpected error occurred while processing the spreadsheet.")
     } finally {
@@ -241,17 +246,31 @@ export function StockSheetImportModal({
                 )}
               </div>
 
-              {/* Download Current Catalogue Link */}
-              <div className="flex items-center justify-between p-3 bg-muted/40 border border-border text-xs font-sans">
-                <span className="text-muted-foreground">Need the current boutique stock sheet?</span>
-                <a
-                  href="/api/admin/catalogue-export"
-                  download
-                  className="inline-flex items-center gap-1.5 text-primary hover:underline font-semibold"
-                >
-                  <Download className="size-3.5" />
-                  <span>Download Current Catalogue (.xlsx)</span>
-                </a>
+              {/* Download Sample Template (.xlsx) */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 bg-muted/40 border border-border text-xs font-sans">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="text-foreground font-medium">Need a sample sheet to fill and upload?</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <a
+                    href="/api/admin/catalogue-template"
+                    download="AR-Boutique-Stock-Sample-Template.xlsx"
+                    className="inline-flex items-center gap-1.5 text-primary hover:underline font-semibold"
+                  >
+                    <Download className="size-3.5" />
+                    <span>Download Sample Template (.xlsx)</span>
+                  </a>
+                  <span className="text-border hidden sm:inline">|</span>
+                  <a
+                    href="/api/admin/catalogue-export"
+                    download
+                    className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground hover:underline text-[11px]"
+                    title="Download the full current boutique catalogue"
+                  >
+                    <span>Current Catalogue</span>
+                  </a>
+                </div>
               </div>
 
               <div className="p-4 bg-muted/30 border border-border text-xs font-sans space-y-2">
@@ -279,6 +298,25 @@ export function StockSheetImportModal({
           ) : (
             /* SCREEN 3: Diff Preview Screen */
             <div className="space-y-4">
+              {/* Active File Banner */}
+              <div className="flex items-center justify-between p-2.5 bg-muted/40 border border-border text-xs font-sans">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="size-4 text-primary shrink-0" />
+                  <span className="text-muted-foreground">Previewing file:</span>
+                  <span className="font-mono font-semibold text-foreground">{preview.fileName}</span>
+                  <span className="text-[11px] text-muted-foreground">({preview.totalRows} data rows)</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetState}
+                  className="h-7 text-xs font-sans text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  Change File
+                </Button>
+              </div>
+
               {/* Preview KPI Strip */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                 <div className="p-3 bg-muted/40 border border-border">

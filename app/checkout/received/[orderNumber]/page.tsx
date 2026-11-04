@@ -1,7 +1,5 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import Image from "next/image"
-import { notFound } from "next/navigation"
 import { AnnouncementBar } from "@/components/store/AnnouncementBar"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
@@ -9,18 +7,26 @@ import { StoreButton } from "@/components/store/StoreButton"
 import { Badge } from "@/components/ui/badge"
 import { createAdminClient } from "@/lib/supabase/server"
 import { formatAED } from "@/lib/money"
+import { ClearCartOnSuccess } from "@/features/checkout/components/ClearCartOnSuccess"
 import { STORE_CONTACT } from "@/lib/contact"
 import {
   CheckCircle2,
-  PhoneCall,
   MessageCircle,
   MapPin,
   Clock,
   Package,
-  ShoppingBag,
   ArrowRight,
-  ShieldCheck,
 } from "lucide-react"
+
+interface ReceivedOrderItem {
+  id: string
+  product_name: string
+  colour_name?: string | null
+  size_label?: string | null
+  quantity: number
+  sku: string
+  total_fils: number
+}
 
 interface ReceivedPageProps {
   params: Promise<{
@@ -73,6 +79,7 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <ClearCartOnSuccess />
       <AnnouncementBar />
       <StoreHeader />
 
@@ -85,17 +92,17 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
 
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-2">
-              <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
+              <span className="text-[11px] font-sans font-medium uppercase tracking-[0.2em] text-muted-foreground">
                 Order Placed Successfully
               </span>
               <Badge className="bg-amber-500/10 text-amber-700 border-amber-500/30 text-[10px] uppercase font-semibold">
                 Awaiting Confirmation
               </Badge>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-sans font-semibold tracking-tight text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-sans font-semibold tracking-tight text-foreground">
               Order Received
             </h1>
-            <p className="text-base font-mono text-muted-foreground">
+            <p className="text-base font-sans font-medium text-muted-foreground">
               Reference #{decodedOrderNumber}
             </p>
           </div>
@@ -116,7 +123,7 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
           <div className="max-w-lg mx-auto text-xs text-muted-foreground leading-relaxed pt-2">
             <p>
               We will call or message you on{" "}
-              <strong className="text-foreground font-mono">{phoneToCall}</strong> within{" "}
+              <strong className="text-foreground font-sans font-semibold">{phoneToCall}</strong> within{" "}
               <strong>24 hours</strong> to verify your delivery address and schedule delivery.
             </p>
           </div>
@@ -152,7 +159,7 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
                   {order.customer_name}
                 </p>
                 <p>{order.email}</p>
-                <p className="font-mono">{order.phone}</p>
+                <p className="font-sans">{order.phone}</p>
                 <div className="pt-2 border-t border-border/40 mt-2 space-y-0.5">
                   <p>
                     {order.building}
@@ -222,7 +229,7 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
             </div>
 
             <div className="divide-y divide-border/50">
-              {order.order_items.map((item: any) => (
+              {order.order_items.map((item: ReceivedOrderItem) => (
                 <div key={item.id} className="py-3 flex items-center justify-between gap-4">
                   <div>
                     <h4 className="text-xs font-semibold text-foreground">
@@ -231,12 +238,12 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
                     <p className="text-[11px] text-muted-foreground mt-0.5">
                       {item.colour_name} • Size: {item.size_label || "Standard"} • Qty: {item.quantity}
                     </p>
-                    <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
+                    <p className="text-[10px] font-sans text-muted-foreground mt-0.5">
                       SKU: {item.sku}
                     </p>
                   </div>
 
-                  <span className="text-xs font-semibold text-foreground tabular-nums font-mono">
+                  <span className="text-xs font-semibold text-foreground tabular-nums font-sans">
                     {formatAED(item.total_fils)}
                   </span>
                 </div>
@@ -247,27 +254,27 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
             <div className="border-t border-border pt-4 space-y-1.5 text-xs">
               <div className="flex justify-between text-muted-foreground">
                 <span>Subtotal</span>
-                <span className="tabular-nums font-mono">{formatAED(order.subtotal_fils)}</span>
+                <span className="tabular-nums font-sans">{formatAED(order.subtotal_fils)}</span>
               </div>
               <div className="flex justify-between text-muted-foreground">
                 <span>Doorstep Delivery</span>
-                <span className="tabular-nums font-mono">
+                <span className="tabular-nums font-sans">
                   {order.delivery_fee_fils === 0 ? "FREE" : formatAED(order.delivery_fee_fils)}
                 </span>
               </div>
               {order.cod_fee_fils > 0 && (
                 <div className="flex justify-between text-muted-foreground">
                   <span>COD Service Fee</span>
-                  <span className="tabular-nums font-mono">{formatAED(order.cod_fee_fils)}</span>
+                  <span className="tabular-nums font-sans">{formatAED(order.cod_fee_fils)}</span>
                 </div>
               )}
               <div className="flex justify-between text-[11px] text-muted-foreground/80">
                 <span>Included 5% UAE VAT</span>
-                <span className="tabular-nums font-mono">{formatAED(order.vat_fils)}</span>
+                <span className="tabular-nums font-sans">{formatAED(order.vat_fils)}</span>
               </div>
               <div className="pt-2 border-t border-border flex justify-between font-semibold text-foreground text-sm">
                 <span>Total to Pay in Cash</span>
-                <span className="tabular-nums font-mono text-base">
+                <span className="tabular-nums font-sans text-base">
                   {formatAED(order.total_fils)}
                 </span>
               </div>

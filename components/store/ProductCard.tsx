@@ -5,6 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Plus } from "lucide-react"
 import { QuickAddModal } from "./QuickAddModal"
+import { WishlistButton } from "@/features/wishlist/components/WishlistButton"
 
 import type { ProductVariantSize } from "@/lib/products"
 
@@ -39,7 +40,7 @@ export function ProductCard({
       <div className="group relative flex flex-col w-full">
         {/* Image container and badges */}
         <div className="relative w-full">
-          <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted rounded-xs">
+          <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted rounded-lg">
             <Image
               src={imageSrc}
               alt={name}
@@ -47,6 +48,21 @@ export function ProductCard({
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
               unoptimized
+            />
+          </div>
+
+          {/* Wishlist Heart Button */}
+          <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 z-10">
+            <WishlistButton
+              product={{
+                productId: slug,
+                slug,
+                name,
+                price,
+                imageSrc,
+              }}
+              size="sm"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/85 backdrop-blur-sm text-foreground shadow-xs hover:bg-background"
             />
           </div>
 
@@ -59,7 +75,7 @@ export function ProductCard({
               setIsModalOpen(true)
             }}
             aria-label={`Quick add ${name} to bag`}
-            className="absolute top-2 right-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm text-foreground shadow-sm transition-transform hover:scale-110 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-10 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/85 backdrop-blur-sm text-foreground shadow-xs transition-transform hover:scale-105 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Plus className="h-5 w-5 opacity-90" strokeWidth={1.5} />
           </button>
@@ -74,18 +90,18 @@ export function ProductCard({
           )}
           <div className="mt-0.5 relative z-10">
             <h3
-              className="font-sans text-[15px] font-medium leading-tight truncate text-foreground pointer-events-none"
+              className="font-sans text-[15px] sm:text-[16px] font-medium leading-tight truncate text-foreground pointer-events-none"
               title={name}
             >
               {name}
             </h3>
           </div>
           <div className="flex flex-wrap items-baseline gap-2 mt-0.5">
-            <span className="text-[15px] font-bold text-foreground font-sans">
+            <span className="text-[15px] sm:text-[16px] font-bold text-foreground font-sans">
               {price}
             </span>
             {compareAtPrice && (
-              <span className="text-[13px] text-muted-foreground line-through font-sans">
+              <span className="text-[13px] sm:text-[14px] text-muted-foreground line-through font-sans">
                 {compareAtPrice}
               </span>
             )}
@@ -95,7 +111,7 @@ export function ProductCard({
         {/* The main hit area link */}
         <Link
           href={href}
-          className="absolute inset-0 z-[1] rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="absolute inset-0 z-[1] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={`View ${name}`}
         >
           <span className="sr-only">View {name}</span>

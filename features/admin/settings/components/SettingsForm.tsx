@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { StoreSettings } from "../types"
 import { updateStoreSettingsAction } from "../actions"
 import { FAQEditorSection } from "./FAQEditorSection"
+import Link from "next/link"
 import {
   Save,
   Loader2,
@@ -18,8 +19,9 @@ import {
   RotateCcw,
   Megaphone,
   Bell,
-  Banknote,
   Receipt,
+  CreditCard,
+  ArrowRight,
 } from "lucide-react"
 
 interface SettingsFormProps {
@@ -286,81 +288,49 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
         </div>
       </SectionCard>
 
-      {/* ── Cash on Delivery ── */}
+      {/* ── Payment Methods Shortcut ── */}
       <SectionCard
-        icon={<Banknote className="size-4" />}
-        title="Cash on Delivery"
-        description="Control whether COD is available at checkout and configure its rules."
+        icon={<CreditCard className="size-4" />}
+        title="Payment Methods"
+        description="Payment gateways, card processing, and Cash on Delivery rules are managed in their dedicated sidebar section."
       >
-        <div className="space-y-4">
-          <FieldRow label="Enable COD">
-            <div className="flex items-center gap-2.5 pt-1">
-              <Checkbox
-                id="cod_enabled"
-                checked={s.cod_enabled}
-                onCheckedChange={(v) => set("cod_enabled", !!v)}
-                className="rounded-none size-4"
-              />
-              <label
-                htmlFor="cod_enabled"
-                className="text-xs font-sans text-foreground cursor-pointer select-none"
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border border-border bg-muted/20">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-xs font-sans font-medium text-foreground">
+                Current Status:
+              </span>
+              <span
+                className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 border ${
+                  s.card_enabled
+                    ? "bg-primary/10 text-primary border-primary/20 font-semibold"
+                    : "bg-muted text-muted-foreground border-border"
+                }`}
               >
-                Allow customers to pay on delivery
-              </label>
-            </div>
-          </FieldRow>
-          <FieldRow label="COD Fee" hint="Extra fee added to COD orders">
-            <AEDInput
-              value={s.cod_fee_fils}
-              onChange={(v) => set("cod_fee_fils", v)}
-            />
-          </FieldRow>
-          <FieldRow label="Max Order Value" hint="COD disabled above this amount">
-            <AEDInput
-              value={s.cod_max_order_fils}
-              onChange={(v) => set("cod_max_order_fils", v)}
-            />
-          </FieldRow>
-          <FieldRow
-            label="Confirm Within"
-            hint="Hours admin has to confirm before order auto-cancels"
-          >
-            <div className="relative">
-              <Input
-                type="number"
-                min="1"
-                step="1"
-                value={s.cod_confirm_hours}
-                onChange={(e) => set("cod_confirm_hours", parseInt(e.target.value, 10) || 24)}
-                onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
-                className="h-9 pr-14 text-xs font-mono bg-background border-input rounded-none"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground pointer-events-none">
-                hours
+                Card: {s.card_enabled ? "Active" : "Disabled"}
+              </span>
+              <span
+                className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 border ${
+                  s.cod_enabled
+                    ? "bg-primary/10 text-primary border-primary/20 font-semibold"
+                    : "bg-muted text-muted-foreground border-border"
+                }`}
+              >
+                COD: {s.cod_enabled ? "Active" : "Disabled"}
               </span>
             </div>
-          </FieldRow>
-          <FieldRow
-            label="Block After Refusals"
-            hint="Block customer from COD after this many refused parcels"
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Configure Stripe card gateways, Apple Pay, Google Pay, COD fees, order value limits, and refusal limits.
+            </p>
+          </div>
+
+          <Link
+            href="/admin/payments"
+            className="inline-flex items-center justify-center gap-2 h-9 px-4 text-xs font-medium border border-border bg-background hover:bg-muted text-foreground transition-colors shrink-0"
           >
-            <div className="relative">
-              <Input
-                type="number"
-                min="1"
-                step="1"
-                value={s.cod_refused_block_count}
-                onChange={(e) =>
-                  set("cod_refused_block_count", parseInt(e.target.value, 10) || 3)
-                }
-                onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
-                className="h-9 pr-20 text-xs font-mono bg-background border-input rounded-none"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground pointer-events-none">
-                refusals
-              </span>
-            </div>
-          </FieldRow>
+            <span>Manage Payment Methods</span>
+            <ArrowRight className="size-3.5" />
+          </Link>
         </div>
       </SectionCard>
 

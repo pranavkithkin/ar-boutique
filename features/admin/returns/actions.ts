@@ -3,6 +3,7 @@
 import "server-only"
 import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/server"
+import { sendReturnDecisionEmail, sendRefundConfirmationEmail } from "@/lib/email"
 import {
   AdminReturnListItem,
   AdminReturnDetail,
@@ -308,6 +309,14 @@ export async function approveReturnAction(input: {
       actor_sub: "admin",
     })
 
+    // Trigger return approved email to customer
+    void sendReturnDecisionEmail(
+      input.returnId,
+      "approved",
+      input.instructions ||
+        "Please package garments with original tags intact in the AR Boutique presentation box."
+    ).catch((e) => console.warn("[Returns] Background approve email error:", e))
+
     revalidatePath(`/admin/returns/${input.returnId}`)
     revalidatePath("/admin/returns")
     return { success: true }
@@ -347,6 +356,11 @@ export async function rejectReturnAction(input: {
       note: input.reason,
       actor_sub: "admin",
     })
+
+    // Trigger return rejected email to customer
+    void sendReturnDecisionEmail(input.returnId, "rejected", input.reason).catch((e) =>
+      console.warn("[Returns] Background reject email error:", e)
+    )
 
     revalidatePath(`/admin/returns/${input.returnId}`)
     revalidatePath("/admin/returns")
@@ -454,6 +468,16 @@ export async function processReturnRefundAction(input: {
       note: refundDescription,
       actor_sub: "admin",
     })
+
+    // Trigger refund confirmation email to customer
+    void sendRefundConfirmationEmail({
+      returnId: input.returnId,
+      orderId: input.orderId,
+      amountFils: input.amountFils,
+      method: input.method,
+      bankTransferDate: input.bankTransferDate,
+      bankTransferReference: input.bankTransferReference,
+    }).catch((e) => console.warn("[Refunds] Background refund email error:", e))
 
     // 3. Mark return closed if desired, or keep as received/refunded
     await adminDb

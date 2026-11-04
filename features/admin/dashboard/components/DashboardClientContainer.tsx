@@ -68,7 +68,7 @@ export function DashboardClientContainer({
 
         {/* Controls: Live pulse, period tabs, refresh */}
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1.5 bg-muted/40 border border-border text-xs text-muted-foreground font-mono">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1.5 bg-muted/40 border border-border text-xs text-muted-foreground font-sans font-medium">
             <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span>Live Boutique Operations</span>
           </div>

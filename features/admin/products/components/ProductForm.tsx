@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Field,
   FieldLabel,
@@ -42,7 +41,9 @@ import {
   X,
   ShieldCheck,
   ShieldAlert,
+  Trash2,
 } from "lucide-react"
+import { ProductDeleteDialog } from "./ProductDeleteDialog"
 
 interface ProductFormProps {
   initialProduct?: AdminProductDetail | null
@@ -62,6 +63,7 @@ export function ProductForm({
   const router = useRouter()
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
 
   const defaultValues: AdminProductFormValues = {
     name: initialProduct?.name || "",
@@ -178,7 +180,8 @@ export function ProductForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" noValidate>
+    <>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" noValidate>
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div className="flex items-center gap-3">
@@ -211,20 +214,32 @@ export function ProductForm({
 
         <div className="flex items-center gap-2.5">
           {mode === "edit" && initialProduct && (
-            <Button
-              variant="outline"
-              className="h-9 px-3 text-xs font-sans rounded-none gap-1.5"
-              render={
-                <Link
-                  href={`/collections/${initialProduct.slug}`}
-                  target="_blank"
-                  rel="noreferrer"
-                />
-              }
-            >
-              <ExternalLink className="size-3.5" />
-              <span>View Live</span>
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                className="h-9 px-3 text-xs font-sans rounded-none gap-1.5"
+                render={
+                  <Link
+                    href={`/collections/${initialProduct.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                }
+              >
+                <ExternalLink className="size-3.5" />
+                <span>View Live</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="h-9 px-3 text-xs font-sans text-destructive border-destructive/40 hover:bg-destructive hover:!text-white hover:[&_svg]:!text-white rounded-none gap-1.5 cursor-pointer transition-colors"
+                title="Delete product"
+              >
+                <Trash2 className="size-3.5" />
+                <span>Delete</span>
+              </Button>
+            </>
           )}
 
           <Button
@@ -564,33 +579,6 @@ export function ProductForm({
                   </Field>
                 )}
               />
-
-              {/* Final Sale Checkbox */}
-              <Controller
-                name="is_final_sale"
-                control={control}
-                render={({ field }) => (
-                  <div className="flex items-start gap-2.5 pt-2 border-t border-border/60">
-                    <Checkbox
-                      id="is_final_sale"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="mt-0.5 rounded-none"
-                    />
-                    <div className="grid gap-0.5 leading-none">
-                      <label
-                        htmlFor="is_final_sale"
-                        className="text-xs font-sans font-medium text-foreground cursor-pointer select-none"
-                      >
-                        Final Sale (Non-Returnable)
-                      </label>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        Items flagged as final sale cannot be refunded or exchanged per our store policy.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              />
             </FieldGroup>
           </div>
 
@@ -641,8 +629,45 @@ export function ProductForm({
               </div>
             </div>
           )}
+
+          {/* Danger Zone: Delete Product */}
+          {mode === "edit" && initialProduct && (
+            <div className="bg-card border border-destructive/30 p-5 rounded-none space-y-3">
+              <div className="flex items-center gap-2 text-destructive">
+                <Trash2 className="size-4" />
+                <h3 className="font-sans text-sm font-semibold text-foreground">
+                  Danger Zone
+                </h3>
+              </div>
+              <p className="text-[11px] text-muted-foreground font-sans leading-relaxed">
+                Permanently delete this product and all associated colourways, photos, and variants from the catalogue.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="w-full text-xs font-sans text-destructive border-destructive/40 hover:bg-destructive hover:!text-white hover:[&_svg]:!text-white rounded-none gap-1.5 cursor-pointer transition-colors"
+              >
+                <Trash2 className="size-3.5" />
+                <span>Delete Product</span>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
+
     </form>
+
+    {mode === "edit" && initialProduct && (
+      <ProductDeleteDialog
+        productId={initialProduct.id}
+        productName={initialProduct.name}
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onDeleted={() => router.push("/admin/products")}
+      />
+    )}
+  </>
   )
 }

@@ -26,7 +26,7 @@ export function SizeChartModal({ isOpen, onClose }: SizeChartModalProps) {
         <DialogHeader className="p-6 pb-4 border-b border-border">
           <div className="flex items-center gap-2">
             <Ruler className="h-5 w-5 text-muted-foreground" />
-            <DialogTitle className="font-heading text-2xl font-normal text-foreground">
+            <DialogTitle className="font-sans text-xl font-semibold text-foreground tracking-tight">
               Size Chart
             </DialogTitle>
           </div>
@@ -91,7 +91,7 @@ export function SizeChartModal({ isOpen, onClose }: SizeChartModalProps) {
           </div>
 
           <div className="mt-5 pt-4 border-t border-border text-xs text-muted-foreground space-y-3">
-            <p className="font-heading text-sm font-semibold text-foreground">How to measure</p>
+            <p className="font-sans text-sm font-semibold text-foreground">How to measure</p>
             <ul className="space-y-1.5 text-xs">
               <li>
                 <strong className="font-medium text-foreground">Bust:</strong> around the fullest part of your bust

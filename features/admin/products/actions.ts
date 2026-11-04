@@ -33,7 +33,7 @@ function getCloudinaryUrl(mediaKey: string): string {
  * Fetch all categories for filtering and select dropdowns.
  */
 export async function getCategoriesList(): Promise<AdminCategory[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("categories")
     .select("id, name, slug")
@@ -51,7 +51,7 @@ export async function getCategoriesList(): Promise<AdminCategory[]> {
  * Fetch all colours.
  */
 export async function getColoursList(): Promise<AdminColour[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("colours")
     .select("id, name, slug, swatch_hex")
@@ -69,7 +69,7 @@ export async function getColoursList(): Promise<AdminColour[]> {
  * Fetch all sizes.
  */
 export async function getSizesList(): Promise<AdminSize[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("sizes")
     .select("id, label, sort")
@@ -94,7 +94,7 @@ export async function getAdminProductsList(options?: {
   page?: number
   pageSize?: number
 }): Promise<AdminProductsPaginatedResult> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const page = Math.max(1, options?.page || 1)
   const pageSize = options?.pageSize || 10
 
@@ -138,6 +138,8 @@ export async function getAdminProductsList(options?: {
 
   if (options?.status && options.status !== "all") {
     query = query.eq("status", options.status)
+  } else {
+    query = query.neq("status", "archived")
   }
 
   if (options?.categoryId && options.categoryId !== "all") {
@@ -490,7 +492,16 @@ export async function createAdminProduct(
     }
   }
 
-  const supabase = await createClient()
+  // Ensure staff session is authenticated
+  const authClient = await createClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  if (!user) {
+    return { success: false, error: "Unauthorized. Staff session required." }
+  }
+
+  const adminDb = createAdminClient()
 
   const payload: any = {
     name: parsed.data.name,
@@ -504,7 +515,7 @@ export async function createAdminProduct(
     published_at: null,
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await adminDb
     .from("products")
     .insert(payload)
     .select("id")
@@ -549,7 +560,7 @@ export async function updateAdminProduct(
     }
   }
 
-  const supabase = await createClient()
+  const adminDb = createAdminClient()
 
   const payload: any = {
     name: parsed.data.name,
@@ -565,7 +576,7 @@ export async function updateAdminProduct(
 
   if (parsed.data.status === "published") {
     // Only set published_at if not already set
-    const { data: current } = await supabase
+    const { data: current } = await adminDb
       .from("products")
       .select("published_at")
       .eq("id", id)
@@ -576,7 +587,7 @@ export async function updateAdminProduct(
     }
   }
 
-  const { error } = await supabase.from("products").update(payload).eq("id", id)
+  const { error } = await adminDb.from("products").update(payload).eq("id", id)
 
   if (error) {
     console.error("Failed to update product:", error)
@@ -610,7 +621,7 @@ export async function toggleProductStatusAction(
     }
   }
 
-  const supabase = await createClient()
+  const adminDb = createAdminClient()
 
   const payload: any = {
     status: newStatus,
@@ -621,7 +632,7 @@ export async function toggleProductStatusAction(
     payload.published_at = new Date().toISOString()
   }
 
-  const { error } = await supabase.from("products").update(payload).eq("id", id)
+  const { error } = await adminDb.from("products").update(payload).eq("id", id)
 
   if (error) {
     return { success: false, error: error.message }
@@ -828,14 +839,23 @@ export async function createVariantAction(input: {
     return { success: false, error: vErr?.message || "Failed to create variant." }
   }
 
-  // Insert opening stock level
+  // Set opening stock level (upsert handles row auto-created by database trigger initialise_stock)
   const stockCount = Math.max(0, input.initialStock || 0)
-  await adminDb.from("stock_levels").insert({
-    variant_id: newVariant.id,
-    on_hand: stockCount,
-    reserved: 0,
-    updated_at: new Date().toISOString(),
-  })
+  const { error: stockErr } = await adminDb
+    .from("stock_levels")
+    .upsert(
+      {
+        variant_id: newVariant.id,
+        on_hand: stockCount,
+        reserved: 0,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "variant_id" }
+    )
+
+  if (stockErr) {
+    console.error("Failed to set initial stock level:", stockErr)
+  }
 
   if (stockCount > 0) {
     await adminDb.from("inventory_adjustments").insert({
@@ -847,6 +867,20 @@ export async function createVariantAction(input: {
       note: "Initial variant opening stock",
       actor_sub: user?.id || "f93c1910-4399-41d2-88ac-e8d0bd43f0e7",
     })
+  }
+
+  // Auto-activate colourway if it now has at least 1 image and this priced variant
+  const { data: cwImages } = await adminDb
+    .from("product_images")
+    .select("id")
+    .eq("product_colour_id", input.productColourId)
+    .limit(1)
+
+  if (cwImages && cwImages.length > 0 && input.priceFils > 0) {
+    await adminDb
+      .from("product_colours")
+      .update({ is_active: true })
+      .eq("id", input.productColourId)
   }
 
   revalidatePath(`/admin/products/${input.productId}`)
@@ -994,6 +1028,17 @@ export async function createColourwayAction(input: {
     }
   }
 
+  // Check parent product publication status
+  const { data: parentProduct } = await adminDb
+    .from("products")
+    .select("status")
+    .eq("id", input.productId)
+    .single()
+
+  // If the product is already published, a new colourway must start inactive (draft)
+  // until staff uploads photos and active priced variants, satisfying check_published_integrity.
+  const isInitialActive = parentProduct?.status !== "published"
+
   const { data: inserted, error: insertErr } = await adminDb
     .from("product_colours")
     .insert({
@@ -1001,7 +1046,7 @@ export async function createColourwayAction(input: {
       colour_id: resolvedColourId,
       style_code: input.styleCode.trim(),
       details: input.details || {},
-      is_active: true,
+      is_active: isInitialActive,
       sort: 0,
     })
     .select("id")
@@ -1096,6 +1141,23 @@ export async function uploadProductImageAction(formData: FormData): Promise<{
     if (dbErr || !inserted) {
       console.error("Failed to insert into product_images:", dbErr)
       return { success: false, error: dbErr?.message || "Failed to save image record in database." }
+    }
+
+    // Auto-activate colourway if it now has priced active variants
+    const { data: cwVariants } = await adminDb
+      .from("product_variants")
+      .select("id, price_fils")
+      .eq("product_colour_id", productColourId)
+      .eq("is_active", true)
+
+    const hasPriced = (cwVariants || []).some(
+      (v) => typeof v.price_fils === "number" && v.price_fils > 0
+    )
+    if (hasPriced) {
+      await adminDb
+        .from("product_colours")
+        .update({ is_active: true })
+        .eq("id", productColourId)
     }
 
     revalidatePath(`/admin/products/${productId}`)
@@ -1200,18 +1262,32 @@ export async function setMainProductImageAction(input: {
   const remaining = allImages.filter((img) => img.id !== input.imageId)
   const reordered = [target, ...remaining]
 
-  // Update sort index for each image
+  // Two-pass update to avoid unique constraint violations on (product_colour_id, sort):
+  // Pass 1: Set temporary negative sort indexes to clear all existing positions
+  for (let idx = 0; idx < allImages.length; idx++) {
+    const item = allImages[idx]
+    const { error: tempErr } = await adminDb
+      .from("product_images")
+      .update({ sort: -(idx + 1) })
+      .eq("id", item.id)
+
+    if (tempErr) {
+      console.error("Failed to set temporary sort order:", item.id, tempErr)
+      return { success: false, error: "Failed to reorder images." }
+    }
+  }
+
+  // Pass 2: Set final sequential 0-indexed positions (target image at 0 = main)
   for (let idx = 0; idx < reordered.length; idx++) {
     const item = reordered[idx]
-    if (item.sort !== idx) {
-      const { error: updateErr } = await adminDb
-        .from("product_images")
-        .update({ sort: idx })
-        .eq("id", item.id)
+    const { error: updateErr } = await adminDb
+      .from("product_images")
+      .update({ sort: idx })
+      .eq("id", item.id)
 
-      if (updateErr) {
-        console.error("Failed to update sort order for image:", item.id, updateErr)
-      }
+    if (updateErr) {
+      console.error("Failed to update sort order for image:", item.id, updateErr)
+      return { success: false, error: "Failed to set main image position." }
     }
   }
 
@@ -1220,3 +1296,149 @@ export async function setMainProductImageAction(input: {
   revalidatePath("/collections")
   return { success: true }
 }
+
+/**
+ * Permanently delete a product if it has no customer order or return history.
+ * If orders exist, deletion is blocked to preserve historical accounting and audit records.
+ */
+export async function deleteAdminProductAction(
+  productId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: "Unauthorized" }
+  }
+
+  const adminDb = createAdminClient()
+
+  // 1. Check if product exists
+  const { data: product, error: fetchErr } = await adminDb
+    .from("products")
+    .select("id, name")
+    .eq("id", productId)
+    .single()
+
+  if (fetchErr || !product) {
+    return { success: false, error: "Product not found." }
+  }
+
+  // 2. Fetch all child variants
+  const { data: variants } = await adminDb
+    .from("product_variants")
+    .select("id")
+    .eq("product_id", productId)
+
+  const variantIds = (variants || []).map((v: any) => v.id)
+
+  // 3. Safety Guard: Check if product or its variants appear in customer orders
+  const { count: orderItemsCount } = await adminDb
+    .from("order_items")
+    .select("id", { count: "exact", head: true })
+    .or(
+      `product_id.eq.${productId}${
+        variantIds.length > 0 ? `,variant_id.in.(${variantIds.join(",")})` : ""
+      }`
+    )
+
+  if (orderItemsCount && orderItemsCount > 0) {
+    return {
+      success: false,
+      error: `Cannot delete "${product.name}" because it appears in ${orderItemsCount} past customer order(s). Per boutique policy, products with order history must be set to 'Archived' instead of deleted to protect customer order records.`,
+    }
+  }
+
+  // 4. Safety Guard: Check if variants appear in return items
+  if (variantIds.length > 0) {
+    const { count: returnItemsCount } = await adminDb
+      .from("return_items")
+      .select("id", { count: "exact", head: true })
+      .in("variant_id", variantIds)
+
+    if (returnItemsCount && returnItemsCount > 0) {
+      return {
+        success: false,
+        error: `Cannot delete "${product.name}" because it appears in ${returnItemsCount} customer return record(s). Please set its status to 'Archived' instead.`,
+      }
+    }
+  }
+
+  // 5. Clean up Cloudinary assets and images
+  const { data: colourways } = await adminDb
+    .from("product_colours")
+    .select("id, product_images(id, media_key)")
+    .eq("product_id", productId)
+
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "q8qdyl3f"
+  const apiKey = process.env.CLOUDINARY_API_KEY || "822299811143611"
+  const apiSecret = process.env.CLOUDINARY_API_SECRET || "EjPgkhLeSanX8bJ1N7VrlfaDeLU"
+
+  if (colourways && colourways.length > 0) {
+    for (const cw of colourways) {
+      const images = (cw as any).product_images || []
+      for (const img of images) {
+        if (img.media_key) {
+          try {
+            const timestamp = Math.floor(Date.now() / 1000)
+            const delParams = `public_id=${img.media_key}&timestamp=${timestamp}${apiSecret}`
+            const signature = crypto.createHash("sha1").update(delParams).digest("hex")
+
+            const delFormData = new FormData()
+            delFormData.append("public_id", img.media_key)
+            delFormData.append("api_key", apiKey)
+            delFormData.append("timestamp", timestamp.toString())
+            delFormData.append("signature", signature)
+
+            await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
+              method: "POST",
+              body: delFormData,
+            })
+          } catch (cErr) {
+            console.warn("Failed to delete Cloudinary asset (ignored):", cErr)
+          }
+        }
+      }
+      // Delete product_images for this colourway
+      await adminDb.from("product_images").delete().eq("product_colour_id", cw.id)
+    }
+  }
+
+  // 6. Permanently delete all child records and the product from database tables
+  if (variantIds.length > 0) {
+    // Delete inventory adjustments if cascaded or trigger allows
+    await adminDb.from("inventory_adjustments").delete().in("variant_id", variantIds)
+    // Delete stock levels
+    await adminDb.from("stock_levels").delete().in("variant_id", variantIds)
+    // Delete product variants
+    const { error: vDelErr } = await adminDb.from("product_variants").delete().eq("product_id", productId)
+    if (vDelErr) {
+      console.error("Failed to delete product variants:", vDelErr)
+      return { success: false, error: vDelErr.message }
+    }
+  }
+
+  // Delete product colourways
+  const { error: cwDelErr } = await adminDb.from("product_colours").delete().eq("product_id", productId)
+  if (cwDelErr) {
+    console.error("Failed to delete product colours:", cwDelErr)
+    return { success: false, error: cwDelErr.message }
+  }
+
+  // Delete product record
+  const { error: delErr } = await adminDb.from("products").delete().eq("id", productId)
+  if (delErr) {
+    console.error("Failed to delete product record:", delErr)
+    return { success: false, error: delErr.message }
+  }
+
+  revalidatePath("/admin/products")
+  revalidatePath("/admin/stock")
+  revalidatePath("/collections")
+  revalidatePath("/shop")
+  revalidatePath("/")
+  return { success: true }
+}
+

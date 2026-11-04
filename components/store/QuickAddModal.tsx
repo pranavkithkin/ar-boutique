@@ -144,7 +144,7 @@ export function QuickAddModal({
       <DialogContent className="w-full max-w-[calc(100%-1.5rem)] sm:max-w-xl max-h-[90vh] p-0 flex flex-col overflow-hidden bg-background border border-border rounded-xs shadow-2xl">
         {/* Header */}
         <DialogHeader className="p-4 sm:p-6 pb-3 border-b border-border/60 shrink-0 pr-12">
-          <DialogTitle className="font-heading text-lg sm:text-xl font-normal text-foreground">
+          <DialogTitle className="font-sans text-lg sm:text-xl font-semibold text-foreground tracking-tight">
             Quick Add to Bag
           </DialogTitle>
         </DialogHeader>
@@ -170,7 +170,7 @@ export function QuickAddModal({
                 <span className="text-[11px] text-muted-foreground uppercase tracking-wider">
                   {displayBrand}
                 </span>
-                <h3 className="font-heading text-lg text-foreground font-normal leading-tight line-clamp-2">
+                <h3 className="font-sans text-lg text-foreground font-semibold leading-tight line-clamp-2">
                   {displayName}
                 </h3>
                 <div className="text-base font-bold text-foreground font-sans mt-1">
@@ -191,7 +191,7 @@ export function QuickAddModal({
                 <span className="text-xs text-muted-foreground tracking-wider uppercase font-sans">
                   {displayBrand}
                 </span>
-                <h3 className="font-heading text-2xl text-foreground font-normal leading-tight">
+                <h3 className="font-sans text-2xl text-foreground font-semibold leading-tight tracking-tight">
                   {displayName}
                 </h3>
                 <div className="text-lg font-bold text-foreground font-sans">

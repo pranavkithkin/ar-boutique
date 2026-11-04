@@ -22,12 +22,20 @@ interface DashboardRecentFeedsProps {
 
 const ORDER_STATUS_CLASSES: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25",
+  awaiting_confirmation: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25",
   confirmed: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/25",
   packed: "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/25",
   shipped: "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/25",
   delivered: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25",
   cancelled: "bg-muted text-muted-foreground border-border",
   returned: "bg-destructive/10 text-destructive border-destructive/25",
+  returned_to_sender: "bg-destructive/10 text-destructive border-destructive/25",
+}
+
+function formatOrderStatus(status: string): string {
+  if (status === "awaiting_confirmation") return "Awaiting Conf."
+  if (status === "returned_to_sender") return "Returned to Sender"
+  return status
 }
 
 const RETURN_STATUS_CLASSES: Record<string, string> = {
@@ -80,7 +88,7 @@ export function DashboardRecentFeeds({
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/orders/${order.id}`}
-                        className="font-mono text-xs font-semibold text-foreground hover:underline underline-offset-2"
+                        className="font-sans text-xs font-semibold text-foreground hover:underline underline-offset-2 tabular-nums"
                       >
                         #{order.orderNumber}
                       </Link>
@@ -90,7 +98,7 @@ export function DashboardRecentFeeds({
                           "bg-muted text-muted-foreground border-border"
                         }`}
                       >
-                        {order.status}
+                        {formatOrderStatus(order.status)}
                       </span>
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -104,19 +112,19 @@ export function DashboardRecentFeeds({
                   </div>
 
                   <div className="flex items-center justify-between sm:justify-end gap-4 text-right">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-sans">
                       {order.paymentMethod === "cod" ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-mono text-amber-600 dark:text-amber-400">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-sans font-medium text-amber-600 dark:text-amber-400">
                           <Banknote className="size-3" /> COD
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-mono text-foreground">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-sans font-medium text-foreground">
                           <CreditCard className="size-3" /> Card
                         </span>
                       )}
                     </div>
 
-                    <div className="text-sm font-mono font-semibold text-foreground">
+                    <div className="text-sm font-sans font-semibold text-foreground tabular-nums">
                       {formatAED(order.totalFils)}
                     </div>
                   </div>
@@ -169,10 +177,10 @@ export function DashboardRecentFeeds({
                   </div>
 
                   <div className="text-right shrink-0">
-                    <div className="font-mono text-xs font-semibold text-rose-600 dark:text-rose-400">
+                    <div className="font-sans text-xs font-semibold text-rose-600 dark:text-rose-400 tabular-nums">
                       {item.available} left
                     </div>
-                    <div className="text-[10px] text-muted-foreground font-mono">
+                    <div className="text-[10px] text-muted-foreground font-sans tabular-nums">
                       {item.onHand} on hand
                     </div>
                   </div>
@@ -214,7 +222,7 @@ export function DashboardRecentFeeds({
                   <div className="min-w-0">
                     <Link
                       href={`/admin/returns/${ret.id}`}
-                      className="font-mono text-xs font-semibold text-foreground hover:underline"
+                      className="font-sans text-xs font-semibold text-foreground hover:underline tabular-nums"
                     >
                       #{ret.returnNumber}
                     </Link>

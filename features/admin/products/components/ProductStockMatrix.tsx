@@ -95,12 +95,12 @@ export function ProductStockMatrix({
               <th className="py-2.5 px-3 min-w-[160px]">Colourway</th>
               <th className="py-2.5 px-3 min-w-[90px]">Style Code</th>
               {activeSizes.map((s) => (
-                <th key={s.id} className="py-2.5 px-2 text-center min-w-[72px] font-mono">
+                <th key={s.id} className="py-2.5 px-2 text-center min-w-[72px] font-sans font-semibold">
                   Size {s.label}
                 </th>
               ))}
               {showNoSizeColumn && (
-                <th className="py-2.5 px-2 text-center min-w-[80px] font-mono">
+                <th className="py-2.5 px-2 text-center min-w-[80px] font-sans font-semibold">
                   No size
                 </th>
               )}
@@ -212,21 +212,21 @@ export function ProductStockMatrix({
                     )
                   })()}
 
-                  <td className="py-2.5 px-3 text-right font-mono text-xs font-semibold text-foreground">
+                  <td className="py-2.5 px-3 text-right font-sans text-xs font-semibold text-foreground tabular-nums">
                     {cwOnHand}
                   </td>
                   <td className="py-2.5 px-3 text-right">
                     {cwReserved > 0 ? (
-                      <span className="font-mono text-xs font-semibold text-amber-600">
+                      <span className="font-sans text-xs font-semibold text-amber-600 tabular-nums">
                         {cwReserved} held
                       </span>
                     ) : (
-                      <span className="font-mono text-xs text-muted-foreground">0</span>
+                      <span className="font-sans text-xs text-muted-foreground tabular-nums">0</span>
                     )}
                   </td>
                   <td className="py-2.5 px-3 text-center">
                     <span
-                      className={`font-mono text-xs font-bold px-2 py-0.5 rounded-none ${
+                      className={`font-sans text-xs font-semibold px-2 py-0.5 rounded-none tabular-nums ${
                         cwAvailable === 0
                           ? "bg-destructive/10 text-destructive"
                           : cwAvailable <= 3

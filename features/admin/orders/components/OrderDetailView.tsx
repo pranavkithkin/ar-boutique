@@ -5,7 +5,9 @@ import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { AdminOrderDetail, AdminOrderItem, AdminOrderEvent, OrderStatus } from "../types"
-import { updateOrderStatusAction, updateOrderNotesAction } from "../actions"
+import { updateOrderStatusAction, updateOrderNotesAction, resendOrderConfirmationEmailAction } from "../actions"
+import { OrderCancelDialog } from "./OrderCancelDialog"
+import { ResendEmailDialog } from "./ResendEmailDialog"
 import { formatAED } from "@/lib/money"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,13 +38,17 @@ interface OrderDetailViewProps {
 
 const STATUS_BADGE_STYLES: Record<OrderStatus, string> = {
   pending: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
+  awaiting_confirmation: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
   confirmed: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30",
   packed: "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30",
   shipped: "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30",
   delivered: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
   cancelled: "bg-muted text-muted-foreground border-border",
   returned: "bg-destructive/10 text-destructive border-destructive/30",
+  returned_to_sender: "bg-destructive/10 text-destructive border-destructive/30",
 }
+
+import { formatActorLabel } from "../utils"
 
 export function OrderDetailView({ order }: OrderDetailViewProps) {
   const router = useRouter()
@@ -52,6 +58,8 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
   const [notes, setNotes] = React.useState(order.internal_notes || "")
   const [isSavingNotes, setIsSavingNotes] = React.useState(false)
   const [notesSaved, setNotesSaved] = React.useState(false)
+  const [isCancelModalOpen, setIsCancelModalOpen] = React.useState(false)
+  const [isResendEmailModalOpen, setIsResendEmailModalOpen] = React.useState(false)
 
   async function handleStatusChange(newStatus: OrderStatus) {
     if (isUpdating) return
@@ -78,6 +86,24 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
     if (res.success) {
       setNotesSaved(true)
       setTimeout(() => setNotesSaved(false), 3000)
+    }
+  }
+
+  const [isSendingEmail, setIsSendingEmail] = React.useState(false)
+  const [emailNotice, setEmailNotice] = React.useState<string | null>(null)
+
+  async function handleResendEmail() {
+    if (isSendingEmail) return
+    setIsSendingEmail(true)
+    setEmailNotice(null)
+    const res = await resendOrderConfirmationEmailAction(order.id)
+    setIsSendingEmail(false)
+    if (res.success) {
+      setEmailNotice(`Confirmation email sent to ${order.email || "customer"}`)
+      setTimeout(() => setEmailNotice(null), 6000)
+      router.refresh()
+    } else {
+      alert(res.error || "Failed to dispatch email")
     }
   }
 
@@ -114,7 +140,7 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
 
         {/* Action Buttons depending on status */}
         <div className="flex flex-wrap items-center gap-2">
-          {order.status === "pending" && (
+          {(order.status === "pending" || order.status === "awaiting_confirmation") && (
             <Button
               onClick={() => handleStatusChange("confirmed")}
               disabled={isUpdating}
@@ -174,11 +200,7 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
 
           {order.status !== "cancelled" && order.status !== "delivered" && order.status !== "returned" && (
             <Button
-              onClick={() => {
-                if (confirm("Are you sure you want to cancel this order?")) {
-                  handleStatusChange("cancelled")
-                }
-              }}
+              onClick={() => setIsCancelModalOpen(true)}
               disabled={isUpdating}
               variant="outline"
               className="h-9 px-3 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 rounded-none border-border"
@@ -186,8 +208,47 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
               Cancel
             </Button>
           )}
+
+          {/* Resend Customer Notification Email */}
+          <Button
+            onClick={() => setIsResendEmailModalOpen(true)}
+            variant="outline"
+            className="h-9 px-3 text-xs font-sans font-medium uppercase tracking-[0.08em] rounded-none border-border hover:bg-muted text-foreground gap-1.5"
+            title="Resend Branded Notification Email to Customer via Resend"
+          >
+            <Mail className="size-3.5" />
+            Resend Email
+          </Button>
+
+          {/* Download Bilingual Tax Invoice */}
+          <a
+            href={`/api/invoices/${order.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 h-9 px-3 text-xs font-sans font-medium uppercase tracking-[0.08em] rounded-none border border-border bg-card hover:bg-muted text-foreground transition-colors"
+            title="Open / Print Official Bilingual Tax Invoice (PDF)"
+          >
+            <FileText className="size-3.5 text-primary" />
+            Tax Invoice
+          </a>
         </div>
       </div>
+
+      {/* Email feedback banner */}
+      {emailNotice && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 px-4 py-3 rounded-none text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="size-4 shrink-0" />
+            <span>{emailNotice}</span>
+          </div>
+          <button
+            onClick={() => setEmailNotice(null)}
+            className="text-muted-foreground hover:text-foreground text-xs"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* ── Order Layout Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -209,13 +270,13 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
               {order.items.map((item: AdminOrderItem) => (
                 <div key={item.id} className="py-3 flex items-start gap-4">
                   {/* Thumbnail */}
-                  <div className="size-16 bg-muted shrink-0 border border-border overflow-hidden relative">
+                  <div className="w-16 h-20 bg-muted shrink-0 border border-border overflow-hidden relative">
                     {item.image_url ? (
                       <Image
                         src={item.image_url}
                         alt={item.product_name}
                         fill
-                        className="object-cover"
+                        className="object-cover object-top"
                         sizes="64px"
                       />
                     ) : (
@@ -311,9 +372,20 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
                           {new Date(ev.created_at).toLocaleString("en-AE")}
                         </span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground">
-                        Actor: {ev.actor_sub}
-                      </span>
+                      <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                        <span>Actor:</span>
+                        <span className="font-medium text-foreground">
+                          {formatActorLabel(ev.actor_sub, order.customer_name)}
+                        </span>
+                        {ev.actor_sub && ev.actor_sub.startsWith("user_") && (
+                          <span
+                            className="font-mono text-[9px] text-muted-foreground/60 select-all"
+                            title={`Clerk User ID: ${ev.actor_sub}`}
+                          >
+                            ({ev.actor_sub.slice(0, 11)}...)
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -453,6 +525,30 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
           </div>
         </div>
       </div>
+
+      {/* Order Cancellation Warning Modal */}
+      <OrderCancelDialog
+        order={order}
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onCancelled={() => {
+          setIsCancelModalOpen(false)
+          router.refresh()
+        }}
+      />
+
+      {/* Resend Email Dispatch Modal */}
+      <ResendEmailDialog
+        order={order}
+        isOpen={isResendEmailModalOpen}
+        onClose={() => setIsResendEmailModalOpen(false)}
+        onSuccess={(msg) => {
+          setIsResendEmailModalOpen(false)
+          setEmailNotice(msg)
+          setTimeout(() => setEmailNotice(null), 6000)
+          router.refresh()
+        }}
+      />
     </div>
   )
 }

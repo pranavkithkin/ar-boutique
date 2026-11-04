@@ -101,12 +101,12 @@ export function StoreHeader() {
             <SheetContent side="left" className="w-[300px] overflow-y-auto text-foreground">
               <SheetTitle className="sr-only">Mobile Navigation</SheetTitle>
               <div className="flex flex-col gap-6 pt-12 p-6">
-                <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Home</Link>
-                <Link href="/collections" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Collections</Link>
+                <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans font-medium hover:opacity-70">Home</Link>
+                <Link href="/collections" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans font-medium hover:opacity-70">Collections</Link>
                 <CategoryMenu {...categories} mobile onNavigate={() => setIsMobileMenuOpen(false)} />
-                {JOURNAL_ENABLED && <Link href="/journal" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Journal</Link>}
-                <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">About</Link>
-                <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-heading hover:opacity-70">Contact Us</Link>
+                {JOURNAL_ENABLED && <Link href="/journal" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans font-medium hover:opacity-70">Journal</Link>}
+                <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans font-medium hover:opacity-70">About</Link>
+                <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans font-medium hover:opacity-70">Contact Us</Link>
                 <div className="mt-8 flex flex-col gap-4 border-t border-border pt-8">
                   <Link href="/account?tab=wishlist" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-muted-foreground hover:text-foreground">
                     <Heart className="h-5 w-5" strokeWidth={1.5} />

@@ -81,7 +81,7 @@ export function CartView() {
       {/* Left: Cart Items List (7 cols) */}
       <div className="lg:col-span-7 space-y-6">
         <div className="flex items-baseline justify-between pb-4 border-b border-border">
-          <h2 className="font-heading text-2xl text-foreground">
+          <h2 className="font-heading text-2xl text-foreground font-normal">
             Items ({totalItemCount})
           </h2>
           <button
@@ -113,7 +113,7 @@ export function CartView() {
                   <div className="flex items-start justify-between gap-3">
                     <Link
                       href={`/collections/${item.productSlug}`}
-                      className="font-heading text-lg sm:text-xl text-foreground hover:opacity-75 transition-opacity line-clamp-1"
+                      className="font-sans text-base sm:text-lg font-medium text-foreground hover:opacity-75 transition-opacity line-clamp-1"
                     >
                       {item.productName}
                     </Link>
@@ -210,7 +210,7 @@ export function CartView() {
 
       {/* Right: Order Summary Card (5 cols) */}
       <div className="lg:col-span-5 bg-card border border-border p-6 sm:p-8 rounded-xs shadow-xs space-y-6 lg:sticky lg:top-28">
-        <h3 className="font-heading text-2xl text-foreground pb-4 border-b border-border/80">
+        <h3 className="font-heading text-2xl text-foreground font-normal pb-4 border-b border-border/80">
           Order Summary
         </h3>
 
@@ -270,8 +270,8 @@ export function CartView() {
           </div>
 
           <div className="pt-4 border-t border-border flex justify-between items-baseline">
-            <span className="font-heading text-xl text-foreground">Estimated Total</span>
-            <span className="text-2xl font-semibold text-foreground tabular-nums font-sans">
+            <span className="font-heading text-xl font-normal text-foreground">Estimated Total</span>
+            <span className="text-2xl font-heading font-normal text-foreground tabular-nums">
               {formatAED(estimatedTotalFils)}
             </span>
           </div>

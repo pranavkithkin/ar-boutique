@@ -58,7 +58,7 @@ export function CookieConsentBanner() {
 
         <div className="space-y-2 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="font-heading text-base font-normal tracking-tight text-foreground">
+            <h3 className="font-sans text-sm font-semibold tracking-tight text-foreground">
               Cookie & Privacy Consent
             </h3>
             <button

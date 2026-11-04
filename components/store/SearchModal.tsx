@@ -183,7 +183,7 @@ function SearchModalContent({ onClose }: { onClose: () => void }) {
                         </span>
                       )}
                     </div>
-                    <h4 className="text-sm font-heading font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                    <h4 className="text-sm font-sans font-medium text-foreground group-hover:text-primary transition-colors truncate">
                       {item.name}
                     </h4>
                     {item.colourName && (
@@ -209,7 +209,7 @@ function SearchModalContent({ onClose }: { onClose: () => void }) {
         {/* No Results Empty State */}
         {showEmpty && (
           <div className="py-12 text-center">
-            <p className="text-base font-heading font-medium text-foreground mb-1">
+            <p className="text-base font-sans font-medium text-foreground mb-1">
               No pieces found
             </p>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto mb-4">

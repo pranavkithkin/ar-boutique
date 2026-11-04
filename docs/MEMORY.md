@@ -194,3 +194,9 @@ Build dedicated `/cart` page with server re-validation (TASK-049) or setup check
 
 
 
+
+- 4 Nov 2026: Implemented Stripe hosted checkout integration and webhook handler (TASK-054, TASK-055). Verified card order confirmation lifecycle, variant resolution, and Cloudinary order thumbnails. Modernized typography across Cart Drawer and Shopping Bag page from serif to clean modern sans (font-sans) matching the Sylvie design system.
+- 4 Nov 2026: Extended modern sans typography across CheckoutView, Order Success, and COD Order Received pages, eliminating residual font-heading and font-mono instances in favor of clean font-sans styling with tabular-nums.
+- 4 Nov 2026: Applied Boutique Editorial Serif (Newsreader / font-heading) to section titles on /checkout (Delivery & Payment, 1. Shipping Destination, 2. Payment Method, Order Summary, Total to Pay) and bag drawers, aligning with the brand reference typography.
+- 4 Nov 2026: Modernized typography across the Checkout experience (/checkout, /checkout/success, /checkout/received) from serif font-heading to clean modern sans (font-sans) with crisp tabular numbers and tracking-tight headings.
+- 4 Nov 2026: Fixed checkout cart emptying timing: preserved cart items when redirecting to Stripe hosted checkout so cart is not prematurely emptied if user cancels/returns from payment gateway; cart is now cleared upon confirmed payment on /checkout/success via ClearCartOnSuccess component.

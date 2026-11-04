@@ -95,8 +95,8 @@ Done when: a shopper pays in Stripe test mode and the order is Confirmed and Pai
 - [ ] TASK-051 Migration: `orders` (payment method, structured address, COD fee, idempotency key, `confirm_by`, confirmed, shipped, courier, tracking, cash collected, cancelled and returned columns; statuses from ADR-035), `order_items`, `order_events`, `stock_reservations`, `stripe_events`, `cod_payouts` + RLS
 - [ ] TASK-052 Postgres functions `create_pending_order()`, `mark_order_paid()` (sets `confirmed` and payment `paid`), `release_order()` + pgTAP tests (holds lock `stock_levels` rows in variant ID order; `mark_order_paid()` sets `first_sold_at`)
 - [ ] TASK-053 `startCheckout` action: validate the delivery details, re-price, create the pending order, release an earlier hold from the same cart
-- [ ] TASK-054 Stripe service: Checkout Session for the payment only (hosted page, AED, 31-min expiry, no address collection, delivery fee as a line item, line items named with colour and size, SKU in metadata, idempotency key)
-- [ ] TASK-055 `/api/webhooks/stripe`: signature check, event idempotency, `checkout.session.completed` and `checkout.session.expired`
+- [x] TASK-054 Stripe service: Checkout Session for the payment only (hosted page, AED, 31-min expiry, no address collection, delivery fee as a line item, line items named with colour and size, SKU in metadata, idempotency key)
+- [x] TASK-055 `/api/webhooks/stripe`: signature check, event idempotency, `checkout.session.completed` and `checkout.session.expired`
 - [x] TASK-056 Success page `/checkout/success` (confirmed order details and delivery timeframe)
 - [ ] TASK-057 Reconciliation job `/api/cron/reconcile-checkouts` every 15 min, protected by `CRON_SECRET`, wrapped in `Sentry.withMonitor()`, writing `job_runs`; also cancels COD orders past `confirm_by` (releasing their stock) and deletes stock sheet previews older than 24 hours
 - [ ] TASK-058 Needs-attention path when a paid order has no stock left

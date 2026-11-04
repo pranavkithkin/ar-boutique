@@ -18,6 +18,7 @@ import type {
 } from "./types"
 import { calculateVatPortion } from "@/lib/money"
 import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email"
+import { createStripeCheckoutSession } from "./stripe"
 
 /**
  * Fetch checkout delivery and payment configuration from database settings.
@@ -286,27 +287,54 @@ export async function placeCheckoutOrderAction(
     }
 
     // 3. Re-price all cart items on the server from the product_variants database
-    const variantIds = cartItems.map((i) => i.variantId).filter(Boolean)
-    const { data: dbVariants } = await supabase
-      .from("product_variants")
-      .select("id, price_fils, is_active, sku")
-      .in("id", variantIds)
+    // Handle both variant UUID and fallback SKU lookups
+    const rawVariantIds = cartItems.map((i) => i.variantId).filter(Boolean)
+    const skus = cartItems.map((i) => i.sku).filter(Boolean)
+
+    let query = supabase.from("product_variants").select("id, product_id, product_colour_id, price_fils, is_active, sku")
+    if (rawVariantIds.length > 0 && skus.length > 0) {
+      query = query.or(`id.in.(${rawVariantIds.join(",")}),sku.in.(${skus.join(",")})`)
+    } else if (rawVariantIds.length > 0) {
+      query = query.in("id", rawVariantIds)
+    } else if (skus.length > 0) {
+      query = query.in("sku", skus)
+    }
+
+    const { data: dbVariants } = await query
 
     const variantPriceMap = new Map<string, number>()
+    const skuToVariantMap = new Map<string, { id: string; productId: string; colourId: string; price_fils: number }>()
+
     if (dbVariants) {
       for (const v of dbVariants) {
         if (typeof v.price_fils === "number") {
           variantPriceMap.set(v.id, v.price_fils)
+          if (v.sku) {
+            skuToVariantMap.set(v.sku.toLowerCase(), {
+              id: v.id,
+              productId: v.product_id,
+              colourId: v.product_colour_id,
+              price_fils: v.price_fils,
+            })
+          }
         }
       }
     }
 
+    const resolvedVariantIds = cartItems
+      .map((item) => {
+        if (item.variantId && variantPriceMap.has(item.variantId)) return item.variantId
+        if (item.sku) return skuToVariantMap.get(item.sku.toLowerCase())?.id
+        return null
+      })
+      .filter((id): id is string => Boolean(id))
+
     // 4. Verify inventory stock levels
-    if (variantIds.length > 0) {
+    if (resolvedVariantIds.length > 0) {
       const { data: stockLevels } = await supabase
         .from("stock_levels")
         .select("variant_id, on_hand, reserved")
-        .in("variant_id", variantIds)
+        .in("variant_id", resolvedVariantIds)
 
       if (stockLevels) {
         const stockMap = new Map<string, { on_hand: number; reserved: number }>()
@@ -318,8 +346,13 @@ export async function placeCheckoutOrderAction(
         }
 
         for (const item of cartItems) {
-          if (!item.variantId) continue
-          const stock = stockMap.get(item.variantId)
+          const matchedVariantId =
+            (item.variantId && variantPriceMap.has(item.variantId))
+              ? item.variantId
+              : (item.sku ? skuToVariantMap.get(item.sku.toLowerCase())?.id : null)
+
+          if (!matchedVariantId) continue
+          const stock = stockMap.get(matchedVariantId)
           if (stock) {
             const available = stock.on_hand - stock.reserved
             if (available < item.quantity) {
@@ -339,11 +372,21 @@ export async function placeCheckoutOrderAction(
 
     let subtotalFils = 0
     const verifiedLines = cartItems.map((item) => {
-      const verifiedUnitPrice = variantPriceMap.get(item.variantId) ?? item.priceFils
+      const fallbackVariant = item.sku ? skuToVariantMap.get(item.sku.toLowerCase()) : null
+      const actualVariantId = (item.variantId && variantPriceMap.has(item.variantId)) ? item.variantId : (fallbackVariant?.id || null)
+      const actualProductId = item.productId || fallbackVariant?.productId || null
+
+      const verifiedUnitPrice =
+        (actualVariantId ? variantPriceMap.get(actualVariantId) : null) ??
+        fallbackVariant?.price_fils ??
+        item.priceFils
+
       const lineTotal = verifiedUnitPrice * item.quantity
       subtotalFils += lineTotal
       return {
         ...item,
+        productId: actualProductId,
+        variantId: actualVariantId,
         unitPriceFils: verifiedUnitPrice,
         lineTotalFils: lineTotal,
       }
@@ -451,10 +494,13 @@ export async function placeCheckoutOrderAction(
     // 7. Generate Order Number
     const orderNumber = await generateOrderNumber(supabase)
 
-    // 8. Determine confirmation deadline for COD
+    // 8. Determine confirmation deadline for COD or 31-min stock hold for Card
     const confirmHours = settings.cod_confirm_hours || 24
     const confirmBy = isCod
       ? new Date(Date.now() + confirmHours * 60 * 60 * 1000).toISOString()
+      : null
+    const holdExpiresAt = !isCod
+      ? new Date(Date.now() + 31 * 60 * 1000).toISOString()
       : null
 
     // 9. Insert Order Header into `orders`
@@ -472,9 +518,9 @@ export async function placeCheckoutOrderAction(
         apartment: data.apartment || null,
         landmark: data.landmark || null,
         internal_notes: data.instructions ? `Customer delivery notes: ${data.instructions}` : null,
-        status: isCod ? "pending" : "confirmed",
+        status: "pending",
         payment_method: data.paymentMethod,
-        payment_status: isCod ? "pending" : "paid",
+        payment_status: "pending",
         subtotal_fils: subtotalFils,
         discount_fils: discountFils,
         delivery_fee_fils: deliveryFeeFils,
@@ -483,8 +529,9 @@ export async function placeCheckoutOrderAction(
         total_fils: totalFils,
         vat_rate_bps: settings.vat_rate_pct * 100,
         confirm_by: confirmBy,
-        confirmed_at: isCod ? null : new Date().toISOString(),
-        paid_at: isCod ? null : new Date().toISOString(),
+        hold_expires_at: holdExpiresAt,
+        confirmed_at: null,
+        paid_at: null,
         clerk_user_id: clerkUserId,
       })
       .select("id")
@@ -588,21 +635,102 @@ export async function placeCheckoutOrderAction(
       console.warn("Failed to update customer registry on checkout:", custSyncErr)
     }
 
-    // 14. Trigger customer confirmation and admin alert emails asynchronously
-    try {
-      void sendOrderConfirmationEmail(orderId).catch((err) =>
-        console.warn("[Checkout] Background confirmation email error:", err)
-      )
-      void sendAdminNewOrderNotification(orderId).catch((err) =>
-        console.warn("[Checkout] Background admin notification error:", err)
-      )
-    } catch (emailErr) {
-      console.warn("[Checkout] Could not trigger background emails:", emailErr)
+    // 14. If COD, dispatch confirmation emails immediately.
+    // (For Card payments, emails are triggered exclusively upon verified Stripe webhook completion - ADR-008)
+    if (isCod) {
+      try {
+        void sendOrderConfirmationEmail(orderId).catch((err) =>
+          console.warn("[Checkout] Background confirmation email error:", err)
+        )
+        void sendAdminNewOrderNotification(orderId).catch((err) =>
+          console.warn("[Checkout] Background admin notification error:", err)
+        )
+      } catch (emailErr) {
+        console.warn("[Checkout] Could not trigger background emails:", emailErr)
+      }
     }
 
-    const redirectUrl = isCod
-      ? `/checkout/received/${encodeURIComponent(orderNumber)}`
-      : `/checkout/success?orderNumber=${encodeURIComponent(orderNumber)}`
+    // 15. Create Stripe Checkout Session if Card payment was selected
+    let redirectUrl = `/checkout/received/${encodeURIComponent(orderNumber)}`
+
+    if (!isCod) {
+      const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+      const successUrl = `${siteUrl}/checkout/success?orderNumber=${encodeURIComponent(orderNumber)}&session_id={CHECKOUT_SESSION_ID}`
+      const cancelUrl = `${siteUrl}/checkout`
+
+      try {
+        const stripeSession = await createStripeCheckoutSession({
+          orderId,
+          orderNumber,
+          customerEmail: data.email.toLowerCase().trim(),
+          customerName: data.fullName.trim(),
+          items: verifiedLines.map((l) => ({
+            name: `${l.productName}${l.sizeLabel ? ` - ${l.sizeLabel}` : ""}${l.colourName ? ` (${l.colourName})` : ""}`,
+            sku: l.sku,
+            quantity: l.quantity,
+            unitPriceFils: l.unitPriceFils,
+          })),
+          deliveryFeeFils,
+          vatFils,
+          successUrl,
+          cancelUrl,
+        })
+
+        if (!stripeSession.url) {
+          throw new Error("Stripe did not return a checkout session URL.")
+        }
+
+        // Try updating stripe_session_id on orders if column exists
+        try {
+          await supabase
+            .from("orders")
+            .update({ stripe_session_id: stripeSession.id })
+            .eq("id", orderId)
+        } catch {
+          // Ignore if column is absent
+        }
+
+        redirectUrl = stripeSession.url
+      } catch (stripeErr: unknown) {
+        console.error("Failed to create Stripe checkout session:", stripeErr)
+        const stripeMsg =
+          stripeErr instanceof Error ? stripeErr.message : "Failed to initialize Stripe payment."
+
+        // Release reserved stock hold since session failed
+        for (const line of verifiedLines) {
+          if (line.variantId) {
+            const { data: curStock } = await supabase
+              .from("stock_levels")
+              .select("reserved")
+              .eq("variant_id", line.variantId)
+              .maybeSingle()
+
+            if (curStock && curStock.reserved > 0) {
+              await supabase
+                .from("stock_levels")
+                .update({ reserved: Math.max(0, curStock.reserved - line.quantity) })
+                .eq("variant_id", line.variantId)
+            }
+          }
+        }
+
+        // Mark order as cancelled
+        await supabase
+          .from("orders")
+          .update({
+            status: "cancelled",
+            cancellation_reason: `Stripe session creation error: ${stripeMsg}`,
+          })
+          .eq("id", orderId)
+
+        return {
+          success: false,
+          error: `Card payment gateway error: ${stripeMsg}`,
+        }
+      }
+    }
 
     return {
       success: true,

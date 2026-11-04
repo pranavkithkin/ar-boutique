@@ -263,11 +263,17 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
         }
       }
 
-      // Clear shopping bag after order is recorded
-      clearCart()
-
-      // Redirect to confirmed destination
-      router.push(result.redirectUrl)
+      if (values.paymentMethod === "cod") {
+        // Clear shopping bag after COD order is recorded
+        clearCart()
+        router.push(result.redirectUrl)
+      } else {
+        // For card payment:
+        // Do NOT clear cart yet! If the customer goes to the Stripe portal and cancels or navigates back,
+        // their cart must remain intact.
+        // The cart will be cleared on /checkout/success once payment is confirmed.
+        window.location.href = result.redirectUrl
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "An unexpected network error occurred. Please try again."
       setSubmitError(msg)
@@ -292,7 +298,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
         <div className="h-16 w-16 mx-auto rounded-full bg-muted flex items-center justify-center text-muted-foreground mb-4">
           <ShoppingBag className="w-8 h-8 opacity-60" />
         </div>
-        <h2 className="text-2xl font-sans font-semibold tracking-tight text-foreground">
+        <h2 className="text-2xl sm:text-3xl font-sans font-semibold tracking-tight text-foreground">
           Your shopping bag is empty
         </h2>
         <p className="text-xs text-muted-foreground mt-2 max-w-sm mx-auto leading-relaxed">
@@ -313,7 +319,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       {/* Top Header */}
       <div className="mb-8 pb-6 border-b border-border/70">
-        <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="text-[11px] font-sans font-medium uppercase tracking-[0.2em] text-muted-foreground">
           Express Boutique Checkout
         </span>
         <h1 className="text-2xl sm:text-3xl font-sans font-semibold tracking-tight text-foreground mt-1">
@@ -374,7 +380,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
             {/* Delivery Address Form */}
             <div className="bg-card border border-border rounded-xs p-5 sm:p-7 shadow-xs space-y-5">
               <div className="border-b border-border/60 pb-3">
-                <h2 className="text-base font-sans font-semibold tracking-tight text-foreground">
+                <h2 className="text-xl sm:text-2xl font-sans font-semibold tracking-tight text-foreground">
                   1. Shipping Destination
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -556,7 +562,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
             {/* Payment Choice Section */}
             <div className="bg-card border border-border rounded-xs p-5 sm:p-7 shadow-xs space-y-5">
               <div className="border-b border-border/60 pb-3">
-                <h2 className="text-base font-sans font-semibold tracking-tight text-foreground">
+                <h2 className="text-xl sm:text-2xl font-sans font-semibold tracking-tight text-foreground">
                   2. Payment Method
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -727,7 +733,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing Order...</span>
+                    <span>{isCodSelected ? "Processing Order..." : "Redirecting to Payment..."}</span>
                   </>
                 ) : !isCardAvailable && !isCodAvailable ? (
                   <span>Checkout Temporarily Paused</span>
@@ -754,10 +760,10 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
           <div className="lg:col-span-5 lg:sticky lg:top-28 space-y-6">
             <div className="bg-card border border-border rounded-xs p-5 sm:p-6 shadow-xs space-y-5">
               <div className="border-b border-border/60 pb-3 flex items-center justify-between">
-                <h3 className="text-base font-sans font-semibold tracking-tight text-foreground">
+                <h3 className="text-lg sm:text-xl font-sans font-semibold tracking-tight text-foreground">
                   Order Summary
                 </h3>
-                <span className="text-xs font-mono text-muted-foreground">
+                <span className="text-xs font-sans text-muted-foreground">
                   {cartItems.reduce((acc, i) => acc + i.quantity, 0)} piece(s)
                 </span>
               </div>
@@ -782,7 +788,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                       <p className="text-[11px] text-muted-foreground mt-0.5">
                         {item.colourName} • Size: {item.sizeLabel}
                       </p>
-                      <p className="text-[10px] font-mono text-muted-foreground/80 mt-0.5">
+                      <p className="text-[10px] font-sans text-muted-foreground/80 mt-0.5">
                         SKU: {item.sku}
                       </p>
                       <div className="flex items-center justify-between mt-1 text-xs">
@@ -803,7 +809,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                     <div className="flex items-center gap-2">
                       <Tag className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <div>
-                        <span className="font-mono font-semibold tracking-wider text-emerald-700 dark:text-emerald-300">
+                        <span className="font-sans font-semibold tracking-wider text-emerald-700 dark:text-emerald-300">
                           {appliedCoupon.code}
                         </span>
                         {appliedCoupon.freeShipping ? (
@@ -839,7 +845,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                             if (couponError) setCouponError(null)
                           }}
                           placeholder="PROMO CODE"
-                          className="w-full h-9 pl-9 pr-3 text-xs uppercase font-mono tracking-wider bg-background border border-input rounded-xs focus:outline-hidden focus:ring-1 focus:ring-primary"
+                          className="w-full h-9 pl-9 pr-3 text-xs uppercase font-sans tracking-wider bg-background border border-input rounded-xs focus:outline-hidden focus:ring-1 focus:ring-primary"
                         />
                       </div>
                       <StoreButton
@@ -907,8 +913,8 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                 </div>
 
                 <div className="pt-3 border-t border-border flex justify-between items-baseline">
-                  <span className="text-sm font-semibold text-foreground">Total to Pay</span>
-                  <span className="text-xl font-semibold text-foreground tabular-nums font-sans">
+                  <span className="text-base font-sans font-semibold text-foreground">Total to Pay</span>
+                  <span className="text-2xl font-sans font-semibold text-foreground tabular-nums">
                     {formatAED(estimatedTotalFils)}
                   </span>
                 </div>

@@ -34,7 +34,7 @@ function getSenderAddress(storeName: string): string {
   if (process.env.RESEND_FROM_EMAIL) {
     return process.env.RESEND_FROM_EMAIL
   }
-  return `${storeName} <onboarding@resend.dev>`
+  return `${storeName} <orders@thearboutique.com>`
 }
 
 export interface SendEmailResult {
@@ -150,6 +150,14 @@ export async function sendOrderConfirmationEmail(
 
     if (sendErr) {
       console.error("[Email Service] Resend error:", sendErr)
+      await supabase.from("order_events").insert({
+        order_id: orderId,
+        event_type: "email_failed",
+        from_status: null,
+        to_status: null,
+        note: `Confirmation email failed via Resend (${toEmail}): ${sendErr.message}`,
+        actor_sub: "system_resend",
+      })
       return { success: false, error: sendErr.message }
     }
 

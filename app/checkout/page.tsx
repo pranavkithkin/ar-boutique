@@ -5,6 +5,8 @@ import { StoreFooter } from "@/components/store/StoreFooter"
 import { CheckoutView } from "@/features/checkout/components/CheckoutView"
 import { getCheckoutInitialDataAction } from "@/features/checkout/actions"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
   title: "Secure Checkout | AR Boutique",
   description:

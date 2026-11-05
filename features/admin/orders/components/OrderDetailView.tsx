@@ -365,8 +365,8 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
                     <div className="size-2 rounded-full bg-primary mt-1.5 shrink-0" />
                     <div className="flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium text-foreground capitalize">
-                          {ev.note || ev.event_type.replace(/_/g, " ")}
+                        <span className="font-medium text-foreground">
+                          {ev.note ? ev.note : <span className="capitalize">{ev.event_type.replace(/_/g, " ")}</span>}
                         </span>
                         <span className="text-[10px] font-mono text-muted-foreground">
                           {new Date(ev.created_at).toLocaleString("en-AE")}
@@ -470,6 +470,8 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
                   className={`capitalize font-mono px-1.5 py-0.5 border text-[10px] ${
                     order.payment_status === "paid"
                       ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30"
+                      : order.payment_status === "refunded"
+                      ? "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30"
                       : "bg-amber-500/10 text-amber-700 border-amber-500/30"
                   }`}
                 >

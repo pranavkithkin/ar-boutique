@@ -1,6 +1,7 @@
 "use server"
 
 import "server-only"
+import { headers } from "next/headers"
 import { auth, currentUser } from "@clerk/nextjs/server"
 import { createAdminClient } from "@/lib/supabase/server"
 import { isClerkConfigured } from "@/lib/clerk"
@@ -588,10 +589,10 @@ export async function placeCheckoutOrderAction(
       order_id: orderId,
       event_type: isCod ? "cod_order_placed" : "card_order_placed",
       from_status: null,
-      to_status: isCod ? "pending" : "confirmed",
+      to_status: "pending",
       note: isCod
         ? `Order placed via Cash on Delivery. Awaiting phone or WhatsApp confirmation within ${confirmHours} hours.`
-        : "Order placed and confirmed successfully via Card payment.",
+        : "Order initiated. Awaiting card payment confirmation from Stripe.",
       actor_sub: clerkUserId || "storefront_shopper",
     })
 
@@ -654,9 +655,20 @@ export async function placeCheckoutOrderAction(
     let redirectUrl = `/checkout/received/${encodeURIComponent(orderNumber)}`
 
     if (!isCod) {
+      let detectedOrigin: string | null = null
+      try {
+        const headerList = await headers()
+        const host = headerList.get("x-forwarded-host") || headerList.get("host")
+        const proto = headerList.get("x-forwarded-proto") || (host?.includes("localhost") ? "http" : "https")
+        detectedOrigin = headerList.get("origin") || (host ? `${proto}://${host}` : null)
+      } catch {
+        // Fall back to environment variables
+      }
+
       const siteUrl =
+        detectedOrigin ||
         process.env.NEXT_PUBLIC_SITE_URL ||
-        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://www.thearboutique.com")
       const successUrl = `${siteUrl}/checkout/success?orderNumber=${encodeURIComponent(orderNumber)}&session_id={CHECKOUT_SESSION_ID}`
       const cancelUrl = `${siteUrl}/checkout`
 

@@ -6,14 +6,7 @@ import { JOURNAL_ENABLED } from "@/lib/journal"
 import { AnnouncementBar } from "@/components/store/AnnouncementBar"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+import { JournalPageHeader } from "@/features/blog/components/JournalPageHeader"
 import { Badge } from "@/components/ui/badge"
 import { StoreButton } from "@/components/store/StoreButton"
 import { ArrowRight, Calendar, Clock, Sparkles } from "lucide-react"
@@ -35,7 +28,6 @@ export default function JournalPage() {
 
   const articles = getAllArticles()
   const featured = getFeaturedArticle()
-  const remainingArticles = articles.filter((a) => a.slug !== featured.slug)
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -43,39 +35,13 @@ export default function JournalPage() {
       <StoreHeader />
 
       <main className="flex-1 pb-20">
-        {/* Page Hero Header */}
-        <div className="bg-muted/50 py-8 md:py-12 border-b border-border/40">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-            <Breadcrumb className="mb-4 md:mb-6">
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/" className="hover:text-foreground">
-                    Home
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>The Journal</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-
-            <div className="text-center">
-              <h1 className="text-3xl sm:text-4xl font-heading font-normal text-foreground tracking-tight mb-3">
-                The Journal
-              </h1>
-              <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
-                Reflections on heritage crafts, modern silhouette styling, and the unhurried artistry behind our signature collections.
-              </p>
-            </div>
-          </div>
-        </div>
+        <JournalPageHeader />
 
         <div className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-8 mt-10 md:mt-14 flex flex-col gap-14 md:gap-20">
           {/* Featured Lead Story */}
           {featured && (
             <FadeIn delay={0.05}>
-              <div className="group relative overflow-hidden rounded-xs border border-border/60 bg-card shadow-xs hover:shadow-md transition-shadow duration-500">
+              <div className="group relative overflow-hidden rounded-none border border-border/60 bg-card shadow-xs hover:shadow-md transition-shadow duration-500">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
                   {/* Visual Column */}
                   <div className="relative lg:col-span-7 h-[300px] sm:h-[400px] lg:h-[480px] overflow-hidden bg-muted">
@@ -86,6 +52,7 @@ export default function JournalPage() {
                       sizes="(max-width: 1024px) 100vw, 60vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                       priority
+                      unoptimized
                     />
                     <div className="absolute top-4 left-4 z-10">
                       <Badge className="bg-foreground text-background font-semibold text-xs tracking-wider uppercase flex items-center gap-1.5 px-3 py-1 shadow-sm">
@@ -98,7 +65,7 @@ export default function JournalPage() {
                   {/* Editorial Text Column */}
                   <div className="lg:col-span-5 p-6 sm:p-8 md:p-12 flex flex-col justify-between bg-card">
                     <div className="flex flex-col gap-4">
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                         <span className="font-semibold uppercase tracking-wider text-primary">
                           {featured.category}
                         </span>
@@ -126,12 +93,10 @@ export default function JournalPage() {
                     </div>
 
                     <div className="pt-6 sm:pt-8">
-                      <Link href={`/journal/${featured.slug}`}>
-                        <StoreButton className="w-full sm:w-auto px-8 gap-2 group-hover:bg-foreground/90">
+                        <StoreButton render={<Link href={`/journal/${featured.slug}`} />} className="w-full sm:w-auto px-8 gap-2 group-hover:bg-foreground/90">
                           <span>Read Article</span>
                           <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                         </StoreButton>
-                      </Link>
                     </div>
                   </div>
                 </div>

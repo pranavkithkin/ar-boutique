@@ -208,8 +208,8 @@ export function getAllArticles(): JournalArticle[] {
   return JOURNAL_ARTICLES
 }
 
-export function getFeaturedArticle(): JournalArticle {
-  return JOURNAL_ARTICLES.find((a) => a.featured) || JOURNAL_ARTICLES[0]
+export function getFeaturedArticle(articles: JournalArticle[] = JOURNAL_ARTICLES): JournalArticle | undefined {
+  return articles.find((a) => a.featured) || articles[0]
 }
 
 export function getArticleBySlug(slug: string): JournalArticle | undefined {

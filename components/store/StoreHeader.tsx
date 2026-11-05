@@ -11,7 +11,6 @@ import { useCartStore } from "@/features/cart/store"
 import { useWishlistStore } from "@/features/wishlist/store"
 import { CategoryMenu, useMenuCategories } from "@/components/store/CategoryMenu"
 import { SearchModal } from "@/components/store/SearchModal"
-import { JOURNAL_ENABLED } from "@/lib/journal"
 
 const subscribeToHydration = () => () => {}
 
@@ -104,7 +103,6 @@ export function StoreHeader() {
                 <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans font-medium hover:opacity-70">Home</Link>
                 <Link href="/collections" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans font-medium hover:opacity-70">Collections</Link>
                 <CategoryMenu {...categories} mobile onNavigate={() => setIsMobileMenuOpen(false)} />
-                {JOURNAL_ENABLED && <Link href="/journal" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans font-medium hover:opacity-70">Journal</Link>}
                 <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans font-medium hover:opacity-70">About</Link>
                 <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans font-medium hover:opacity-70">Contact Us</Link>
                 <div className="mt-8 flex flex-col gap-4 border-t border-border pt-8">
@@ -183,7 +181,6 @@ export function StoreHeader() {
         >
           <Link href="/" className="hover:opacity-70 transition-opacity">Home</Link>
           <CategoryMenu {...categories} />
-          {JOURNAL_ENABLED && <Link href="/journal" className="hover:opacity-70 transition-opacity">Journal</Link>}
           <Link href="/about" className="hover:opacity-70 transition-opacity">About</Link>
           <Link href="/contact" className="hover:opacity-70 transition-opacity">Contact Us</Link>
         </nav>

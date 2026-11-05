@@ -24,6 +24,7 @@ export function JournalList({ articles, initialCategory = "All" }: JournalListPr
 
   return (
     <div className="flex flex-col gap-10 md:gap-14">
+      <p role="status" className="sr-only">{filteredArticles.length} {filteredArticles.length === 1 ? "story" : "stories"} in {selectedCategory}</p>
       {/* Category Pills Filter */}
       <div className="flex items-center justify-start md:justify-center gap-2 sm:gap-2.5 overflow-x-auto pb-2 scrollbar-none">
         {JOURNAL_CATEGORIES.map((cat) => {
@@ -31,8 +32,10 @@ export function JournalList({ articles, initialCategory = "All" }: JournalListPr
           return (
             <button
               key={cat}
+              type="button"
+              aria-pressed={isActive}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold tracking-[0.12em] uppercase transition-all duration-300 cursor-pointer shrink-0 border ${
+              className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-none text-[11px] sm:text-xs font-semibold tracking-[0.12em] uppercase transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer shrink-0 border ${
                 isActive
                   ? "bg-foreground text-background border-foreground shadow-xs"
                   : "bg-background text-muted-foreground hover:text-foreground border-border/80 hover:border-foreground/40 hover:bg-muted/40"
@@ -56,7 +59,7 @@ export function JournalList({ articles, initialCategory = "All" }: JournalListPr
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
             >
-              <Link href={`/journal/${article.slug}`} className="group block h-full">
+              <Link href={`/journal/${article.slug}`} className="group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 <Card className="flex flex-col h-full overflow-hidden border-border/60 hover:border-foreground/30 transition-colors duration-500 shadow-xs hover:shadow-md pt-0 bg-card">
                   {/* Image Container */}
                   <div className="relative aspect-[16/10] overflow-hidden w-full shrink-0 bg-muted">
@@ -65,7 +68,8 @@ export function JournalList({ articles, initialCategory = "All" }: JournalListPr
                       alt={article.title}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                      className="object-cover motion-safe:group-hover:scale-105 transition-transform duration-700 ease-out"
+                      unoptimized
                     />
                     <div className="absolute top-3 left-3">
                       <Badge variant="secondary" className="bg-background/95 backdrop-blur-xs text-[10px] font-semibold tracking-[0.14em] uppercase border-border/50 shadow-xs">

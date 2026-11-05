@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Badge } from "@/components/ui/badge"
 import { StoreButton } from "@/components/store/StoreButton"
-import { ArrowLeft, ArrowRight, Calendar, Clock, Share2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, Calendar, Clock } from "lucide-react"
 import {
   getArticleBySlug,
   getRelatedArticles,
@@ -49,9 +49,7 @@ export async function generateMetadata({
   const article = getArticleBySlug(slug)
 
   if (!article) {
-    return {
-      title: "Article Not Found | AR Boutique",
-    }
+    notFound()
   }
 
   return {
@@ -144,7 +142,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           {/* Hero Image */}
           <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 mt-8 md:mt-12">
             <FadeIn delay={0.08}>
-              <div className="relative aspect-[16/9] sm:aspect-[2.2/1] w-full overflow-hidden rounded-xs bg-muted shadow-sm">
+              <div className="relative aspect-[16/9] sm:aspect-[2.2/1] w-full overflow-hidden rounded-none bg-muted shadow-sm">
                 <Image
                   src={article.imageSrc}
                   alt={article.title}
@@ -152,6 +150,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   sizes="(max-width: 1240px) 100vw, 1240px"
                   className="object-cover"
                   priority
+                  unoptimized
                 />
               </div>
             </FadeIn>
@@ -161,7 +160,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           <div className="max-w-[780px] mx-auto px-4 sm:px-6 lg:px-8 mt-10 md:mt-16">
             <AnimatedSection delay={0.1}>
               {/* Lead Paragraph */}
-              <p className="text-lg sm:text-xl font-normal leading-relaxed text-foreground/90 font-serif mb-8 md:mb-10 first-letter:text-5xl first-letter:font-heading first-letter:float-left first-letter:mr-3 first-letter:leading-none first-letter:text-foreground">
+              <p className="text-lg sm:text-xl font-normal leading-relaxed text-foreground/90 font-heading mb-8 md:mb-10 first-letter:text-5xl first-letter:font-heading first-letter:float-left first-letter:mr-3 first-letter:leading-none first-letter:text-foreground">
                 {article.content.leadParagraph}
               </p>
 
@@ -178,7 +177,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                     <p className="leading-relaxed">{section.body}</p>
 
                     {section.quote && (
-                      <blockquote className="my-6 border-l-2 border-foreground pl-6 py-2 italic text-lg sm:text-xl text-foreground font-serif bg-muted/30 rounded-r-xs">
+                      <blockquote className="my-6 border-y border-border px-6 py-6 italic text-lg sm:text-xl text-foreground font-heading bg-muted/30">
                         &ldquo;{section.quote}&rdquo;
                       </blockquote>
                     )}
@@ -188,12 +187,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
               {/* Author & Back Navigation */}
               <div className="mt-14 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-6">
-                <Link href="/journal">
-                  <StoreButton variant="outline" className="gap-2">
+                  <StoreButton render={<Link href="/journal" />} variant="outline" className="gap-2">
                     <ArrowLeft className="w-4 h-4" />
                     <span>Back to All Stories</span>
                   </StoreButton>
-                </Link>
 
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>Published in {article.category}</span>
@@ -231,6 +228,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                             alt={rel.title}
                             fill
                             sizes="(max-width: 768px) 100vw, 33vw"
+                            unoptimized
                             className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                           />
                           <div className="absolute top-3 left-3">

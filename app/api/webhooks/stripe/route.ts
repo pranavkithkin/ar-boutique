@@ -239,8 +239,93 @@ export async function POST(req: NextRequest) {
         break
       }
 
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge
+        const paymentIntentId =
+          typeof charge.payment_intent === "string"
+            ? charge.payment_intent
+            : charge.payment_intent?.id || null
+
+        if (!paymentIntentId) break
+
+        console.log(`[Stripe Webhook] Charge refunded for payment intent ${paymentIntentId}`)
+
+        const isFullyRefunded = charge.refunded
+        const newPaymentStatus = isFullyRefunded ? "refunded" : "partially_refunded"
+
+        const { data: order } = await supabase
+          .from("orders")
+          .select("id, order_number, payment_status, total_fils")
+          .eq("stripe_payment_intent_id", paymentIntentId)
+          .maybeSingle()
+
+        if (order) {
+          await supabase
+            .from("orders")
+            .update({
+              payment_status: newPaymentStatus,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", order.id)
+
+          const refundedAed = ((charge.amount_refunded || 0) / 100).toFixed(2)
+          await supabase.from("order_events").insert({
+            order_id: order.id,
+            event_type: isFullyRefunded ? "payment_refunded" : "payment_partially_refunded",
+            from_status: order.payment_status,
+            to_status: newPaymentStatus,
+            note: `Stripe card charge ${newPaymentStatus}. Amount refunded: AED ${refundedAed} (Charge: ${charge.id}).`,
+            actor_sub: "stripe_webhook",
+          })
+        }
+        break
+      }
+
+      case "refund.created":
+      case "refund.updated": {
+        const refund = event.data.object as Stripe.Refund
+        const paymentIntentId =
+          typeof refund.payment_intent === "string"
+            ? refund.payment_intent
+            : refund.payment_intent?.id || null
+
+        if (!paymentIntentId || refund.status !== "succeeded") break
+
+        console.log(`[Stripe Webhook] Refund succeeded for payment intent ${paymentIntentId}`)
+
+        const { data: order } = await supabase
+          .from("orders")
+          .select("id, order_number, payment_status, total_fils")
+          .eq("stripe_payment_intent_id", paymentIntentId)
+          .maybeSingle()
+
+        if (order) {
+          const isFull = (refund.amount || 0) >= (order.total_fils || 0)
+          const newStatus = isFull ? "refunded" : "partially_refunded"
+
+          await supabase
+            .from("orders")
+            .update({
+              payment_status: newStatus,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", order.id)
+
+          const refundedAed = ((refund.amount || 0) / 100).toFixed(2)
+          await supabase.from("order_events").insert({
+            order_id: order.id,
+            event_type: "payment_refunded",
+            from_status: order.payment_status,
+            to_status: newStatus,
+            note: `Stripe refund ${refund.status}. Amount refunded: AED ${refundedAed} (Refund: ${refund.id}).`,
+            actor_sub: "stripe_webhook",
+          })
+        }
+        break
+      }
+
       default: {
-        // Other events (e.g. charge.refunded, payment_intent.succeeded) can be logged
+        // Other events (e.g. payment_intent.succeeded) can be logged
         console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`)
       }
     }

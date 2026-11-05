@@ -13,6 +13,7 @@ import {
 import { useCartStore } from "../store"
 import { formatAED } from "@/lib/money"
 import { StoreButton } from "@/components/store/StoreButton"
+import { getCartStockAvailabilityAction, type CartStockMap } from "../actions"
 
 export function CartDrawer() {
   const {
@@ -26,9 +27,26 @@ export function CartDrawer() {
 
   // Avoid hydration mismatch by waiting for mount
   const [mounted, setMounted] = React.useState(false)
+  const [stockMap, setStockMap] = React.useState<CartStockMap>({})
+
   React.useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Sync real-time available inventory when drawer is open
+  React.useEffect(() => {
+    if (!isOpen || items.length === 0) return
+    let cancelled = false
+    const skus = items.map((i) => i.sku)
+    getCartStockAvailabilityAction(skus).then((res) => {
+      if (!cancelled && res.success && res.data) {
+        setStockMap(res.data)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, items])
 
   if (!mounted) {
     return null
@@ -46,7 +64,7 @@ export function CartDrawer() {
         {/* Header */}
         <SheetHeader className="p-6 border-b border-border/80 flex flex-row items-center justify-between">
           <div className="flex items-baseline gap-2">
-            <SheetTitle className="font-heading text-2xl font-normal tracking-wide text-foreground">
+            <SheetTitle className="font-sans text-xl font-semibold tracking-tight text-foreground">
               Your Bag
             </SheetTitle>
             <span className="text-xs text-muted-foreground uppercase tracking-widest">
@@ -62,7 +80,7 @@ export function CartDrawer() {
               <ShoppingBag className="w-8 h-8 stroke-[1.25]" />
             </div>
             <div className="flex flex-col gap-1 max-w-xs">
-              <h3 className="font-heading text-xl font-normal text-foreground">
+              <h3 className="font-sans text-lg font-semibold tracking-tight text-foreground">
                 Your bag is empty
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -82,7 +100,14 @@ export function CartDrawer() {
           <>
             {/* Items list */}
             <div className="flex-1 overflow-y-auto divide-y divide-border/60 p-6 space-y-4">
-              {items.map((item) => (
+              {items.map((item) => {
+                const stock = stockMap[item.sku]
+                const maxAllowed = stock ? stock.maxAllowed : 5
+                const isSoldOut = stock ? stock.isSoldOut : false
+                const unitsLeft = stock ? stock.unitsLeft : null
+                const isAtMax = item.quantity >= maxAllowed || isSoldOut
+
+                return (
                 <div key={item.sku} className="pt-4 first:pt-0 flex gap-4">
                   {/* Thumbnail */}
                   <div className="relative w-20 h-26 bg-muted/30 shrink-0 overflow-hidden rounded-xs border border-border/50">
@@ -130,6 +155,20 @@ export function CartDrawer() {
                       <div className="text-[11px] font-mono text-muted-foreground/75">
                         SKU: {item.sku}
                       </div>
+
+                      {isSoldOut ? (
+                        <div className="text-[11px] font-medium text-destructive mt-0.5">
+                          Sold out in boutique
+                        </div>
+                      ) : unitsLeft !== null ? (
+                        <div className="text-[11px] font-medium text-amber-700 dark:text-amber-400 mt-0.5">
+                          Only {unitsLeft} left in stock
+                        </div>
+                      ) : isAtMax && maxAllowed < 5 ? (
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          Maximum available reached ({maxAllowed})
+                        </div>
+                      ) : null}
                     </div>
 
                     {/* Price and Quantity Controls */}
@@ -148,9 +187,16 @@ export function CartDrawer() {
                         </span>
                         <button
                           onClick={() => updateQuantity(item.sku, item.quantity + 1)}
-                          disabled={item.quantity >= 5}
+                          disabled={isAtMax}
                           aria-label="Increase quantity"
-                          className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors"
+                          title={
+                            isSoldOut
+                              ? "Currently sold out"
+                              : isAtMax
+                              ? `Maximum available quantity reached (${maxAllowed})`
+                              : "Increase quantity"
+                          }
+                          className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors cursor-pointer disabled:cursor-not-allowed"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -162,17 +208,22 @@ export function CartDrawer() {
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* Footer with subtotal and checkout */}
             <div className="p-6 border-t border-border bg-card/40 flex flex-col gap-4">
+              {items.some((i) => stockMap[i.sku]?.isSoldOut) && (
+                <div className="p-2.5 bg-destructive/10 border border-destructive/20 text-destructive text-[11px] font-medium leading-tight">
+                  One or more items in your bag are currently sold out. Please remove them to proceed.
+                </div>
+              )}
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between text-sm text-foreground">
                   <span className="text-muted-foreground uppercase text-xs tracking-wider">
                     Subtotal
                   </span>
-                  <span className="text-lg font-heading font-normal tabular-nums text-foreground">
+                  <span className="text-lg font-sans font-semibold tabular-nums text-foreground">
                     {formatAED(subtotalFils)}
                   </span>
                 </div>

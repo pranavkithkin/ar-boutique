@@ -401,8 +401,8 @@ export function ProductInfo({
             </span>
             <button
               type="button"
-              onClick={() => setQuantity((q) => Math.min(5, q + 1))}
-              disabled={quantity >= 5 || !isAvailable}
+              onClick={() => setQuantity((q) => Math.min(unitsLeft !== null ? Math.min(5, Math.max(0, unitsLeft)) : 5, q + 1))}
+              disabled={quantity >= (unitsLeft !== null ? Math.min(5, Math.max(0, unitsLeft)) : 5) || !isAvailable}
               aria-label="Increase quantity"
               className="flex-1 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors h-full"
             >

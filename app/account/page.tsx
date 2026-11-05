@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/breadcrumb"
 import { AccountView } from "@/features/account/components/AccountView"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
   title: "Account | AR Boutique",
   description:

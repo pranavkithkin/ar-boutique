@@ -21,6 +21,7 @@ import {
   FREE_DELIVERY_MINIMUM_LABEL,
 } from "@/lib/money"
 import { StoreButton } from "@/components/store/StoreButton"
+import { getCartStockAvailabilityAction, type CartStockMap } from "../actions"
 
 export function CartView() {
   const {
@@ -33,9 +34,26 @@ export function CartView() {
 
   // Wait for client mount to avoid hydration mismatch
   const [mounted, setMounted] = React.useState(false)
+  const [stockMap, setStockMap] = React.useState<CartStockMap>({})
+
   React.useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Sync real-time available inventory for cart items
+  React.useEffect(() => {
+    if (items.length === 0) return
+    let cancelled = false
+    const skus = items.map((i) => i.sku)
+    getCartStockAvailabilityAction(skus).then((res) => {
+      if (!cancelled && res.success && res.data) {
+        setStockMap(res.data)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [items])
 
   if (!mounted) {
     return (
@@ -93,7 +111,14 @@ export function CartView() {
         </div>
 
         <div className="divide-y divide-border/60">
-          {items.map((item) => (
+          {items.map((item) => {
+            const stock = stockMap[item.sku]
+            const maxAllowed = stock ? stock.maxAllowed : 5
+            const isSoldOut = stock ? stock.isSoldOut : false
+            const unitsLeft = stock ? stock.unitsLeft : null
+            const isAtMax = item.quantity >= maxAllowed || isSoldOut
+
+            return (
             <div key={item.sku} className="py-6 first:pt-2 flex gap-5 sm:gap-6">
               {/* Product Thumbnail */}
               <div className="relative w-24 sm:w-28 h-32 sm:h-36 bg-muted/30 shrink-0 overflow-hidden rounded-xs border border-border/60">
@@ -140,6 +165,20 @@ export function CartView() {
                   <div className="text-[11px] font-mono text-muted-foreground/75">
                     SKU: {item.sku}
                   </div>
+
+                  {isSoldOut ? (
+                    <div className="text-xs font-medium text-destructive mt-1">
+                      Sold out in boutique
+                    </div>
+                  ) : unitsLeft !== null ? (
+                    <div className="text-xs font-medium text-amber-700 dark:text-amber-400 mt-1">
+                      Only {unitsLeft} left in stock
+                    </div>
+                  ) : isAtMax && maxAllowed < 5 ? (
+                    <div className="text-[11px] text-muted-foreground mt-1">
+                      Maximum available reached ({maxAllowed})
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Stepper & Price */}
@@ -158,9 +197,16 @@ export function CartView() {
                     </span>
                     <button
                       onClick={() => updateQuantity(item.sku, item.quantity + 1)}
-                      disabled={item.quantity >= 5}
+                      disabled={isAtMax}
                       aria-label="Increase quantity"
-                      className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+                      title={
+                        isSoldOut
+                          ? "Currently sold out"
+                          : isAtMax
+                          ? `Maximum available quantity reached (${maxAllowed})`
+                          : "Increase quantity"
+                      }
+                      className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors cursor-pointer disabled:cursor-not-allowed"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
@@ -179,7 +225,7 @@ export function CartView() {
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
 
         {/* Confidence Badges */}
@@ -279,12 +325,24 @@ export function CartView() {
 
         {/* Action Buttons */}
         <div className="space-y-3 pt-2">
-          <Link href="/checkout" className="block w-full">
-            <StoreButton className="w-full h-12 uppercase tracking-widest text-xs flex items-center justify-center gap-2">
-              <span>Proceed to Checkout</span>
-              <ArrowRight className="w-4 h-4" />
+          {items.some((i) => stockMap[i.sku]?.isSoldOut) && (
+            <div className="p-3 bg-destructive/10 border border-destructive/25 text-destructive text-xs font-medium leading-normal rounded-xs">
+              Some items in your shopping bag are out of stock. Please remove them before proceeding to checkout.
+            </div>
+          )}
+
+          {items.some((i) => stockMap[i.sku]?.isSoldOut) ? (
+            <StoreButton disabled className="w-full h-12 uppercase tracking-widest text-xs opacity-50 cursor-not-allowed">
+              <span>Cannot Proceed (Sold Out Items)</span>
             </StoreButton>
-          </Link>
+          ) : (
+            <Link href="/checkout" className="block w-full">
+              <StoreButton className="w-full h-12 uppercase tracking-widest text-xs flex items-center justify-center gap-2">
+                <span>Proceed to Checkout</span>
+                <ArrowRight className="w-4 h-4" />
+              </StoreButton>
+            </Link>
+          )}
 
           <Link href="/collections" className="block w-full">
             <StoreButton variant="outline" className="w-full h-10 uppercase tracking-widest text-xs">

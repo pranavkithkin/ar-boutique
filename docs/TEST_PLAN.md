@@ -119,6 +119,7 @@ After every task: typecheck -> lint -> tokens -> unit -> DB -> integration -> E2
 - Card checkout is unchanged
 
 ## Orders
+- Guest tracking (`/track-order`): opens while signed out; requires a valid order UUID and exact checkout email; order numbers are rejected; wrong credentials return a generic no-match result; result contains only status, courier and tracking reference. Card/COD confirmation emails include the UUID and tracking link. Confirmation pages reveal the UUID only with a matching customer session or stored Stripe Checkout Session.
 - Admin moves an order Confirmed -> Packed -> Shipped (courier and tracking number) -> Delivered; the timeline shows each change and who made it
 - The customer sees the same status in My orders
 - Order lines show colour, size and SKU in the admin, My orders, emails and the invoice

@@ -5,6 +5,7 @@ import { auth, currentUser } from "@clerk/nextjs/server"
 import { isClerkConfigured } from "@/lib/clerk"
 import { getCurrentCustomerAction } from "@/features/auth/actions"
 import { createAdminClient } from "@/lib/supabase/server"
+import { sendOrderCancelledEmail } from "@/lib/email"
 import type { AccountAddress, AccountOrder, AccountOrderItem, AccountUserProfile } from "./types"
 
 const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "q8qdyl3f"
@@ -40,16 +41,19 @@ function mapStatusToAccount(rawStatus: string): {
     case "shipped":
       return { status: "shipped", statusLabel: "Out for Delivery" }
     case "packed":
-      return { status: "confirmed", statusLabel: "Being Prepared" }
+      return { status: "packed", statusLabel: "Being Prepared" }
+    case "confirmed":
+      return { status: "confirmed", statusLabel: "Confirmed" }
     case "awaiting_confirmation":
-      return { status: "confirmed", statusLabel: "Awaiting Confirmation" }
+      return { status: "pending", statusLabel: "Awaiting Confirmation" }
+    case "pending":
+      return { status: "pending", statusLabel: "Pending Confirmation" }
     case "cancelled":
       return { status: "cancelled", statusLabel: "Cancelled" }
     case "returned_to_sender":
       return { status: "cancelled", statusLabel: "Returned to Boutique" }
-    case "confirmed":
     default:
-      return { status: "confirmed", statusLabel: "Confirmed" }
+      return { status: "pending", statusLabel: "Pending" }
   }
 }
 
@@ -80,9 +84,7 @@ function mapRawOrderToAccountOrder(order: any): AccountOrder {
     sizeLabel: it.size_label || "One Size",
     quantity: it.quantity || 1,
     priceFils: it.unit_price_fils || 0,
-    imageSrc:
-      getCloudinaryUrl(it.media_key) ||
-      "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=400&q=80",
+    imageSrc: getCloudinaryUrl(it.media_key) || "",
   }))
 
   return {
@@ -94,6 +96,8 @@ function mapRawOrderToAccountOrder(order: any): AccountOrder {
     trackingNumber: order.tracking_number || undefined,
     courierName: order.courier || order.courier_name || undefined,
     paymentMethod: order.payment_method === "cod" ? "cod" : "card",
+    paymentStatus: order.payment_status || "pending",
+    cancellationReason: order.cancellation_reason || undefined,
     subtotalFils: order.subtotal_fils || 0,
     deliveryFeeFils: order.delivery_fee_fils || 0,
     vatFils: order.vat_fils || 0,
@@ -430,6 +434,154 @@ export async function getCustomerOrderDetailsAction(
     return { success: true, order }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to load order"
+    return { success: false, error: msg }
+  }
+}
+
+/**
+ * Customer-initiated cancellation request for an open, unfulfilled order.
+ * - Confirms customer authorization.
+ * - Ensures order is pre-shipment (not shipped, delivered, or already cancelled).
+ * - Updates order status to "cancelled" and records customer reason.
+ * - Releases reserved inventory in `stock_levels`.
+ * - Records audit timeline event in `order_events`.
+ * - Dispatches cancellation confirmation email.
+ */
+export async function cancelCustomerOrderAction(input: {
+  orderIdOrNumber: string
+  reason: string
+  userEmail?: string
+}): Promise<{ success: boolean; error?: string }> {
+  const cleanParam = input.orderIdOrNumber.trim()
+  const cleanReason = (input.reason || "Customer requested cancellation").trim()
+
+  if (!cleanParam) {
+    return { success: false, error: "Order reference is required." }
+  }
+
+  // 1. Resolve authorized user email
+  let authorizedEmail = input.userEmail?.toLowerCase().trim()
+
+  if (!authorizedEmail) {
+    if (isClerkConfigured()) {
+      try {
+        const { userId } = await auth()
+        if (userId) {
+          const clerkUser = await currentUser()
+          authorizedEmail = clerkUser?.primaryEmailAddress?.emailAddress?.toLowerCase().trim()
+        }
+      } catch {
+        // Ignore
+      }
+    }
+
+    if (!authorizedEmail) {
+      try {
+        const session = await getCurrentCustomerAction()
+        authorizedEmail = session?.email?.toLowerCase().trim()
+      } catch {
+        // Ignore
+      }
+    }
+  }
+
+  if (!authorizedEmail) {
+    return { success: false, error: "You must be signed in to cancel this order." }
+  }
+
+  try {
+    const adminDb = createAdminClient()
+
+    // 2. Fetch order to verify ownership and eligible status
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanParam)
+    let query = adminDb
+      .from("orders")
+      .select("id, order_number, email, status, payment_method, payment_status, total_fils, order_items(variant_id, quantity)")
+      .ilike("email", authorizedEmail)
+
+    if (isUuid) {
+      query = query.eq("id", cleanParam)
+    } else {
+      query = query.ilike("order_number", cleanParam)
+    }
+
+    const { data: order, error } = await query.maybeSingle()
+
+    if (error || !order) {
+      return { success: false, error: "Order not found or you are not authorized to cancel it." }
+    }
+
+    // 3. Verify order status allows cancellation
+    if (order.status === "cancelled") {
+      return { success: false, error: "This order is already cancelled." }
+    }
+    if (order.status === "shipped" || order.status === "delivered") {
+      return {
+        success: false,
+        error: "This order has already been dispatched. You can request a return after delivery.",
+      }
+    }
+    if (order.status === "returned_to_sender") {
+      return { success: false, error: "This order has already been returned." }
+    }
+
+    const previousStatus = order.status
+
+    // 4. Update order to cancelled
+    const { error: updateErr } = await adminDb
+      .from("orders")
+      .update({
+        status: "cancelled",
+        cancelled_at: new Date().toISOString(),
+        cancellation_reason: cleanReason,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", order.id)
+
+    if (updateErr) {
+      return { success: false, error: updateErr.message }
+    }
+
+    // 5. Release any reserved inventory back to stock_levels
+    if (Array.isArray(order.order_items)) {
+      for (const item of order.order_items) {
+        if (item.variant_id) {
+          const { data: stock } = await adminDb
+            .from("stock_levels")
+            .select("reserved")
+            .eq("variant_id", item.variant_id)
+            .maybeSingle()
+
+          if (stock && typeof stock.reserved === "number" && stock.reserved > 0) {
+            await adminDb
+              .from("stock_levels")
+              .update({
+                reserved: Math.max(0, stock.reserved - (item.quantity || 1)),
+              })
+              .eq("variant_id", item.variant_id)
+          }
+        }
+      }
+    }
+
+    // 6. Log timeline audit event
+    await adminDb.from("order_events").insert({
+      order_id: order.id,
+      event_type: "customer_order_cancelled",
+      from_status: previousStatus,
+      to_status: "cancelled",
+      note: `Cancelled by customer: ${cleanReason}`,
+      actor_sub: authorizedEmail,
+    })
+
+    // 7. Dispatch cancellation email in background
+    void sendOrderCancelledEmail(order.id, cleanReason, order.email).catch((e) =>
+      console.warn("[Account Cancel Order] Email error:", e)
+    )
+
+    return { success: true }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to cancel order"
     return { success: false, error: msg }
   }
 }

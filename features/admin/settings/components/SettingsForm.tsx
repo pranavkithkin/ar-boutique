@@ -22,6 +22,7 @@ import {
   Receipt,
   CreditCard,
   ArrowRight,
+  ImageIcon,
 } from "lucide-react"
 
 interface SettingsFormProps {
@@ -436,6 +437,32 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
               {s.announcement_bar_text.length} / 120 characters
             </p>
           </FieldRow>
+        </div>
+      </SectionCard>
+
+      {/* ── Banners & Hero Carousel Shortcut ── */}
+      <SectionCard
+        icon={<ImageIcon className="size-4" />}
+        title="Hero & Promo Banners"
+        description="Rotating hero carousel slides and promo banners are managed in their dedicated admin section."
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border border-border bg-muted/20">
+          <div className="space-y-1.5">
+            <span className="text-xs font-sans font-medium text-foreground">
+              Storefront Hero Carousel
+            </span>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Upload high-resolution desktop (2:1) and mobile images, reorder slides, adjust link destinations, and toggle visibility.
+            </p>
+          </div>
+
+          <Link
+            href="/admin/banners"
+            className="inline-flex items-center justify-center gap-2 h-9 px-4 text-xs font-medium border border-border bg-background hover:bg-muted text-foreground transition-colors shrink-0"
+          >
+            <span>Manage Banners & Carousel</span>
+            <ArrowRight className="size-3.5" />
+          </Link>
         </div>
       </SectionCard>
 

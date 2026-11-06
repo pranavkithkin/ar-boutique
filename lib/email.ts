@@ -128,6 +128,8 @@ export async function sendOrderConfirmationEmail(
       to: [toEmail],
       subject,
       react: OrderConfirmationEmail({
+        orderId: order.id,
+        trackingUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://www.thearboutique.com").replace(/\/$/, "")}/track-order`,
         orderNumber: order.order_number,
         orderDate,
         customerName: order.customer_name || "Valued Patron",

@@ -115,6 +115,7 @@ Done when: each paid order (card at payment, COD when the cash is collected) sen
 - [x] TASK-064 Bilingual Tax Invoice (lines show colour, size and client SKU; UAE FTA Article 59 compliant, gapless sequential numbering INV-YYYY-XXXX, English/Arabic layout), `/api/invoices/[orderId]` route with 1-click print/PDF download, and direct link in OrderConfirmationEmail
 
 ## Phase 8: Orders
+- [x] TASK-128 Guest order tracking: footer link, public UUID + checkout email lookup, minimal status/shipment result, and Order ID distribution in confirmations. Signed-out route verified, 18 focused tests and full 104-test suite passing.
 Done when: the admin moves an order to Delivered (a COD order through confirm, ship and cash collected) and the customer sees it in My orders.
 - [x] TASK-065 Admin orders list: search (order number, email, phone, SKU), filters (status, payment method), new badge
 - [x] TASK-066 Admin order detail: items with colour, size and SKU, customer, address, payment method and payment, COD details (deadline, cash collected, payout), timeline, internal notes; actions shown per status

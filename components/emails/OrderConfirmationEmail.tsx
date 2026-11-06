@@ -25,6 +25,8 @@ export interface OrderItemEmailData {
 }
 
 export interface OrderConfirmationEmailProps {
+  orderId?: string
+  trackingUrl?: string
   orderNumber: string
   orderDate: string
   customerName: string
@@ -51,6 +53,8 @@ export interface OrderConfirmationEmailProps {
 }
 
 export function OrderConfirmationEmail({
+  orderId,
+  trackingUrl,
   orderNumber = "AR-1001",
   orderDate = "October 19, 2026",
   customerName = "Valued Patron",
@@ -103,6 +107,14 @@ export function OrderConfirmationEmail({
               <strong style={orderNumberHighlight}>#{orderNumber}</strong> placed on{" "}
               {orderDate}.
             </Text>
+            {orderId && (
+              <Text style={subheading}>
+                Order ID: <strong>{orderId}</strong>
+                <br />
+                Use this ID and your checkout email to check your order status.
+                {trackingUrl && <><br /><a href={trackingUrl}>Track Your Order</a></>}
+              </Text>
+            )}
           </Section>
 
           {/* COD Notice Box */}

@@ -40,6 +40,7 @@ export async function generateMetadata({
   const { orderNumber } = await params
   return {
     title: `Order Received #${orderNumber} | AR Boutique`,
+    robots: { index: false, follow: false },
     description: `Your AR Boutique order #${orderNumber} has been received. Cash on delivery confirmation in progress.`,
   }
 }

@@ -8,6 +8,7 @@ import { AdminOrderDetail, AdminOrderItem, AdminOrderEvent, OrderStatus } from "
 import { updateOrderStatusAction, updateOrderNotesAction, resendOrderConfirmationEmailAction } from "../actions"
 import { OrderCancelDialog } from "./OrderCancelDialog"
 import { ResendEmailDialog } from "./ResendEmailDialog"
+import { OrderStripeRefundDialog } from "./OrderStripeRefundDialog"
 import { formatAED } from "@/lib/money"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +29,8 @@ import {
   Mail,
   FileText,
   AlertTriangle,
+  AlertCircle,
+  RefreshCw,
   Loader2,
   Save,
 } from "lucide-react"
@@ -91,6 +94,7 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
 
   const [isSendingEmail, setIsSendingEmail] = React.useState(false)
   const [emailNotice, setEmailNotice] = React.useState<string | null>(null)
+  const [isRefundModalOpen, setIsRefundModalOpen] = React.useState(false)
 
   async function handleResendEmail() {
     if (isSendingEmail) return
@@ -209,6 +213,18 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
             </Button>
           )}
 
+          {/* Refund via Stripe */}
+          {order.payment_method === "card" && order.payment_status === "paid" && (
+            <Button
+              onClick={() => setIsRefundModalOpen(true)}
+              className="h-9 px-3 text-xs font-sans font-medium uppercase tracking-[0.08em] rounded-none bg-purple-700 hover:bg-purple-800 text-white gap-1.5"
+              title="Issue full card refund directly via Stripe"
+            >
+              <RefreshCw className="size-3.5" />
+              Refund via Stripe
+            </Button>
+          )}
+
           {/* Resend Customer Notification Email */}
           <Button
             onClick={() => setIsResendEmailModalOpen(true)}
@@ -247,6 +263,37 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
           >
             Dismiss
           </button>
+        </div>
+      )}
+
+      {/* Cancelled & Paid Alert Banner */}
+      {order.status === "cancelled" && order.payment_method === "card" && order.payment_status === "paid" && (
+        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 px-4 py-3 rounded-none text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-2">
+            <AlertCircle className="size-4 shrink-0 text-amber-600 mt-0.5 sm:mt-0" />
+            <div>
+              <span className="font-semibold uppercase tracking-wider">Cancellation Pending Card Refund:</span>{" "}
+              {order.cancellation_reason ? `Reason: "${order.cancellation_reason}"` : "This order has been cancelled and is ready for Stripe card refund."}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setIsRefundModalOpen(true)}
+            className="h-8 px-3 text-xs bg-purple-700 hover:bg-purple-800 text-white rounded-none shrink-0 gap-1.5 font-sans font-medium uppercase tracking-wider"
+          >
+            <RefreshCw className="size-3.5" />
+            Refund via Stripe ({formatAED(order.total_fils)})
+          </Button>
+        </div>
+      )}
+
+      {/* Refunded confirmation banner */}
+      {order.payment_status === "refunded" && (
+        <div className="bg-purple-500/10 border border-purple-500/30 text-purple-900 dark:text-purple-200 px-4 py-2.5 rounded-none text-xs flex items-center gap-2">
+          <CheckCircle2 className="size-4 shrink-0 text-purple-600" />
+          <span>
+            <strong>Payment Refunded:</strong> A full refund of {formatAED(order.total_fils)} has been processed to the customer&apos;s card via Stripe.
+          </span>
         </div>
       )}
 
@@ -548,6 +595,19 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
           setIsResendEmailModalOpen(false)
           setEmailNotice(msg)
           setTimeout(() => setEmailNotice(null), 6000)
+          router.refresh()
+        }}
+      />
+
+      {/* Stripe Direct Card Refund Modal */}
+      <OrderStripeRefundDialog
+        order={order}
+        isOpen={isRefundModalOpen}
+        onClose={() => setIsRefundModalOpen(false)}
+        onRefunded={(msg) => {
+          setIsRefundModalOpen(false)
+          setEmailNotice(msg)
+          setTimeout(() => setEmailNotice(null), 8000)
           router.refresh()
         }}
       />

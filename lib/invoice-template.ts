@@ -610,10 +610,9 @@ export function renderBilingualInvoiceHtml(data: InvoiceData, autoPrint = false)
           <span>ATELIER AUTHENTICATION</span>
           <div class="ar-text" style="font-size: 10px; font-weight: normal; margin-top: 1px;">الاعتماد والتوقيع</div>
         </div>
-        <div style="font-family: 'Newsreader', serif; font-style: italic; font-size: 14px; margin-bottom: 6px;">
+        <div style="font-family: 'Newsreader', serif; font-style: italic; font-size: 14px;">
           AR Boutique
         </div>
-        <div class="signature-line">Authorized Signatory / التوقيع المعتمد</div>
       </div>
     </footer>
 

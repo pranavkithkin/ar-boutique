@@ -18,6 +18,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Order Confirmed | AR Boutique",
+  robots: { index: false, follow: false },
   description: "Your payment has been confirmed and your AR Boutique order is being processed.",
 }
 
@@ -33,6 +34,8 @@ interface SuccessOrderItem {
 }
 
 interface SuccessOrder {
+  clerk_user_id?: string | null
+  stripe_session_id?: string | null
   id: string
   order_number: string
   customer_name: string
@@ -52,11 +55,12 @@ interface SuccessOrder {
 interface SuccessPageProps {
   searchParams: Promise<{
     orderNumber?: string
+    session_id?: string
   }>
 }
 
 export default async function CheckoutSuccessPage({ searchParams }: SuccessPageProps) {
-  const { orderNumber } = await searchParams
+  const { orderNumber, session_id } = await searchParams
   const decodedOrderNumber = orderNumber ? decodeURIComponent(orderNumber) : null
 
   let order: SuccessOrder | null = null

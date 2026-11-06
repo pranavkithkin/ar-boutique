@@ -3,9 +3,24 @@
 > The project's current state. Update it after every task. Permanent decisions go in `DECISIONS.md`.
 
 ## Current Status
+TASK-092 Blog Admin & TASK-093 Storefront Journal completed on 6 Nov 2026:
+- Fully connected the Storefront Journal (`/journal`, `/journal/[slug]`) to live Supabase `public.blog_posts` table with sanitization, responsive skeletons, category filtering, reading time indicators, related story cards, and atelier empty states.
+- Built complete editorial management system (`/admin/blog`, `/admin/blog/new`, `/admin/blog/[id]`). Implemented `BlogRichTextEditor` powered by EditorCN Toolbar Editor with Tiptap (headings, lists, blockquotes, code, link popover, text alignment, and dynamic word count).
+- Refined EditorCN design system overrides adhering strictly to `docs/DESIGN.md` (square corners, theme tokens, left-aligned toolbar, high-contrast active states, removed floating drop shadows and double borders).
+- Added direct signed Cloudinary cover image upload, slug generator, automatic reading time calculation, status lifecycle tabs (All, Published, Draft, Archived), search filtering, and SEO metadata configuration. Added unit test suites `tests/admin-blog.test.ts` and `tests/journal.test.ts`. Sidebar updated under Store Configuration. 83/83 Vitest tests passing, TypeScript clean.
+
+TASK-093 follow-up (5 Nov 2026): replaced the generic Journal loading blocks with a page-matched responsive skeleton, including the persistent storefront shell, shared title/breadcrumb banner, split featured story, category-filter placeholders and six article cards. Added `JournalPageHeader` and `JournalSkeleton` wrappers using existing shadcn primitives. Placeholders are hidden from assistive technology, with a single loading announcement and reduced-motion support.
+
+Skeleton follow-up validation: targeted ESLint and TypeScript passed. Local `/journal` returned HTTP 200 and included the shared header and loading state in the streamed response. No production build or additional unit tests run for this visual change; browser visual verification remains pending.
+
+TASK-093 storefront stage completed on 5 Nov 2026: Journal routes enabled with an Explore footer link, retaining the existing local editorial articles, category filtering, article detail and related stories. Header Journal links and the homepage promotion remain hidden. Added accessible filter selection/status, local-image handling, and loading/error/missing-story recovery. Admin publishing, Supabase blog persistence and Tiptap remain deferred to TASK-092. Existing editorial copy still needs client review before release. Work is on `feature/TASK-093-journal-storefront`, created from local `main` in `scratch/journal-storefront` to preserve the original checkout worktree.
+
+TASK-093 validation: existing Vitest suite passed (73 tests), plus 5 new Journal tests passed; targeted ESLint, TypeScript after `next typegen`, and `git diff --check` passed. Production webpack build compiled and passed TypeScript, then failed prerendering the existing `/checkout` because this isolated worktree has no `SUPABASE_SECRET_KEY`. Updated browser coverage in `tests/e2e/journal-storefront.spec.mjs` replaces the old disabled-Journal checks, but could not run because Playwright is not installed. The documented typecheck/token/E2E npm scripts are not present in this baseline; TypeScript was invoked directly. No dependencies installed and no deployment performed.
+
 Phase 1 (Setup), Phase 2 (Database Foundation), Phase 3 (Admin Access), Phase 4 (Catalogue & Product Management), Phase 6 (Cart & Secure Checkout), Phase 8 (Admin Orders Management), Phase 11 (Banners & Hero Carousel Admin), and Phase 12 (Store & Payment Settings) are implemented and functional. The boutique features full products catalogue management (variants, sizes, prices, stock adjustments, Cloudinary uploads), comprehensive store & payment settings (delivery fees, VAT, COD thresholds, FAQs, announcement bar sync), real-time storefront checkout with UAE delivery address pre-filling and COD eligibility verification, and full orders lifecycle management (database pagination, status filter tabs, transition skeleton loaders, order details inspection, status progression, and timeline audit logs).
 
 ## Completed
+- Blog Admin Management (TASK-092): Comprehensive editorial workspace for boutique staff (`/admin/blog`, `/admin/blog/new`, `/admin/blog/[id]`). Features EditorCN Tiptap rich-text toolbar, auto-calculated reading times, signed Cloudinary cover image uploads, status lifecycle filters (Draft, Published, Archived), and SEO metadata customization. Connected to `public.blog_posts`.
 - Research: stack, payments, auth, media, UAE compliance
 - Requirements interview with the tech lead
 - Project docs: PRD, ARCHITECTURE, DESIGN, RULES, TASKS, DECISIONS, TEST_PLAN, SECURITY, README, `.env.example`, Cursor rules

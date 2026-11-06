@@ -94,6 +94,11 @@ export const navGroups: SidebarNavGroup[] = [
 				icon: <ImageIcon />,
 			},
 			{
+				title: "Editorial Journal",
+				path: "/admin/blog",
+				icon: <BookOpenIcon />,
+			},
+			{
 				title: "Promo Codes & Discounts",
 				path: "/admin/coupons",
 				icon: <TicketPercentIcon />,

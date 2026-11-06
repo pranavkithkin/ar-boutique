@@ -58,12 +58,12 @@ export function AppSidebar() {
 				<SidebarMenu className="p-2">
 					<SidebarMenuItem>
 						<SidebarMenuButton
-							className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs font-sans rounded-none h-9 px-3 transition-colors cursor-pointer group-data-[collapsible=icon]:justify-center"
+							className="text-foreground/80 hover:text-destructive hover:bg-destructive/10 text-xs font-sans rounded-none h-9 px-3 transition-colors cursor-pointer group-data-[collapsible=icon]:justify-center"
 							size="sm"
 							onClick={() => setIsSignOutOpen(true)}
 							title="Sign out of Admin Console"
 						>
-							<LogOut className="size-4 shrink-0" />
+							<LogOut className="size-4 shrink-0 text-foreground/75" />
 							<span>Sign out</span>
 						</SidebarMenuButton>
 					</SidebarMenuItem>

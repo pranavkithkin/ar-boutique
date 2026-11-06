@@ -14,7 +14,7 @@ import {
   getStorefrontPromoBanners,
   getStorefrontHeroSlides,
 } from "@/features/admin/banners/actions"
-import { JOURNAL_ENABLED } from "@/lib/journal"
+import { JOURNAL_HOME_ENABLED } from "@/lib/journal"
 import {
   AnimatedSection,
   AnimatedDiv,
@@ -173,7 +173,7 @@ export default async function Home() {
         )}
 
         {/* Journal Section */}
-        {JOURNAL_ENABLED && (
+        {JOURNAL_HOME_ENABLED && (
         <AnimatedSection delay={0.1} className="pt-6 pb-10 md:pt-8 md:pb-16 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
           <SectionHeading className="mb-2">From the Journal</SectionHeading>
           <p className="text-[13px] text-muted-foreground mb-8 md:mb-12">Discover the latest trends, styling tips, and brand news.</p>

@@ -158,8 +158,8 @@ Done when: a received return is refunded through Stripe, with a credit note when
 Done when: the admin changes banners, publishes posts, and policy pages are live.
 - [x] TASK-090 Banners admin: placement (hero or promo), eyebrow, title, text, button, desktop + mobile image, order, on/off; Cloudinary upload integration, device live previews (desktop 8:3 vs mobile 4:5), reordering, status toggles, Supabase database synchronization (storefront kept on static images per user direction)
 - [x] TASK-091 Home page per `docs/DESIGN.md`: hero, shop by category, new arrivals, trust strip, promo banner, latest posts
-- [ ] TASK-092 Blog admin: Tiptap editor, cover image, SEO fields, Draft/Published
-- [ ] TASK-093 Blog list and post pages
+- [x] TASK-092 Blog admin: Tiptap editor with EditorCN toolbar, cover image Cloudinary upload, reading time calculation, SEO metadata fields, Draft/Published/Archived lifecycle management, and admin sidebar integration (`/admin/blog`, `/admin/blog/new`, `/admin/blog/[id]`).
+- [x] TASK-093 Blog list and post pages: footer Journal discovery, existing editorial articles and category filters, article detail/related stories, page-matched responsive skeleton and loading/error/not-found states. Static content for this storefront stage; admin publishing remains TASK-092.
 - [ ] TASK-094 Pages: About, Contact, Terms, Privacy, Returns & Refunds, Shipping & Delivery
 
 ## Phase 12: Dashboard and Settings

@@ -33,7 +33,7 @@ export function NavGroup({ label, items }: SidebarNavGroup) {
 	return (
 		<SidebarGroup className="py-2">
 			{label && (
-				<SidebarGroupLabel className="text-[10px] font-mono font-medium uppercase tracking-[0.2em] text-muted-foreground/70 px-3 py-1.5 h-auto">
+				<SidebarGroupLabel className="text-[10px] font-mono font-medium uppercase tracking-[0.2em] text-foreground/60 px-3 py-1.5 h-auto">
 					{label}
 				</SidebarGroupLabel>
 			)}
@@ -59,21 +59,21 @@ export function NavGroup({ label, items }: SidebarNavGroup) {
 													"h-9 px-3 text-[13px] font-sans tracking-tight transition-all rounded-xs",
 													active
 														? "!bg-foreground !text-background font-medium shadow-2xs hover:!bg-foreground hover:!text-background"
-														: "text-muted-foreground hover:text-foreground hover:!bg-accent/60"
+														: "text-foreground/80 hover:text-foreground hover:!bg-accent/60 font-normal"
 												)}
 											/>
 										}
 									>
 										<span className={cn(
-											"[&>svg]:size-4 [&>svg]:stroke-[1.5] shrink-0",
-											active ? "!text-background [&>svg]:!stroke-background" : "text-muted-foreground group-hover:text-foreground"
+											"[&>svg]:size-4 [&>svg]:stroke-[1.5] shrink-0 transition-colors",
+											active ? "!text-background [&>svg]:!stroke-background" : "text-foreground/75 group-hover:text-foreground"
 										)}>
 											{item.icon}
 										</span>
-										<span className={cn(active && "!text-background")}>{item.title}</span>
+										<span className={cn(active ? "!text-background" : "text-foreground/85 group-hover:text-foreground")}>{item.title}</span>
 										<ChevronRightIcon className={cn(
 											"ml-auto size-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90",
-											active ? "!text-background opacity-80" : "opacity-60"
+											active ? "!text-background opacity-80" : "text-foreground/60 group-hover:text-foreground"
 										)} />
 									</CollapsibleTrigger>
 									<CollapsibleContent>
@@ -88,17 +88,17 @@ export function NavGroup({ label, items }: SidebarNavGroup) {
 																"h-8 text-xs font-sans tracking-tight rounded-xs transition-colors",
 																subActive
 																	? "!bg-foreground !text-background font-medium"
-																	: "text-muted-foreground hover:text-foreground hover:!bg-accent/60"
+																	: "text-foreground/80 hover:text-foreground hover:!bg-accent/60 font-normal"
 															)}
 															render={<a href={subItem.path} />}
 														>
 															<span className={cn(
-																"[&>svg]:size-3.5 [&>svg]:stroke-[1.5] shrink-0",
-																subActive ? "!text-background [&>svg]:!stroke-background" : ""
+																"[&>svg]:size-3.5 [&>svg]:stroke-[1.5] shrink-0 transition-colors",
+																subActive ? "!text-background [&>svg]:!stroke-background" : "text-foreground/75"
 															)}>
 																{subItem.icon}
 															</span>
-															<span className={cn(subActive && "!text-background")}>{subItem.title}</span>
+															<span className={cn(subActive ? "!text-background" : "text-foreground/85 group-hover:text-foreground")}>{subItem.title}</span>
 														</SidebarMenuSubButton>
 													</SidebarMenuSubItem>
 												);
@@ -113,17 +113,17 @@ export function NavGroup({ label, items }: SidebarNavGroup) {
 										"h-9 px-3 text-[13px] font-sans tracking-tight transition-all rounded-xs group/btn",
 										active
 											? "!bg-foreground !text-background font-medium shadow-2xs hover:!bg-foreground hover:!text-background"
-											: "text-muted-foreground hover:text-foreground hover:!bg-accent/60"
+											: "text-foreground/80 hover:text-foreground hover:!bg-accent/60 font-normal"
 									)}
 									render={<a href={item.path} />}
 								>
 									<span className={cn(
 										"[&>svg]:size-4 [&>svg]:stroke-[1.5] shrink-0 transition-colors",
-										active ? "!text-background [&>svg]:!stroke-background" : "text-muted-foreground group-hover/btn:text-foreground"
+										active ? "!text-background [&>svg]:!stroke-background" : "text-foreground/75 group-hover/btn:text-foreground"
 									)}>
 										{item.icon}
 									</span>
-									<span className={cn("truncate", active ? "!text-background" : "group-hover/btn:text-foreground")}>
+									<span className={cn("truncate", active ? "!text-background" : "text-foreground/85 group-hover/btn:text-foreground")}>
 										{item.title}
 									</span>
 								</SidebarMenuButton>

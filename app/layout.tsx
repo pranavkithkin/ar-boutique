@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
+import "@/components/editor/style.css";
 import { cn } from "@/lib/utils";
 import { fontSans, fontHeading, fontMono } from "@/lib/fonts";
 import { NuqsAdapter } from "nuqs/adapters/next/app";

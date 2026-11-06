@@ -58,6 +58,7 @@ export interface ProductType {
 }
 
 interface ProductInfoProps {
+  returnWindowDays: number
   product: ProductDetail | ProductType
   title: string
   activeColourway?: ProductColourway | null
@@ -69,6 +70,7 @@ interface ProductInfoProps {
 }
 
 export function ProductInfo({
+  returnWindowDays,
   product,
   title,
   activeColourway: controlledColourway,
@@ -469,12 +471,13 @@ export function ProductInfo({
 
       {/* Tax & Delivery Footnote */}
       <div className="text-xs text-muted-foreground mb-6">
-        Prices include 5% UAE VAT. Complimentary delivery across UAE for orders over AED 500.
+        Complimentary delivery across the UAE on orders of AED 200 or more.
       </div>
 
       {/* Accordions (Details & Specifications, Care, Shipping) */}
       <div className="mt-4">
         <ProductAccordions
+          returnWindowDays={returnWindowDays}
           product={{
             ...product,
             colour: currentColourName,

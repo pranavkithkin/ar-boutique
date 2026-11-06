@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/server"
 import { isClerkConfigured } from "@/lib/clerk"
 import { getCurrentCustomerAction } from "@/features/auth/actions"
 import { sendReturnRequestedEmails } from "@/lib/email"
+import { getStoreSettings } from "@/features/admin/settings/actions"
 import {
   customerReturnFormSchema,
   type CustomerReturnFormValues,
@@ -632,9 +633,12 @@ export async function submitCustomerReturnAction(
       })),
     }
 
+    const settings = await getStoreSettings()
     const eligibility = evaluateOrderReturnEligibility(
       orderForCheck,
-      existingReturnedItems
+      existingReturnedItems,
+      new Date(),
+      settings.return_window_days
     )
 
     if (!eligibility.isEligible) {

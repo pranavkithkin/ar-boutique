@@ -32,6 +32,7 @@ import {
   HelpCircle,
 } from "lucide-react"
 import { toAED, STANDARD_DELIVERY_FEE_FILS, FREE_DELIVERY_THRESHOLD_FILS } from "@/lib/money"
+import { getStoreSettings } from "@/features/admin/settings/actions"
 import { STORE_CONTACT } from "@/lib/contact"
 import { AnimatedSection, FadeIn } from "@/components/store/AnimatedSection"
 
@@ -69,9 +70,15 @@ const SHIPPING_FAQS = [
   },
 ]
 
-export default function ShippingPage() {
-  const deliveryFee = toAED(STANDARD_DELIVERY_FEE_FILS)
-  const freeDeliveryMin = toAED(FREE_DELIVERY_THRESHOLD_FILS)
+export default async function ShippingPage() {
+  const settings = await getStoreSettings()
+  const deliveryFee = toAED(settings.delivery_fee_fils ?? STANDARD_DELIVERY_FEE_FILS)
+  const freeDeliveryMin = toAED(settings.free_delivery_over_fils ?? FREE_DELIVERY_THRESHOLD_FILS)
+  const storeEmail = settings.store_email || STORE_CONTACT.email
+  const storePhone = settings.store_phone || STORE_CONTACT.phone
+  const cleanPhone = storePhone.replace(/[^0-9]/g, "")
+  const whatsappHref = `https://wa.me/${cleanPhone}`
+  const emailHref = `mailto:${storeEmail}`
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -330,19 +337,19 @@ export default function ShippingPage() {
                     <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                       If your order has not arrived within the delivery time, or something is missing, message us on WhatsApp at{" "}
                       <a
-                        href={STORE_CONTACT.whatsappHref}
+                        href={whatsappHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
                       >
-                        {STORE_CONTACT.whatsapp}
+                        {storePhone}
                       </a>{" "}
                       or email{" "}
                       <a
-                        href={STORE_CONTACT.emailHref}
+                        href={emailHref}
                         className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
                       >
-                        {STORE_CONTACT.email}
+                        {storeEmail}
                       </a>{" "}
                       with your order number. We will get back to you within 1 working day.
                     </p>
@@ -381,7 +388,7 @@ export default function ShippingPage() {
 
                     <div className="flex flex-col gap-3 pt-2">
                       <a
-                        href={STORE_CONTACT.whatsappHref}
+                        href={whatsappHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs"
@@ -390,7 +397,7 @@ export default function ShippingPage() {
                         Chat on WhatsApp
                       </a>
                       <a
-                        href={STORE_CONTACT.emailHref}
+                        href={emailHref}
                         className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm font-medium border border-input bg-background text-foreground hover:bg-accent transition-colors"
                       >
                         <Mail className="w-4 h-4" />

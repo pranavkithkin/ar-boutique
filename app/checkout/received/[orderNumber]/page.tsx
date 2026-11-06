@@ -256,6 +256,12 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
                 <span>Subtotal</span>
                 <span className="tabular-nums font-sans">{formatAED(order.subtotal_fils)}</span>
               </div>
+              {order.discount_fils > 0 && (
+                <div className="flex justify-between text-emerald-700 dark:text-emerald-400 font-medium">
+                  <span>Promotional Discount</span>
+                  <span className="tabular-nums font-sans">-{formatAED(order.discount_fils)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-muted-foreground">
                 <span>Doorstep Delivery</span>
                 <span className="tabular-nums font-sans">

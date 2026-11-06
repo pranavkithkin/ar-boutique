@@ -5,7 +5,8 @@ import {
 } from "@/features/account/returns/eligibility"
 import { customerReturnFormSchema } from "@/features/account/returns/schemas"
 
-test("evaluateOrderReturnEligibility: approves delivered orders within 7 days", () => {
+test("evaluateOrderReturnEligibility: approves delivered orders within 14 days", () => {
+  expect(RETURN_WINDOW_DAYS).toBe(14)
   const now = new Date("2026-10-19T10:00:00Z")
   const threeDaysAgo = new Date("2026-10-16T10:00:00Z").toISOString()
 
@@ -23,7 +24,7 @@ test("evaluateOrderReturnEligibility: approves delivered orders within 7 days", 
 
   const result = evaluateOrderReturnEligibility(order, [], now)
   expect(result.isEligible).toBe(true)
-  expect(result.daysRemaining).toBe(4)
+  expect(result.daysRemaining).toBe(11)
   expect(result.items).toHaveLength(2)
   expect(result.items[0].isEligible).toBe(true)
   expect(result.items[0].maxReturnableQuantity).toBe(2)
@@ -47,16 +48,16 @@ test("evaluateOrderReturnEligibility: rejects non-delivered orders", () => {
   expect(result.items[0].isEligible).toBe(false)
 })
 
-test("evaluateOrderReturnEligibility: rejects delivered orders after 7-day window", () => {
+test("evaluateOrderReturnEligibility: rejects delivered orders after 14-day window", () => {
   const now = new Date("2026-10-19T10:00:00Z")
-  const tenDaysAgo = new Date("2026-10-09T10:00:00Z").toISOString()
+  const sixteenDaysAgo = new Date("2026-10-03T10:00:00Z").toISOString()
 
   const order = {
     id: "ord_3",
     orderNumber: "AR-1003",
     status: "delivered",
-    deliveredAt: tenDaysAgo,
-    createdAt: tenDaysAgo,
+    deliveredAt: sixteenDaysAgo,
+    createdAt: sixteenDaysAgo,
     items: [{ id: "item_1", quantity: 1 }],
   }
 

@@ -1,6 +1,7 @@
 export interface CheckoutConfig {
   deliveryFeeFils: number
   freeDeliveryThresholdFils: number
+  vatEnabled: boolean
   vatRatePct: number
   cardEnabled: boolean
   codEnabled: boolean

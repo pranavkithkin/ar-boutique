@@ -33,6 +33,7 @@ export interface OrderConfirmationEmailProps {
   paymentMethod: "card" | "cod"
   items: OrderItemEmailData[]
   subtotalAed: string
+  discountAed?: string
   deliveryFeeAed: string
   vatAed: string
   totalAed: string
@@ -58,6 +59,7 @@ export function OrderConfirmationEmail({
   paymentMethod = "cod",
   items = [],
   subtotalAed = "AED 1,200.00",
+  discountAed,
   deliveryFeeAed = "Complimentary",
   vatAed = "AED 60.00",
   totalAed = "AED 1,260.00",
@@ -154,6 +156,16 @@ export function OrderConfirmationEmail({
                 <Text style={totalValue}>{subtotalAed}</Text>
               </Column>
             </Row>
+            {discountAed && (
+              <Row style={totalRow}>
+                <Column style={{ width: "70%" }}>
+                  <Text style={{ ...totalLabel, color: "#15803d", fontWeight: 600 }}>Promotional Discount</Text>
+                </Column>
+                <Column style={{ width: "30%", textAlign: "right" }}>
+                  <Text style={{ ...totalValue, color: "#15803d", fontWeight: 600 }}>-{discountAed}</Text>
+                </Column>
+              </Row>
+            )}
             <Row style={totalRow}>
               <Column style={{ width: "70%" }}>
                 <Text style={totalLabel}>Estimated Delivery</Text>

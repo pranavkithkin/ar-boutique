@@ -1,5 +1,19 @@
 # Project Memory
 
+6 Nov 2026: TASK-094 licence review added The AR Boutique FZE's verified document details to Terms (Business details) and Privacy (Who is responsible for your information?). Shared LegalBusinessDetails contains licence 4421784.01, free zone establishment status, Sharjah Publishing City - Free Zone Authority and registered Sharjah address. Document inspected visually and as extracted text. Licence contains no VAT TRN. Company contact email stays sourced from Admin Settings.
+
+Licence detail validation: targeted ESLint and full TypeScript passed. Both local policy routes returned HTTP 200 and contained the company name, licence number, authority and registered address after refresh. No build, commit or push performed.
+
+6 Nov 2026: TASK-094 Terms page replaces Coming Soon with simple UAE storefront terms. Uses saved store identity/contact details and return window, with links to shipping, returns and privacy. Registered legal entity/licensing disclosures and Arabic legal wording still need client/legal review before release.
+
+Terms page validation: targeted ESLint and full TypeScript passed. Local `/policies/terms` returned HTTP 200 with the new sections and policy links. No build, commit or push performed.
+
+6 Nov 2026: TASK-094 Privacy Policy simplified into readable sections covering collected data, order processing, service-provider sharing, Stripe, cookies, retention, requests and updates. Store name and contact email continue to use Admin Settings.
+
+Validation: Privacy page ESLint passed and local `/policies/privacy` returned HTTP 200 with the revised content. Full TypeScript check reported existing `size_name` and `style_code` type errors in `lib/invoice.ts` (lines 175–176). No production build run.
+
+6 Nov 2026: Implemented dynamic Store Email routing for Contact inquiries, live Privacy Policy page (UAE PDPL compliant), dynamic cart delivery & 14-day return sync, and Stripe webhook email fallback.
+
 > The project's current state. Update it after every task. Permanent decisions go in `DECISIONS.md`.
 
 ## Current Status

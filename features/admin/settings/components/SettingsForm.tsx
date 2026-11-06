@@ -108,17 +108,16 @@ function AEDInput({
         AED
       </span>
       <Input
-        type="number"
-        min="0"
-        step="1"
+        type="text"
+        inputMode="decimal"
         value={raw}
         placeholder={placeholder}
         onChange={(e) => {
-          setRaw(e.target.value)
-          const parsed = parseFloat(e.target.value)
+          const val = e.target.value.replace(/[^0-9.]/g, "")
+          setRaw(val)
+          const parsed = parseFloat(val)
           if (!isNaN(parsed) && parsed >= 0) onChange(Math.round(parsed * 100))
         }}
-        onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
         className="h-9 pl-10 text-xs font-mono bg-background border-input rounded-none"
       />
     </div>
@@ -143,7 +142,13 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
     setIsSaving(true)
     setSaveError(null)
     setSavedOk(false)
-    const res = await updateStoreSettingsAction(s)
+    const payloadToSave: StoreSettings = {
+      ...s,
+      return_window_days: Math.max(1, s.return_window_days || 14),
+      return_expiry_days: Math.max(1, s.return_expiry_days || 7),
+      low_stock_threshold: Math.max(1, s.low_stock_threshold || 3),
+    }
+    const res = await updateStoreSettingsAction(payloadToSave)
     setIsSaving(false)
     if (res.success) {
       setSavedOk(true)
@@ -347,12 +352,13 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           >
             <div className="relative">
               <Input
-                type="number"
-                min="1"
-                step="1"
-                value={s.return_window_days}
-                onChange={(e) => set("return_window_days", parseInt(e.target.value, 10) || 14)}
-                onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
+                type="text"
+                inputMode="numeric"
+                value={s.return_window_days ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "")
+                  set("return_window_days", val ? parseInt(val, 10) : 0)
+                }}
                 className="h-9 pr-10 text-xs font-mono bg-background border-input rounded-none"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground pointer-events-none">
@@ -366,12 +372,13 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           >
             <div className="relative">
               <Input
-                type="number"
-                min="1"
-                step="1"
-                value={s.return_expiry_days}
-                onChange={(e) => set("return_expiry_days", parseInt(e.target.value, 10) || 7)}
-                onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
+                type="text"
+                inputMode="numeric"
+                value={s.return_expiry_days ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "")
+                  set("return_expiry_days", val ? parseInt(val, 10) : 0)
+                }}
                 className="h-9 pr-10 text-xs font-mono bg-background border-input rounded-none"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground pointer-events-none">
@@ -460,14 +467,13 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           >
             <div className="relative">
               <Input
-                type="number"
-                min="1"
-                step="1"
-                value={s.low_stock_threshold}
-                onChange={(e) =>
-                  set("low_stock_threshold", parseInt(e.target.value, 10) || 3)
-                }
-                onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
+                type="text"
+                inputMode="numeric"
+                value={s.low_stock_threshold ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "")
+                  set("low_stock_threshold", val ? parseInt(val, 10) : 0)
+                }}
                 className="h-9 pr-10 text-xs font-mono bg-background border-input rounded-none"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground pointer-events-none">

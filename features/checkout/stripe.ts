@@ -14,6 +14,8 @@ export interface CreateStripeSessionParams {
     unitPriceFils: number
   }>
   deliveryFeeFils: number
+  discountFils?: number
+  promoCode?: string
   vatFils: number
   successUrl: string
   cancelUrl: string
@@ -60,7 +62,30 @@ export async function createStripeCheckoutSession(
     })
   }
 
-  // 3. Set expiry to 31 minutes from now (Stripe requires minimum 30 minutes)
+  // 3. Handle Promotional Discount (Coupon)
+  const discounts: Stripe.Checkout.SessionCreateParams.Discount[] = []
+  if (params.discountFils && params.discountFils > 0) {
+    const couponName = params.promoCode
+      ? `Promo Code (${params.promoCode.toUpperCase()})`
+      : "Promotional Discount"
+
+    // Create a one-time Stripe coupon matching the exact discount amount in AED
+    const stripeCoupon = await stripe.coupons.create(
+      {
+        amount_off: params.discountFils,
+        currency: "aed",
+        duration: "once",
+        name: couponName,
+      },
+      {
+        idempotencyKey: `coupon_${params.orderId}_${params.discountFils}`,
+      }
+    )
+
+    discounts.push({ coupon: stripeCoupon.id })
+  }
+
+  // 4. Set expiry to 31 minutes from now (Stripe requires minimum 30 minutes)
   const expiresAtUnix = Math.floor(Date.now() / 1000) + 31 * 60
 
   const session = await stripe.checkout.sessions.create(
@@ -70,6 +95,7 @@ export async function createStripeCheckoutSession(
       customer_email: params.customerEmail,
       client_reference_id: params.orderId,
       line_items: lineItems,
+      discounts: discounts.length > 0 ? discounts : undefined,
       expires_at: expiresAtUnix,
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
@@ -77,6 +103,8 @@ export async function createStripeCheckoutSession(
         order_id: params.orderId,
         order_number: params.orderNumber,
         customer_name: params.customerName,
+        promo_code: params.promoCode || "",
+        discount_fils: (params.discountFils || 0).toString(),
       },
     },
     {

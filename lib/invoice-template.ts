@@ -450,15 +450,16 @@ export function renderBilingualInvoiceHtml(data: InvoiceData, autoPrint = false)
           <div>${data.supplier.addressEn}</div>
           <div class="ar-text">${data.supplier.addressAr}</div>
           <div>Email: ${data.supplier.email} | Tel: ${data.supplier.phone}</div>
+          ${data.supplier.trn ? `
           <div class="trn-badge">
             TRN / الرقم الضريبي: <strong>${data.supplier.trn}</strong>
-          </div>
+          </div>` : ""}
         </div>
       </div>
 
       <div class="invoice-title-col">
-        <div class="doc-type-en">TAX INVOICE</div>
-        <div class="doc-type-ar ar-text">فاتورة ضريبية</div>
+        <div class="doc-type-en">${data.supplier.trn ? "TAX INVOICE" : "INVOICE"}</div>
+        <div class="doc-type-ar ar-text">${data.supplier.trn ? "فاتورة ضريبية" : "فاتورة"}</div>
         <div class="doc-number-box">
           <div class="doc-number">${data.invoiceNumber}</div>
           <div class="doc-meta-row">
@@ -556,6 +557,15 @@ export function renderBilingualInvoiceHtml(data: InvoiceData, autoPrint = false)
           </td>
           <td class="val-col">${formatAED(data.subtotalNetFils)}</td>
         </tr>
+        ${data.discountFils && data.discountFils > 0 ? `
+        <tr>
+          <td class="label-col" style="color: #15803d;">
+            Promotional Discount
+            <div class="ar-text" style="font-size: 10px; color: #15803d;">خصم ترويجي</div>
+          </td>
+          <td class="val-col" style="color: #15803d; font-weight: 600;">-${formatAED(data.discountFils)}</td>
+        </tr>
+        ` : ''}
         <tr>
           <td class="label-col">
             Delivery Fee

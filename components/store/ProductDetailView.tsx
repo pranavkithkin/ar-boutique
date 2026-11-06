@@ -7,6 +7,7 @@ import { ProductGallery } from "./ProductGallery"
 import { ProductInfo } from "./ProductInfo"
 
 interface ProductDetailViewProps {
+  returnWindowDays: number
   product: ProductDetail
   initialColourSlug?: string
   reviewSummary?: {
@@ -16,6 +17,7 @@ interface ProductDetailViewProps {
 }
 
 export function ProductDetailView({
+  returnWindowDays,
   product,
   initialColourSlug,
   reviewSummary,
@@ -66,6 +68,7 @@ export function ProductDetailView({
       left={<ProductGallery images={galleryImages} />}
       right={
         <ProductInfo
+          returnWindowDays={returnWindowDays}
           product={product}
           title={product.name}
           activeColourway={currentColourway}

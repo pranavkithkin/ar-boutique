@@ -165,7 +165,8 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
   const isCodSelected = currentPaymentMethod === "cod"
   const codFeeFils = isCodSelected ? config.codFeeFils : 0
   const estimatedTotalFils = Math.max(0, subtotalFils - couponDiscountFils) + deliveryFeeFils + codFeeFils
-  const vatPortionFils = calculateVatPortion(estimatedTotalFils)
+  const isVatEnabled = Boolean(config.vatEnabled)
+  const vatPortionFils = isVatEnabled ? calculateVatPortion(estimatedTotalFils) : 0
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -905,12 +906,14 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                   </div>
                 )}
 
-                <div className="flex justify-between items-baseline text-[11px]">
-                  <span className="text-muted-foreground/80">Included 5% UAE VAT</span>
-                  <span className="text-muted-foreground tabular-nums">
-                    {formatAED(vatPortionFils)}
-                  </span>
-                </div>
+                {isVatEnabled && (
+                  <div className="flex justify-between items-baseline text-[11px]">
+                    <span className="text-muted-foreground/80">Included {config.vatRatePct || 5}% UAE VAT</span>
+                    <span className="text-muted-foreground tabular-nums">
+                      {formatAED(vatPortionFils)}
+                    </span>
+                  </div>
+                )}
 
                 <div className="pt-3 border-t border-border flex justify-between items-baseline">
                   <span className="text-base font-sans font-semibold text-foreground">Total to Pay</span>

@@ -30,6 +30,7 @@ export async function getCheckoutConfigAction(): Promise<CheckoutConfig> {
     return {
       deliveryFeeFils: settings.delivery_fee_fils,
       freeDeliveryThresholdFils: settings.free_delivery_over_fils,
+      vatEnabled: Boolean(settings.vat_enabled),
       vatRatePct: settings.vat_rate_pct,
       cardEnabled: settings.card_enabled,
       codEnabled: settings.cod_enabled,
@@ -43,6 +44,7 @@ export async function getCheckoutConfigAction(): Promise<CheckoutConfig> {
     return {
       deliveryFeeFils: 2500, // 25 AED fallback
       freeDeliveryThresholdFils: 20000, // 200 AED free delivery
+      vatEnabled: false,
       vatRatePct: 5,
       cardEnabled: true,
       codEnabled: true,
@@ -436,7 +438,8 @@ export async function placeCheckoutOrderAction(
     const isCod = data.paymentMethod === "cod"
     const codFeeFils = isCod ? settings.cod_fee_fils : 0
     const totalFils = Math.max(0, subtotalFils - discountFils) + deliveryFeeFils + codFeeFils
-    const vatFils = calculateVatPortion(totalFils)
+    const isVatEnabled = Boolean(settings.vat_enabled)
+    const vatFils = isVatEnabled ? calculateVatPortion(totalFils) : 0
 
     // 6. Validate Payment Method availability rules
     if (isCod) {
@@ -528,7 +531,7 @@ export async function placeCheckoutOrderAction(
         cod_fee_fils: codFeeFils,
         vat_fils: vatFils,
         total_fils: totalFils,
-        vat_rate_bps: settings.vat_rate_pct * 100,
+        vat_rate_bps: isVatEnabled ? settings.vat_rate_pct * 100 : 0,
         confirm_by: confirmBy,
         hold_expires_at: holdExpiresAt,
         confirmed_at: null,
@@ -553,9 +556,11 @@ export async function placeCheckoutOrderAction(
       product_name: line.productName,
       colour_name: line.colourName,
       style_code: line.sku,
+      size_name: line.sizeLabel || null,
       size_label: line.sizeLabel || null,
       sku: line.sku,
       media_key: line.image || null,
+      price_fils: line.unitPriceFils,
       unit_price_fils: line.unitPriceFils,
       quantity: line.quantity,
       total_fils: line.lineTotalFils,
@@ -596,9 +601,10 @@ export async function placeCheckoutOrderAction(
       actor_sub: clerkUserId || "storefront_shopper",
     })
 
-    // 13. If promo code was applied, record redemption and increment coupon usage
+    // 13. If promo code was applied on COD, record redemption immediately.
+    // (For Card payments, redemption is recorded exclusively upon verified Stripe webhook completion so abandoned sessions do not consume the coupon).
     const cleanEmail = data.email.toLowerCase().trim()
-    if (appliedCoupon) {
+    if (appliedCoupon && isCod) {
       try {
         await supabase.from("coupon_redemptions").insert({
           coupon_id: appliedCoupon.id,
@@ -685,6 +691,8 @@ export async function placeCheckoutOrderAction(
             unitPriceFils: l.unitPriceFils,
           })),
           deliveryFeeFils,
+          discountFils,
+          promoCode: appliedCoupon?.code || couponCode?.trim() || undefined,
           vatFils,
           successUrl,
           cancelUrl,

@@ -18,12 +18,20 @@ import {
   formatAED,
   calculateVatPortion,
   calculateDeliveryEstimate,
-  FREE_DELIVERY_MINIMUM_LABEL,
 } from "@/lib/money"
 import { StoreButton } from "@/components/store/StoreButton"
-import { getCartStockAvailabilityAction, type CartStockMap } from "../actions"
+import {
+  getCartStockAvailabilityAction,
+  getCartSettingsAction,
+  type CartStockMap,
+  type CartSettingsConfig,
+} from "../actions"
 
-export function CartView() {
+interface CartViewProps {
+  initialConfig?: CartSettingsConfig
+}
+
+export function CartView({ initialConfig }: CartViewProps) {
   const {
     items,
     updateQuantity,
@@ -35,10 +43,22 @@ export function CartView() {
   // Wait for client mount to avoid hydration mismatch
   const [mounted, setMounted] = React.useState(false)
   const [stockMap, setStockMap] = React.useState<CartStockMap>({})
+  const [config, setConfig] = React.useState<CartSettingsConfig>(
+    initialConfig || {
+      deliveryFeeFils: 2500,
+      freeDeliveryThresholdFils: 20000,
+      vatEnabled: false,
+      vatRatePct: 5,
+      returnWindowDays: 14,
+    }
+  )
 
   React.useEffect(() => {
     setMounted(true)
-  }, [])
+    if (!initialConfig) {
+      getCartSettingsAction().then(setConfig)
+    }
+  }, [initialConfig])
 
   // Sync real-time available inventory for cart items
   React.useEffect(() => {
@@ -69,9 +89,15 @@ export function CartView() {
   const subtotalFils = getSubtotalFils()
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const { isFreeShipping, deliveryFeeFils, remainingFils, progressPercent } =
-    calculateDeliveryEstimate(subtotalFils, items.length > 0)
+    calculateDeliveryEstimate(
+      subtotalFils,
+      items.length > 0,
+      config.freeDeliveryThresholdFils,
+      config.deliveryFeeFils
+    )
   const estimatedTotalFils = subtotalFils + deliveryFeeFils
-  const vatPortionFils = calculateVatPortion(estimatedTotalFils)
+  const vatPortionFils = config.vatEnabled ? calculateVatPortion(estimatedTotalFils) : 0
+  const freeDeliveryMinimumLabel = `${formatAED(config.freeDeliveryThresholdFils)} or more`
 
   if (items.length === 0) {
     return (
@@ -234,7 +260,7 @@ export function CartView() {
             <Truck className="w-4 h-4 text-primary shrink-0" />
             <div className="text-xs">
               <span className="font-medium text-foreground block">Free UAE Delivery</span>
-              <span className="text-muted-foreground text-[11px]">On orders of {FREE_DELIVERY_MINIMUM_LABEL}</span>
+              <span className="text-muted-foreground text-[11px]">On orders of {freeDeliveryMinimumLabel}</span>
             </div>
           </div>
           <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xs">
@@ -248,7 +274,7 @@ export function CartView() {
             <RotateCcw className="w-4 h-4 text-primary shrink-0" />
             <div className="text-xs">
               <span className="font-medium text-foreground block">Easy Returns</span>
-              <span className="text-muted-foreground text-[11px]">7 days return policy</span>
+              <span className="text-muted-foreground text-[11px]">{config.returnWindowDays} days return policy</span>
             </div>
           </div>
         </div>
@@ -306,14 +332,16 @@ export function CartView() {
             </span>
           </div>
 
-          <div className="flex justify-between items-baseline text-[11px]">
-            <span className="uppercase tracking-[0.08em] text-muted-foreground/80">
-              Included 5% UAE VAT
-            </span>
-            <span className="text-muted-foreground tabular-nums">
-              {formatAED(vatPortionFils)}
-            </span>
-          </div>
+          {config.vatEnabled && (
+            <div className="flex justify-between items-baseline text-[11px]">
+              <span className="uppercase tracking-[0.08em] text-muted-foreground/80">
+                Included {config.vatRatePct}% UAE VAT
+              </span>
+              <span className="text-muted-foreground tabular-nums">
+                {formatAED(vatPortionFils)}
+              </span>
+            </div>
+          )}
 
           <div className="pt-4 border-t border-border flex justify-between items-baseline">
             <span className="font-heading text-xl font-normal text-foreground">Estimated Total</span>

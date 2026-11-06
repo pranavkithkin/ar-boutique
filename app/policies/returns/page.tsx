@@ -1,3 +1,4 @@
+import { getStoreSettings } from "@/features/admin/settings/actions"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { AnnouncementBar } from "@/components/store/AnnouncementBar"
@@ -37,7 +38,7 @@ import { AnimatedSection, FadeIn } from "@/components/store/AnimatedSection"
 export const metadata: Metadata = {
   title: "Returns & Exchanges | AR Boutique",
   description:
-    "Learn about AR Boutique's 7-day return and exchange policy, garment condition standards, refund timelines, and concierge assistance.",
+    "Learn about AR Boutique's return and exchange policy, garment condition standards, refund timelines, and concierge assistance.",
 }
 
 const RETURN_CONDITIONS = [
@@ -85,7 +86,15 @@ const RETURN_FAQS = [
   },
 ]
 
-export default function ReturnsPage() {
+export default async function ReturnsPage() {
+  const settings = await getStoreSettings()
+  const days = settings.return_window_days ?? 14
+  const windowLabel = `${days} ${days === 1 ? "day" : "days"}`
+  const storeEmail = settings.store_email || STORE_CONTACT.email
+  const storePhone = settings.store_phone || STORE_CONTACT.phone
+  const cleanPhone = storePhone.replace(/[^0-9]/g, "")
+  const whatsappHref = `https://wa.me/${cleanPhone}`
+  const emailHref = `mailto:${storeEmail}`
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <AnnouncementBar />
@@ -121,7 +130,7 @@ export default function ReturnsPage() {
                 Returns & Exchanges
               </h1>
               <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
-                You can return or exchange an item within 7 days of delivery. Transparent, seamless, and guided personally by our concierge.
+                You can return or exchange an item within {windowLabel} of delivery. Transparent, seamless, and guided personally by our concierge.
               </p>
             </div>
           </div>
@@ -142,7 +151,7 @@ export default function ReturnsPage() {
                       Return Window
                     </h2>
                     <p className="text-base font-medium text-foreground mt-1">
-                      7 Days of Delivery
+                      {windowLabel} of Delivery
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Returns & exchanges eligible
@@ -228,7 +237,7 @@ export default function ReturnsPage() {
                         </h2>
                       </div>
                       <p className="text-sm sm:text-base text-muted-foreground leading-relaxed pt-1">
-                        You can return or exchange an item within 7 days of delivery.
+                        You can return or exchange an item within {windowLabel} of delivery.
                       </p>
                     </div>
 
@@ -270,19 +279,19 @@ export default function ReturnsPage() {
                     <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                       Message us on WhatsApp at{" "}
                       <a
-                        href={STORE_CONTACT.whatsappHref}
+                        href={whatsappHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
                       >
-                        {STORE_CONTACT.whatsapp}
+                        {storePhone}
                       </a>{" "}
                       or email{" "}
                       <a
-                        href={STORE_CONTACT.emailHref}
+                        href={emailHref}
                         className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
                       >
-                        {STORE_CONTACT.email}
+                        {storeEmail}
                       </a>{" "}
                       with your order number and the item. We will share the next steps.
                     </p>
@@ -387,7 +396,7 @@ export default function ReturnsPage() {
 
                     <div className="flex flex-col gap-3 pt-2">
                       <a
-                        href={STORE_CONTACT.whatsappHref}
+                        href={whatsappHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs"
@@ -396,7 +405,7 @@ export default function ReturnsPage() {
                         Message on WhatsApp
                       </a>
                       <a
-                        href={STORE_CONTACT.emailHref}
+                        href={emailHref}
                         className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm font-medium border border-input bg-background text-foreground hover:bg-accent transition-colors"
                       >
                         <Mail className="w-4 h-4" />

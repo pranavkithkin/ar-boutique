@@ -18,6 +18,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Order Confirmed | AR Boutique",
+  robots: { index: false, follow: false },
   description: "Your payment has been confirmed and your AR Boutique order is being processed.",
 }
 
@@ -33,6 +34,8 @@ interface SuccessOrderItem {
 }
 
 interface SuccessOrder {
+  clerk_user_id?: string | null
+  stripe_session_id?: string | null
   id: string
   order_number: string
   customer_name: string
@@ -43,6 +46,8 @@ interface SuccessOrder {
   street_address: string
   area: string
   emirate: string
+  subtotal_fils?: number
+  discount_fils?: number
   total_fils: number
   order_items: SuccessOrderItem[]
 }
@@ -50,11 +55,12 @@ interface SuccessOrder {
 interface SuccessPageProps {
   searchParams: Promise<{
     orderNumber?: string
+    session_id?: string
   }>
 }
 
 export default async function CheckoutSuccessPage({ searchParams }: SuccessPageProps) {
-  const { orderNumber } = await searchParams
+  const { orderNumber, session_id } = await searchParams
   const decodedOrderNumber = orderNumber ? decodeURIComponent(orderNumber) : null
 
   let order: SuccessOrder | null = null
@@ -225,7 +231,20 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
               ))}
             </div>
 
-            <div className="border-t border-border pt-4 flex justify-between font-semibold text-foreground text-sm">
+            {!!order.discount_fils && order.discount_fils > 0 && (
+              <div className="border-t border-border pt-3 space-y-1.5 text-xs">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Subtotal</span>
+                  <span className="tabular-nums font-sans">{formatAED(order.subtotal_fils || 0)}</span>
+                </div>
+                <div className="flex justify-between text-emerald-700 dark:text-emerald-400 font-medium">
+                  <span>Promotional Discount</span>
+                  <span className="tabular-nums font-sans">-{formatAED(order.discount_fils)}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="border-t border-border pt-3 flex justify-between font-semibold text-foreground text-sm">
               <span>Total Paid</span>
               <span className="tabular-nums font-sans text-base">
                 {formatAED(order.total_fils)}

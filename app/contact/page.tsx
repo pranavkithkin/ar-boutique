@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { AnnouncementBar } from "@/components/store/AnnouncementBar"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
@@ -11,7 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import {
   Accordion,
   AccordionContent,
@@ -31,36 +30,44 @@ export const metadata: Metadata = {
     "Get in touch with the AR Boutique concierge team. Sizing advice, order support, and bespoke consultations across the UAE.",
 }
 
-const CONCIERGE_CHANNELS = [
-  {
-    icon: MessageSquare,
-    title: "WhatsApp Concierge",
-    subtitle: "Instant styling & order chat",
-    detail: STORE_CONTACT.whatsapp,
-    action: "Chat on WhatsApp",
-    href: STORE_CONTACT.whatsappHref,
-  },
-  {
-    icon: Mail,
-    title: "Email Assistance",
-    subtitle: "Dedicated client responses",
-    detail: STORE_CONTACT.email,
-    action: "Send an Email",
-    href: STORE_CONTACT.emailHref,
-  },
-  {
-    icon: MapPin,
-    title: "Private Atelier",
-    subtitle: "By private appointment",
-    detail: STORE_CONTACT.atelier,
-    action: "View Location",
-    href: STORE_CONTACT.atelierHref,
-  },
-]
-
 export default async function ContactPage() {
   const settings = await getStoreSettings()
   const faqs = settings.faqs && settings.faqs.length > 0 ? settings.faqs : DEFAULT_FAQS
+
+  const phone = settings.store_phone || STORE_CONTACT.phone
+  const phoneClean = phone.replace(/[^0-9+]/g, "")
+  const whatsappHref = `https://wa.me/${phoneClean.replace("+", "")}`
+  const email = settings.store_email || STORE_CONTACT.email
+  const emailHref = `mailto:${email}`
+  const atelier = settings.store_address || STORE_CONTACT.atelier
+  const atelierHref = `https://maps.google.com/?q=${encodeURIComponent(atelier)}`
+
+  const conciergeChannels = [
+    {
+      icon: MessageSquare,
+      title: "WhatsApp Concierge",
+      subtitle: "Instant styling & order chat",
+      detail: phone,
+      action: "Chat on WhatsApp",
+      href: whatsappHref,
+    },
+    {
+      icon: Mail,
+      title: "Email Assistance",
+      subtitle: "Dedicated client responses",
+      detail: email,
+      action: "Send an Email",
+      href: emailHref,
+    },
+    {
+      icon: MapPin,
+      title: "Private Atelier",
+      subtitle: "By private appointment",
+      detail: atelier,
+      action: "View Location",
+      href: atelierHref,
+    },
+  ]
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -100,7 +107,7 @@ export default async function ContactPage() {
           {/* Quick Concierge Cards */}
           <FadeIn delay={0.05}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-              {CONCIERGE_CHANNELS.map((item, i) => {
+              {conciergeChannels.map((item, i) => {
                 const Icon = item.icon
                 return (
                   <Card
@@ -175,7 +182,7 @@ export default async function ContactPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-foreground" />
-                      <span>Complimentary returns within 14 days</span>
+                      <span>Complimentary returns within {settings.return_window_days} {settings.return_window_days === 1 ? "day" : "days"}</span>
                     </div>
                   </div>
                 </div>

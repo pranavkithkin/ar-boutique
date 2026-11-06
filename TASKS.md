@@ -115,6 +115,7 @@ Done when: each paid order (card at payment, COD when the cash is collected) sen
 - [x] TASK-064 Bilingual Tax Invoice (lines show colour, size and client SKU; UAE FTA Article 59 compliant, gapless sequential numbering INV-YYYY-XXXX, English/Arabic layout), `/api/invoices/[orderId]` route with 1-click print/PDF download, and direct link in OrderConfirmationEmail
 
 ## Phase 8: Orders
+- [x] TASK-128 Guest order tracking: footer link, public UUID + checkout email lookup, minimal status/shipment result, and Order ID distribution in confirmations. Signed-out route verified, 18 focused tests and full 104-test suite passing.
 Done when: the admin moves an order to Delivered (a COD order through confirm, ship and cash collected) and the customer sees it in My orders.
 - [x] TASK-065 Admin orders list: search (order number, email, phone, SKU), filters (status, payment method), new badge
 - [x] TASK-066 Admin order detail: items with colour, size and SKU, customer, address, payment method and payment, COD details (deadline, cash collected, payout), timeline, internal notes; actions shown per status
@@ -160,12 +161,12 @@ Done when: the admin changes banners, publishes posts, and policy pages are live
 - [x] TASK-091 Home page per `docs/DESIGN.md`: hero, shop by category, new arrivals, trust strip, promo banner, latest posts
 - [x] TASK-092 Blog admin: Tiptap editor with EditorCN toolbar, cover image Cloudinary upload, reading time calculation, SEO metadata fields, Draft/Published/Archived lifecycle management, and admin sidebar integration (`/admin/blog`, `/admin/blog/new`, `/admin/blog/[id]`).
 - [x] TASK-093 Blog list and post pages: footer Journal discovery, existing editorial articles and category filters, article detail/related stories, page-matched responsive skeleton and loading/error/not-found states. Static content for this storefront stage; admin publishing remains TASK-092.
-- [ ] TASK-094 Pages: About, Contact, Terms, Privacy, Returns & Refunds, Shipping & Delivery
+- [ ] TASK-094 Pages: About, Contact, Terms, Privacy, Returns & Refunds, Shipping & Delivery (Privacy Policy simplified and Terms page implemented on 6 Nov 2026; company identity added from trade licence; client/legal approval pending)
 
 ## Phase 12: Dashboard and Settings
 Done when: the admin sees today's numbers and can change store settings without a developer.
 - [x] TASK-095 Admin dashboard: KPIs (today, 7 days, 30 days), queues (COD to confirm, to pack, to ship, open returns, low-stock SKUs), COD cash reconciliation, interactive line/bar revenue trends, and recent activity feed.
-- [x] TASK-096 Settings page: store details, TRN, VAT, delivery fee, return window, return expiry, low-stock threshold, announcement bar text, notification emails, return instructions template, COD settings (on or off, fee, maximum order value, hours to confirm, refused parcels before blocking)
+- [x] TASK-096 Return window wording connected on Returns, product details and Contact. Settings page: store details, TRN, VAT, delivery fee, return window, return expiry, low-stock threshold, announcement bar text, notification emails, return instructions template, COD settings (on or off, fee, maximum order value, hours to confirm, refused parcels before blocking)
 - [x] TASK-126 Coupons / Promo Codes (Item 12): Checkout discount codes with real-time server validation, spend threshold & cap enforcement, and admin coupon manager (`/admin/coupons`).
 - [x] TASK-127 Customer Product Reviews & Ratings (Item 13): Star ratings, sizing feedback (true to size/runs small/large), verified buyer verification, customer submission modal, PDP reviews summary & breakdown, and boutique admin moderation queue (`/admin/reviews`).
 

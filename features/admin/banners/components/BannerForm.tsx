@@ -216,57 +216,59 @@ export function BannerForm({ mode, initialBanner, existingPromoId }: BannerFormP
         </div>
       )}
 
-      {/* ── Section Type Selector (Hero vs Promo) ── */}
-      <div className="space-y-2">
-        <span className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
-          Select Banner Type
-        </span>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => handlePlacementChange("hero")}
-            className={`p-4 border text-left transition-all rounded-none ${
-              placement === "hero"
-                ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                : "border-border bg-background hover:border-border/80"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Sparkles className="size-4 text-primary" />
-                Hero Carousel Slide
-              </span>
-              {placement === "hero" && <CheckCircle2 className="size-4 text-primary" />}
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Top rotating full-width banner image with clickable destination link.
-            </p>
-          </button>
+      {/* ── Section Type Selector (Hero vs Promo) - Only show when creating a new banner ── */}
+      {!isEditing && (
+        <div className="space-y-2">
+          <span className="text-[11px] font-sans font-medium uppercase tracking-[0.08em] text-muted-foreground">
+            Select Banner Type
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handlePlacementChange("hero")}
+              className={`p-4 border text-left transition-all rounded-none ${
+                placement === "hero"
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                  : "border-border bg-background hover:border-border/80"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Sparkles className="size-4 text-primary" />
+                  Hero Carousel Slide
+                </span>
+                {placement === "hero" && <CheckCircle2 className="size-4 text-primary" />}
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Top rotating full-width banner image with clickable destination link.
+              </p>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => handlePlacementChange("promo")}
-            className={`p-4 border text-left transition-all rounded-none ${
-              placement === "promo"
-                ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                : "border-border bg-background hover:border-border/80"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Tag className="size-4 text-primary" />
-                Promo Split Banner
-              </span>
-              {placement === "promo" && <CheckCircle2 className="size-4 text-primary" />}
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {!isEditing && existingPromoId
-                ? "Only 1 promo banner is used on the boutique. Click to edit existing."
-                : "Mid-page featured section with photo on the left & styled copy on the right."}
-            </p>
-          </button>
+            <button
+              type="button"
+              onClick={() => handlePlacementChange("promo")}
+              className={`p-4 border text-left transition-all rounded-none ${
+                placement === "promo"
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                  : "border-border bg-background hover:border-border/80"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Tag className="size-4 text-primary" />
+                  Promo Split Banner
+                </span>
+                {placement === "promo" && <CheckCircle2 className="size-4 text-primary" />}
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {!isEditing && existingPromoId
+                  ? "Only 1 promo banner is used on the boutique. Click to edit existing."
+                  : "Mid-page featured section with photo on the left & styled copy on the right."}
+              </p>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Form Body: Case 1 (Hero Carousel Slide) ── */}
       {placement === "hero" && (

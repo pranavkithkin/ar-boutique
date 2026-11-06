@@ -7,7 +7,10 @@ import {
   sendOrderConfirmationEmail,
   sendOrderShippedEmail,
   sendOrderCancelledEmail,
+  sendRefundConfirmationEmail,
 } from "@/lib/email"
+import { getStripeServer } from "@/lib/stripe"
+import { formatAED } from "@/lib/money"
 import {
   AdminOrderListItem,
   AdminOrderDetail,
@@ -73,7 +76,8 @@ export async function getAdminOrdersList({
         payment_status,
         total_fils,
         order_items (
-          id
+          id,
+          quantity
         )
       `,
         { count: "exact" }
@@ -129,7 +133,9 @@ export async function getAdminOrdersList({
       status: o.status as OrderStatus,
       payment_method: o.payment_method as PaymentMethod,
       payment_status: o.payment_status as PaymentStatus,
-      item_count: Array.isArray(o.order_items) ? o.order_items.length : 0,
+      item_count: Array.isArray(o.order_items)
+        ? o.order_items.reduce((sum: number, it: any) => sum + (it.quantity || 1), 0)
+        : 0,
       total_fils: o.total_fils,
     }))
 
@@ -303,6 +309,175 @@ export async function updateOrderStatusAction(input: {
     return { success: true }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Error updating order"
+    return { success: false, error: msg }
+  }
+}
+
+/**
+ * Direct Stripe Card refund initiated by boutique admin.
+ * - Confirms order was paid via card (payment_method === 'card', payment_status === 'paid').
+ * - Finds payment_intent ID (directly from order, or retrieves checkout session to get payment_intent).
+ * - Calls Stripe API: `stripe.refunds.create({ payment_intent, reason: 'requested_by_customer' })`.
+ * - Inserts a record into `refunds` table.
+ * - Updates `orders`:
+ *     `payment_status: 'refunded'`
+ *     `status: 'cancelled'` (if not already cancelled)
+ *     `cancelled_at: order.cancelled_at || new Date().toISOString()`
+ * - Inserts an audit event in `order_events`:
+ *     `event_type: 'refund_processed'`
+ *     `note: 'Processed full Stripe card refund of ' + formatAED(order.total_fils) + ' (Stripe Refund ID: ' + refund.id + ')'`
+ * - Dispatches refund confirmation email to customer.
+ * - Revalidates paths.
+ */
+export async function refundOrderViaStripeAction(input: {
+  orderId: string
+  reason?: string
+}): Promise<{ success: boolean; error?: string; refundId?: string }> {
+  try {
+    const adminDb = createAdminClient()
+
+    // 1. Fetch order
+    const { data: order, error: orderErr } = await adminDb
+      .from("orders")
+      .select("id, order_number, customer_name, email, payment_method, payment_status, total_fils, status, stripe_payment_intent_id, stripe_session_id, cancelled_at")
+      .eq("id", input.orderId)
+      .maybeSingle()
+
+    if (orderErr || !order) {
+      return { success: false, error: "Order not found." }
+    }
+
+    if (order.payment_method !== "card") {
+      return { success: false, error: "This order was not placed with an online card payment." }
+    }
+
+    if (order.payment_status === "refunded") {
+      return { success: false, error: "This order has already been refunded." }
+    }
+
+    if (order.payment_status !== "paid") {
+      return { success: false, error: `Order payment status is '${order.payment_status}'. Only paid orders can be refunded.` }
+    }
+
+    const stripe = getStripeServer()
+    let paymentIntentId = order.stripe_payment_intent_id
+
+    // Fallback: If payment_intent_id is not directly stored on the order, retrieve it from the Stripe Checkout Session
+    if (!paymentIntentId && order.stripe_session_id) {
+      try {
+        const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id)
+        if (typeof session.payment_intent === "string") {
+          paymentIntentId = session.payment_intent
+        } else if (session.payment_intent && typeof session.payment_intent === "object") {
+          paymentIntentId = session.payment_intent.id
+        }
+      } catch (err) {
+        console.warn("[Stripe Refund] Session lookup error:", err)
+      }
+    }
+
+    if (!paymentIntentId) {
+      return {
+        success: false,
+        error: "Unable to find Stripe Payment Intent ID for this order. Please verify in Stripe Dashboard.",
+      }
+    }
+
+    // 2. Execute live refund via Stripe API
+    const refundReason = input.reason?.trim() || "Customer cancellation refund"
+    const stripeRefund = await stripe.refunds.create({
+      payment_intent: paymentIntentId,
+      reason: "requested_by_customer",
+      metadata: {
+        order_id: order.id,
+        order_number: order.order_number,
+        customer_email: order.email,
+        admin_reason: refundReason,
+      },
+    })
+
+    if (!stripeRefund || stripeRefund.status === "failed") {
+      return { success: false, error: "Stripe declined the refund request. Please check Stripe dashboard." }
+    }
+
+    // 3. Insert record into `refunds` table
+    const { error: refInsertErr } = await adminDb.from("refunds").insert({
+      order_id: order.id,
+      amount_fils: order.total_fils,
+      method: "card",
+      status: "succeeded",
+      stripe_refund_id: stripeRefund.id,
+      reason: refundReason,
+      processed_by: "admin",
+    })
+
+    if (refInsertErr) {
+      console.error("[Stripe Refund] Failed to insert refund record:", refInsertErr)
+    }
+
+    // 4. Update order payment status and cancellation status
+    const updatePayload: Record<string, unknown> = {
+      payment_status: "refunded",
+      updated_at: new Date().toISOString(),
+    }
+    if (order.status !== "cancelled") {
+      updatePayload.status = "cancelled"
+      updatePayload.cancelled_at = order.cancelled_at || new Date().toISOString()
+      updatePayload.cancellation_reason = refundReason
+    }
+
+    await adminDb.from("orders").update(updatePayload).eq("id", order.id)
+
+    // 5. Release any reserved stock
+    const { data: items } = await adminDb
+      .from("order_items")
+      .select("variant_id, quantity")
+      .eq("order_id", order.id)
+
+    if (items) {
+      for (const it of items) {
+        if (it.variant_id) {
+          const { data: st } = await adminDb
+            .from("stock_levels")
+            .select("reserved")
+            .eq("variant_id", it.variant_id)
+            .maybeSingle()
+
+          if (st && typeof st.reserved === "number" && st.reserved > 0) {
+            await adminDb
+              .from("stock_levels")
+              .update({ reserved: Math.max(0, st.reserved - (it.quantity || 1)) })
+              .eq("variant_id", it.variant_id)
+          }
+        }
+      }
+    }
+
+    // 6. Record audit event in order_events
+    const formattedAmount = formatAED(order.total_fils)
+    await adminDb.from("order_events").insert({
+      order_id: order.id,
+      event_type: "refund_processed",
+      from_status: order.status,
+      to_status: "cancelled",
+      note: `Full Stripe card refund of ${formattedAmount} processed. (Stripe Refund ID: ${stripeRefund.id})`,
+      actor_sub: "admin",
+    })
+
+    // 7. Send refund confirmation email
+    void sendRefundConfirmationEmail({
+      orderId: order.id,
+      amountFils: order.total_fils,
+      method: "card",
+    }).catch((e) => console.warn("[Stripe Refund] Email error:", e))
+
+    revalidatePath(`/admin/orders/${order.id}`)
+    revalidatePath("/admin/orders")
+
+    return { success: true, refundId: stripeRefund.id }
+  } catch (err: unknown) {
+    console.error("[Stripe Refund] Exception:", err)
+    const msg = err instanceof Error ? err.message : "Error processing Stripe refund"
     return { success: false, error: msg }
   }
 }

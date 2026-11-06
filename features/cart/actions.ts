@@ -2,6 +2,7 @@
 
 import "server-only"
 import { createAdminClient } from "@/lib/supabase/server"
+import { getStoreSettings } from "@/features/admin/settings/actions"
 
 export interface SkuStockInfo {
   sku: string
@@ -88,6 +89,43 @@ export async function getCartStockAvailabilityAction(
     const msg = err instanceof Error ? err.message : "Failed to fetch stock availability"
     console.error("[Cart Stock] Unexpected error:", msg)
     return { success: false, error: msg }
+  }
+}
+
+export interface CartSettingsConfig {
+  deliveryFeeFils: number
+  freeDeliveryThresholdFils: number
+  vatEnabled: boolean
+  vatRatePct: number
+  returnWindowDays: number
+}
+
+/**
+ * Server Action to fetch live cart delivery, VAT, and return settings.
+ */
+export async function getCartSettingsAction(): Promise<CartSettingsConfig> {
+  try {
+    const settings = await getStoreSettings()
+    return {
+      deliveryFeeFils:
+        typeof settings.delivery_fee_fils === "number" ? settings.delivery_fee_fils : 2500,
+      freeDeliveryThresholdFils:
+        typeof settings.free_delivery_over_fils === "number"
+          ? settings.free_delivery_over_fils
+          : 20000,
+      vatEnabled: Boolean(settings.vat_enabled),
+      vatRatePct: settings.vat_rate_pct || 5,
+      returnWindowDays: settings.return_window_days || 14,
+    }
+  } catch (err) {
+    console.error("[Cart Settings] Error fetching settings:", err)
+    return {
+      deliveryFeeFils: 2500,
+      freeDeliveryThresholdFils: 20000,
+      vatEnabled: false,
+      vatRatePct: 5,
+      returnWindowDays: 14,
+    }
   }
 }
 

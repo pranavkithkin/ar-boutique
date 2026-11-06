@@ -30,6 +30,7 @@ export async function getCheckoutConfigAction(): Promise<CheckoutConfig> {
     return {
       deliveryFeeFils: settings.delivery_fee_fils,
       freeDeliveryThresholdFils: settings.free_delivery_over_fils,
+      vatEnabled: Boolean(settings.vat_enabled),
       vatRatePct: settings.vat_rate_pct,
       cardEnabled: settings.card_enabled,
       codEnabled: settings.cod_enabled,
@@ -43,6 +44,7 @@ export async function getCheckoutConfigAction(): Promise<CheckoutConfig> {
     return {
       deliveryFeeFils: 2500, // 25 AED fallback
       freeDeliveryThresholdFils: 20000, // 200 AED free delivery
+      vatEnabled: false,
       vatRatePct: 5,
       cardEnabled: true,
       codEnabled: true,
@@ -160,26 +162,13 @@ export async function getCheckoutInitialDataAction(): Promise<CheckoutPageData> 
         }
 
         // Active open COD order check
-        if (
-          ord.payment_method === "cod" &&
-          ["awaiting_confirmation", "pending", "confirmed", "processing", "packed", "shipped"].includes(
-            ord.status
-          )
-        ) {
-          hasOpenCodOrder = true
-        }
-
         // Refused / returned order count
         if (ord.status === "returned_to_sender") {
           refusalsCount++
         }
       }
 
-      if (hasOpenCodOrder) {
-        codEligible = false
-        codReason =
-          "You already have an active Cash on Delivery order in progress. You can place another once it is delivered."
-      } else if (refusalsCount >= config.codRefusedBlockCount) {
+      if (refusalsCount >= config.codRefusedBlockCount) {
         isBlocked = true
         codEligible = false
         codReason = "Cash on delivery is disabled due to past parcel delivery refusals."
@@ -292,7 +281,9 @@ export async function placeCheckoutOrderAction(
     const rawVariantIds = cartItems.map((i) => i.variantId).filter(Boolean)
     const skus = cartItems.map((i) => i.sku).filter(Boolean)
 
-    let query = supabase.from("product_variants").select("id, product_id, product_colour_id, price_fils, is_active, sku")
+    let query = supabase
+      .from("product_variants")
+      .select("id, product_id, product_colour_id, price_fils, is_active, sku, product_colours(style_code)")
     if (rawVariantIds.length > 0 && skus.length > 0) {
       query = query.or(`id.in.(${rawVariantIds.join(",")}),sku.in.(${skus.join(",")})`)
     } else if (rawVariantIds.length > 0) {
@@ -304,19 +295,30 @@ export async function placeCheckoutOrderAction(
     const { data: dbVariants } = await query
 
     const variantPriceMap = new Map<string, number>()
-    const skuToVariantMap = new Map<string, { id: string; productId: string; colourId: string; price_fils: number }>()
+    const variantDetailsMap = new Map<
+      string,
+      { id: string; productId: string; colourId: string; styleCode?: string; price_fils: number }
+    >()
+    const skuToVariantMap = new Map<
+      string,
+      { id: string; productId: string; colourId: string; styleCode?: string; price_fils: number }
+    >()
 
     if (dbVariants) {
-      for (const v of dbVariants) {
+      for (const v of dbVariants as any[]) {
         if (typeof v.price_fils === "number") {
+          const styleCode = v.product_colours?.style_code || undefined
+          const detail = {
+            id: v.id,
+            productId: v.product_id,
+            colourId: v.product_colour_id,
+            styleCode,
+            price_fils: v.price_fils,
+          }
           variantPriceMap.set(v.id, v.price_fils)
+          variantDetailsMap.set(v.id, detail)
           if (v.sku) {
-            skuToVariantMap.set(v.sku.toLowerCase(), {
-              id: v.id,
-              productId: v.product_id,
-              colourId: v.product_colour_id,
-              price_fils: v.price_fils,
-            })
+            skuToVariantMap.set(v.sku.toLowerCase(), detail)
           }
         }
       }
@@ -374,12 +376,17 @@ export async function placeCheckoutOrderAction(
     let subtotalFils = 0
     const verifiedLines = cartItems.map((item) => {
       const fallbackVariant = item.sku ? skuToVariantMap.get(item.sku.toLowerCase()) : null
-      const actualVariantId = (item.variantId && variantPriceMap.has(item.variantId)) ? item.variantId : (fallbackVariant?.id || null)
-      const actualProductId = item.productId || fallbackVariant?.productId || null
+      const variantDetails = item.variantId ? variantDetailsMap.get(item.variantId) : null
+      const resolvedDetails = variantDetails || fallbackVariant
+
+      const actualVariantId = resolvedDetails?.id || item.variantId || null
+      const actualProductId = item.productId || resolvedDetails?.productId || null
+      const actualColourId = resolvedDetails?.colourId || null
+      const actualStyleCode = resolvedDetails?.styleCode || item.sku || "N/A"
 
       const verifiedUnitPrice =
+        resolvedDetails?.price_fils ??
         (actualVariantId ? variantPriceMap.get(actualVariantId) : null) ??
-        fallbackVariant?.price_fils ??
         item.priceFils
 
       const lineTotal = verifiedUnitPrice * item.quantity
@@ -387,7 +394,9 @@ export async function placeCheckoutOrderAction(
       return {
         ...item,
         productId: actualProductId,
+        productColourId: actualColourId,
         variantId: actualVariantId,
+        styleCode: actualStyleCode,
         unitPriceFils: verifiedUnitPrice,
         lineTotalFils: lineTotal,
       }
@@ -436,7 +445,8 @@ export async function placeCheckoutOrderAction(
     const isCod = data.paymentMethod === "cod"
     const codFeeFils = isCod ? settings.cod_fee_fils : 0
     const totalFils = Math.max(0, subtotalFils - discountFils) + deliveryFeeFils + codFeeFils
-    const vatFils = calculateVatPortion(totalFils)
+    const isVatEnabled = Boolean(settings.vat_enabled)
+    const vatFils = isVatEnabled ? calculateVatPortion(totalFils) : 0
 
     // 6. Validate Payment Method availability rules
     if (isCod) {
@@ -461,19 +471,6 @@ export async function placeCheckoutOrderAction(
         .ilike("email", cleanEmail)
 
       if (customerPastOrders && customerPastOrders.length > 0) {
-        const hasOpen = customerPastOrders.some(
-          (o) =>
-            o.payment_method === "cod" &&
-            ["awaiting_confirmation", "pending", "confirmed", "processing", "packed", "shipped"].includes(o.status)
-        )
-        if (hasOpen) {
-          return {
-            success: false,
-            error:
-              "You currently have an active Cash on Delivery order awaiting confirmation or delivery.",
-          }
-        }
-
         const refusedCount = customerPastOrders.filter((o) => o.status === "returned_to_sender").length
         const allowedRefusals = settings.cod_refused_block_count || 2
         if (refusedCount >= allowedRefusals) {
@@ -528,7 +525,7 @@ export async function placeCheckoutOrderAction(
         cod_fee_fils: codFeeFils,
         vat_fils: vatFils,
         total_fils: totalFils,
-        vat_rate_bps: settings.vat_rate_pct * 100,
+        vat_rate_bps: isVatEnabled ? settings.vat_rate_pct * 100 : 0,
         confirm_by: confirmBy,
         hold_expires_at: holdExpiresAt,
         confirmed_at: null,
@@ -545,41 +542,91 @@ export async function placeCheckoutOrderAction(
 
     const orderId = insertedOrder.id
 
+    const isUuid = (val: unknown): val is string =>
+      typeof val === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val.trim())
+
     // 10. Insert Order Items Snapshot
-    const orderItemsPayload = verifiedLines.map((line) => ({
-      order_id: orderId,
-      product_id: line.productId || null,
-      variant_id: line.variantId || null,
-      product_name: line.productName,
-      colour_name: line.colourName,
-      style_code: line.sku,
-      size_label: line.sizeLabel || null,
-      sku: line.sku,
-      media_key: line.image || null,
-      unit_price_fils: line.unitPriceFils,
-      quantity: line.quantity,
-      total_fils: line.lineTotalFils,
-    }))
+    const orderItemsPayload = verifiedLines.map((line) => {
+      const fallbackVariant = line.sku ? skuToVariantMap.get(line.sku.toLowerCase()) : null
+      const variantDetails = (line.variantId && isUuid(line.variantId)) ? variantDetailsMap.get(line.variantId) : null
+      const resolved = variantDetails || fallbackVariant
+
+      const variantId = isUuid(line.variantId)
+        ? line.variantId
+        : (isUuid(resolved?.id) ? resolved.id : null)
+
+      const productId = isUuid(line.productId)
+        ? line.productId
+        : (isUuid(resolved?.productId) ? resolved.productId : null)
+
+      const colourId = isUuid(line.productColourId)
+        ? line.productColourId
+        : (isUuid(resolved?.colourId) ? resolved.colourId : null)
+
+      const unitPriceFils = Math.max(0, Math.round(Number(line.unitPriceFils) || 0))
+      const quantity = Math.max(1, Math.round(Number(line.quantity) || 1))
+      const totalFils = Math.max(0, Math.round(Number(line.lineTotalFils) || unitPriceFils * quantity))
+
+      // Clean media key: if it is a full Cloudinary URL, extract public_id or keep raw key
+      let mediaKey: string | null = null
+      if (line.image && typeof line.image === "string") {
+        if (!line.image.startsWith("http") && !line.image.startsWith("/")) {
+          mediaKey = line.image
+        } else if (line.image.includes("/upload/")) {
+          const parts = line.image.split("/upload/")
+          if (parts[1]) {
+            mediaKey = parts[1].replace(/^v\d+\//, "").replace(/\.[^.]+$/, "") || null
+          }
+        }
+      }
+
+      return {
+        order_id: orderId,
+        product_id: productId,
+        product_colour_id: colourId,
+        variant_id: variantId,
+        product_name: String(line.productName || "Boutique Piece"),
+        colour_name: String(line.colourName || "Standard"),
+        style_code: String(resolved?.styleCode || line.styleCode || line.sku || "N/A"),
+        size_label: line.sizeLabel ? String(line.sizeLabel) : null,
+        sku: String(line.sku || "N/A"),
+        media_key: mediaKey,
+        unit_price_fils: unitPriceFils,
+        quantity,
+        total_fils: totalFils,
+        is_final_sale: false,
+      }
+    })
 
     const { error: itemsError } = await supabase.from("order_items").insert(orderItemsPayload)
     if (itemsError) {
       console.error("Failed to insert order items:", itemsError)
+      return {
+        success: false,
+        error: `Failed to record order items (${itemsError.message || "database error"}). Please try again.`,
+      }
     }
 
     // 11. Reserve stock in `stock_levels`
     for (const line of verifiedLines) {
-      if (line.variantId) {
+      const fallbackVariant = line.sku ? skuToVariantMap.get(line.sku.toLowerCase()) : null
+      const actualVariantId = (line.variantId && isUuid(line.variantId))
+        ? line.variantId
+        : (isUuid(fallbackVariant?.id) ? fallbackVariant.id : null)
+
+      if (actualVariantId) {
         const { data: curStock } = await supabase
           .from("stock_levels")
           .select("reserved")
-          .eq("variant_id", line.variantId)
+          .eq("variant_id", actualVariantId)
           .maybeSingle()
 
         if (curStock) {
           await supabase
             .from("stock_levels")
             .update({ reserved: (curStock.reserved || 0) + line.quantity })
-            .eq("variant_id", line.variantId)
+            .eq("variant_id", actualVariantId)
         }
       }
     }
@@ -596,9 +643,10 @@ export async function placeCheckoutOrderAction(
       actor_sub: clerkUserId || "storefront_shopper",
     })
 
-    // 13. If promo code was applied, record redemption and increment coupon usage
+    // 13. If promo code was applied on COD, record redemption immediately.
+    // (For Card payments, redemption is recorded exclusively upon verified Stripe webhook completion so abandoned sessions do not consume the coupon).
     const cleanEmail = data.email.toLowerCase().trim()
-    if (appliedCoupon) {
+    if (appliedCoupon && isCod) {
       try {
         await supabase.from("coupon_redemptions").insert({
           coupon_id: appliedCoupon.id,
@@ -685,6 +733,8 @@ export async function placeCheckoutOrderAction(
             unitPriceFils: l.unitPriceFils,
           })),
           deliveryFeeFils,
+          discountFils,
+          promoCode: appliedCoupon?.code || couponCode?.trim() || undefined,
           vatFils,
           successUrl,
           cancelUrl,

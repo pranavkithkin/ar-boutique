@@ -25,6 +25,8 @@ export interface OrderItemEmailData {
 }
 
 export interface OrderConfirmationEmailProps {
+  orderId?: string
+  trackingUrl?: string
   orderNumber: string
   orderDate: string
   customerName: string
@@ -33,6 +35,7 @@ export interface OrderConfirmationEmailProps {
   paymentMethod: "card" | "cod"
   items: OrderItemEmailData[]
   subtotalAed: string
+  discountAed?: string
   deliveryFeeAed: string
   vatAed: string
   totalAed: string
@@ -50,6 +53,8 @@ export interface OrderConfirmationEmailProps {
 }
 
 export function OrderConfirmationEmail({
+  orderId,
+  trackingUrl,
   orderNumber = "AR-1001",
   orderDate = "October 19, 2026",
   customerName = "Valued Patron",
@@ -58,6 +63,7 @@ export function OrderConfirmationEmail({
   paymentMethod = "cod",
   items = [],
   subtotalAed = "AED 1,200.00",
+  discountAed,
   deliveryFeeAed = "Complimentary",
   vatAed = "AED 60.00",
   totalAed = "AED 1,260.00",
@@ -101,6 +107,14 @@ export function OrderConfirmationEmail({
               <strong style={orderNumberHighlight}>#{orderNumber}</strong> placed on{" "}
               {orderDate}.
             </Text>
+            {orderId && (
+              <Text style={subheading}>
+                Order ID: <strong>{orderId}</strong>
+                <br />
+                Use this ID and your checkout email to check your order status.
+                {trackingUrl && <><br /><a href={trackingUrl}>Track Your Order</a></>}
+              </Text>
+            )}
           </Section>
 
           {/* COD Notice Box */}
@@ -154,6 +168,16 @@ export function OrderConfirmationEmail({
                 <Text style={totalValue}>{subtotalAed}</Text>
               </Column>
             </Row>
+            {discountAed && (
+              <Row style={totalRow}>
+                <Column style={{ width: "70%" }}>
+                  <Text style={{ ...totalLabel, color: "#15803d", fontWeight: 600 }}>Promotional Discount</Text>
+                </Column>
+                <Column style={{ width: "30%", textAlign: "right" }}>
+                  <Text style={{ ...totalValue, color: "#15803d", fontWeight: 600 }}>-{discountAed}</Text>
+                </Column>
+              </Row>
+            )}
             <Row style={totalRow}>
               <Column style={{ width: "70%" }}>
                 <Text style={totalLabel}>Estimated Delivery</Text>

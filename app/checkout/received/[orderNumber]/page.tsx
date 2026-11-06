@@ -40,6 +40,7 @@ export async function generateMetadata({
   const { orderNumber } = await params
   return {
     title: `Order Received #${orderNumber} | AR Boutique`,
+    robots: { index: false, follow: false },
     description: `Your AR Boutique order #${orderNumber} has been received. Cash on delivery confirmation in progress.`,
   }
 }
@@ -256,6 +257,12 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
                 <span>Subtotal</span>
                 <span className="tabular-nums font-sans">{formatAED(order.subtotal_fils)}</span>
               </div>
+              {order.discount_fils > 0 && (
+                <div className="flex justify-between text-emerald-700 dark:text-emerald-400 font-medium">
+                  <span>Promotional Discount</span>
+                  <span className="tabular-nums font-sans">-{formatAED(order.discount_fils)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-muted-foreground">
                 <span>Doorstep Delivery</span>
                 <span className="tabular-nums font-sans">

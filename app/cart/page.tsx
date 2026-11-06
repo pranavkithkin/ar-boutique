@@ -3,6 +3,7 @@ import { Metadata } from "next"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
 import { CartView } from "@/features/cart/components/CartView"
+import { getCartSettingsAction } from "@/features/cart/actions"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,7 +18,9 @@ export const metadata: Metadata = {
   description: "Review items in your luxury shopping bag before proceeding to secure checkout.",
 }
 
-export default function CartPage() {
+export default async function CartPage() {
+  const config = await getCartSettingsAction()
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <StoreHeader />
@@ -50,7 +53,7 @@ export default function CartPage() {
             </p>
           </div>
 
-          <CartView />
+          <CartView initialConfig={config} />
         </div>
       </main>
 

@@ -29,11 +29,13 @@ export interface AccountOrder {
   id: string
   orderNumber: string
   date: string
-  status: "confirmed" | "shipped" | "delivered" | "cancelled"
+  status: "pending" | "confirmed" | "packed" | "shipped" | "delivered" | "cancelled"
   statusLabel: string
   trackingNumber?: string
   courierName?: string
   paymentMethod: "card" | "cod"
+  paymentStatus?: "pending" | "paid" | "refunded" | "failed"
+  cancellationReason?: string
   subtotalFils: number
   deliveryFeeFils: number
   vatFils: number

@@ -13,6 +13,10 @@ import { OrderCancelledEmail } from "@/components/emails/OrderCancelledEmail"
 import { ReturnRequestedEmail } from "@/components/emails/ReturnRequestedEmail"
 import { ReturnDecisionEmail } from "@/components/emails/ReturnDecisionEmail"
 import { RefundConfirmationEmail } from "@/components/emails/RefundConfirmationEmail"
+import {
+  ContactInquiryEmail,
+  CustomerInquiryAcknowledgmentEmail,
+} from "@/components/emails/ContactInquiryEmail"
 
 /**
  * Lazily instantiate Resend to avoid errors during static builds if the key is missing.
@@ -97,7 +101,8 @@ export async function sendOrderConfirmationEmail(
 
     const totalFils = order.total_fils || 0
     const deliveryFeeFils = order.delivery_fee_fils || 0
-    const subtotalFils = totalFils - deliveryFeeFils
+    const subtotalFils = order.subtotal_fils ?? (totalFils - deliveryFeeFils)
+    const discountFils = order.discount_fils || 0
     const vatFils = calculateVatPortion(totalFils)
 
     const orderDate = new Date(order.created_at || Date.now()).toLocaleDateString("en-AE", {
@@ -123,6 +128,8 @@ export async function sendOrderConfirmationEmail(
       to: [toEmail],
       subject,
       react: OrderConfirmationEmail({
+        orderId: order.id,
+        trackingUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://www.thearboutique.com").replace(/\/$/, "")}/track-order`,
         orderNumber: order.order_number,
         orderDate,
         customerName: order.customer_name || "Valued Patron",
@@ -131,6 +138,7 @@ export async function sendOrderConfirmationEmail(
         paymentMethod: isCod ? "cod" : "card",
         items: orderItems,
         subtotalAed: formatAED(subtotalFils),
+        discountAed: discountFils > 0 ? formatAED(discountFils) : undefined,
         deliveryFeeAed: deliveryFeeFils === 0 ? "Complimentary" : formatAED(deliveryFeeFils),
         vatAed: formatAED(vatFils),
         totalAed: formatAED(totalFils),
@@ -453,7 +461,8 @@ export async function sendReturnRequestedEmails(returnId: string): Promise<SendE
       reason: it.reason || "General return",
     }))
 
-    const orderNumber = (ret.orders as any)?.order_number || "Order"
+    const ordersRel = ret.orders as unknown as { order_number?: string; payment_method?: string } | null
+    const orderNumber = ordersRel?.order_number || "Order"
     const sender = getSenderAddress(settings.store_name || "AR Boutique")
     const resend = getResendClient()
     if (!resend) {
@@ -498,7 +507,7 @@ export async function sendReturnRequestedEmails(returnId: string): Promise<SendE
           customerName: ret.customer_name || "Customer",
           customerEmail: ret.email,
           customerPhone: ret.phone || "N/A",
-          paymentMethod: (ret.orders as any)?.payment_method === "cod" ? "cod" : "card",
+          paymentMethod: ordersRel?.payment_method === "cod" ? "cod" : "card",
           totalAed: "Review items",
           itemCount: returnItems.length,
           adminOrderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://arboutique.ae"}/admin/returns/${ret.id}`,
@@ -546,7 +555,8 @@ export async function sendReturnDecisionEmail(
       return { success: false, error: "Return request not found or has no email" }
     }
 
-    const orderNumber = (ret.orders as any)?.order_number || "Order"
+    const ordersRel = ret.orders as unknown as { order_number?: string; payment_method?: string } | null
+    const orderNumber = ordersRel?.order_number || "Order"
     const sender = getSenderAddress(settings.store_name || "AR Boutique")
     const resend = getResendClient()
     if (!resend) {
@@ -675,6 +685,82 @@ export async function sendRefundConfirmationEmail(input: {
     return {
       success: false,
       error: err instanceof Error ? err.message : "Unknown error",
+    }
+  }
+}
+
+/**
+ * Sends a concierge notification email when a visitor submits the contact form,
+ * and sends an auto-reply acknowledgment email to the patron.
+ */
+export async function sendContactInquiryEmail(input: {
+  name: string
+  email: string
+  phone?: string
+  topic: string
+  message: string
+}): Promise<SendEmailResult> {
+  try {
+    const settings = await getStoreSettings()
+    const storeName = settings.store_name || "AR Boutique"
+    const sender = getSenderAddress(storeName)
+    const resend = getResendClient()
+
+    const contactRecipient =
+      settings.store_email?.trim() ||
+      settings.admin_notification_email?.trim() ||
+      "hello@arboutique.ae"
+
+    if (!resend) {
+      console.log(
+        `[Email Mock] Would send contact inquiry from ${input.name} (${input.email}) to ${contactRecipient}: "${input.topic}"`
+      )
+      return { success: true, id: "mock_inquiry_id" }
+    }
+
+    // 1. Send alert to boutique concierge / operations team
+    const { data: adminResult, error: adminSendErr } = await resend.emails.send({
+      from: sender,
+      to: [contactRecipient],
+      replyTo: input.email,
+      subject: `[Concierge Inquiry] ${input.topic} - ${input.name}`,
+      react: ContactInquiryEmail({
+        name: input.name,
+        email: input.email,
+        phone: input.phone,
+        topic: input.topic,
+        message: input.message,
+      }),
+    })
+
+    if (adminSendErr) {
+      console.error("[Email Service] Error sending concierge inquiry email:", adminSendErr)
+      return { success: false, error: adminSendErr.message }
+    }
+
+    // 2. Send acknowledgment to the patron (asynchronous, non-blocking)
+    void resend.emails
+      .send({
+        from: sender,
+        to: [input.email],
+        subject: `Thank you for contacting ${storeName} Concierge`,
+        react: CustomerInquiryAcknowledgmentEmail({
+          name: input.name,
+          topic: input.topic,
+          storeEmail: settings.store_email || "concierge@arboutique.ae",
+          storePhone: settings.store_phone || "+971 50 273 6767",
+        }),
+      })
+      .catch((err) => {
+        console.warn("[Email Service] Non-blocking patron acknowledgment email failed:", err)
+      })
+
+    return { success: true, id: adminResult?.id }
+  } catch (err: unknown) {
+    console.error("[Email Service] Exception sending contact inquiry:", err)
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send inquiry",
     }
   }
 }

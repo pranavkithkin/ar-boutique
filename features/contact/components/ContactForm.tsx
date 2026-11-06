@@ -19,11 +19,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StoreButton } from "@/components/store/StoreButton"
-import { Check, Send } from "lucide-react"
+import { Check, Send, Loader2, AlertCircle } from "lucide-react"
 import { contactFormSchema, type ContactFormValues } from "../schemas"
+import { submitContactInquiryAction } from "../actions"
 
 export function ContactForm() {
   const [submitted, setSubmitted] = React.useState(false)
+  const [submitError, setSubmitError] = React.useState<string | null>(null)
 
   const {
     handleSubmit,
@@ -41,8 +43,14 @@ export function ContactForm() {
     },
   })
 
-  function onSubmit(_data: ContactFormValues) {
-    setSubmitted(true)
+  async function onSubmit(data: ContactFormValues) {
+    setSubmitError(null)
+    const res = await submitContactInquiryAction(data)
+    if (res.success) {
+      setSubmitted(true)
+    } else {
+      setSubmitError(res.error || "Failed to submit inquiry. Please try again or reach out on WhatsApp.")
+    }
   }
 
   if (submitted) {
@@ -202,13 +210,29 @@ export function ContactForm() {
         />
       </FieldGroup>
 
+      {submitError && (
+        <div className="p-3 text-xs bg-destructive/10 border border-destructive/20 text-destructive rounded-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{submitError}</span>
+        </div>
+      )}
+
       <StoreButton
         type="submit"
         disabled={isSubmitting}
         className="gap-2 w-full sm:w-auto self-start px-8"
       >
-        <Send className="w-4 h-4" />
-        <span>Submit Inquiry</span>
+        {isSubmitting ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Sending Inquiry...</span>
+          </>
+        ) : (
+          <>
+            <Send className="w-4 h-4" />
+            <span>Submit Inquiry</span>
+          </>
+        )}
       </StoreButton>
     </form>
   )

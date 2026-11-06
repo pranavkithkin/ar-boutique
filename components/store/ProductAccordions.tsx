@@ -8,7 +8,7 @@ function isValidValue(val?: string | null): boolean {
   return trimmed !== "" && trimmed !== "-" && trimmed.toLowerCase() !== "null"
 }
 
-export function ProductAccordions({ product }: { product: ProductType }) {
+export function ProductAccordions({ product, returnWindowDays }: { product: ProductType; returnWindowDays: number }) {
   const details = product.details || {}
 
   // 1. Package Contains
@@ -204,7 +204,7 @@ export function ProductAccordions({ product }: { product: ProductType }) {
           <p className="flex items-start gap-2">
             <span className="text-primary font-bold">•</span>
             <span>
-              <strong className="text-foreground font-medium">14-Day Returns:</strong> Hassle-free exchanges and returns within 14 days of receipt in original condition with tags attached.
+              <strong className="text-foreground font-medium">{returnWindowDays}-Day Returns:</strong> Hassle-free exchanges and returns within {returnWindowDays} {returnWindowDays === 1 ? "day" : "days"} of receipt in original condition with tags attached.
             </span>
           </p>
         </AccordionContent>

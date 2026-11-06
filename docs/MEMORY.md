@@ -1,5 +1,28 @@
 # Project Memory
 
+6 Nov 2026: Implemented Customer Order Cancellation & One-Click Admin Stripe Refund:
+- Added customer order cancellation on `/account/orders/[orderNumber]`: customers can cancel pre-dispatch orders (`confirmed`, `pending`, `packed`, `awaiting_confirmation`) with reason selection and custom notes via `CustomerOrderCancelDialog` and `OrderCancelButton`. Cancelling updates status to `cancelled`, releases reserved inventory back to `stock_levels`, logs audit timeline event, and triggers cancellation email.
+- Added live Stripe Card Refund in Admin Orders (`/admin/orders/[id]`): implemented `OrderStripeRefundDialog` and `refundOrderViaStripeAction` allowing admins to issue full card refunds via Stripe API (`stripe.refunds.create`). Updates order `payment_status` to `refunded`, inserts audit log into `refunds` table, logs timeline event, and sends confirmation email.
+- Resolved order items schema column mismatch in `features/checkout/actions.ts` and restored items for order `#AR-1045`. All 20 Vitest test suites (109 tests) and full TypeScript compilation passed cleanly.
+
+6 Nov 2026: TASK-128 completed. Footer Customer Care now links to `/track-order`, publicly accessible without login. Guests enter the existing unique order UUID plus their checkout email. The server validates input and queries the exact pair, returning only status, courier and shipment tracking reference. Generic no-match/failure messages avoid exposing customer details. The UUID and tracking link are included in card/COD confirmation emails, including admin resends for older orders. Confirmation pages display the UUID only with the matching signed-in customer or matching stored Stripe Checkout Session. Tracking and confirmation metadata use noindex. No database schema or order records changed.
+
+TASK-128 validation: all 104 Vitest tests passed, including 18 new tracking/access/email tests. Full TypeScript and targeted ESLint passed (one existing unused `customerEmail` warning in the confirmation email template). Local tracking route returned HTTP 200 without a redirect and included both form fields, footer link and noindex metadata. Read-only database column check passed. Browser interaction/end-to-end verification remains pending. No build, commit or push performed.
+
+6 Nov 2026: TASK-094 licence review added The AR Boutique FZE's verified document details to Terms (Business details) and Privacy (Who is responsible for your information?). Shared LegalBusinessDetails contains licence 4421784.01, free zone establishment status, Sharjah Publishing City - Free Zone Authority and registered Sharjah address. Document inspected visually and as extracted text. Licence contains no VAT TRN. Company contact email stays sourced from Admin Settings.
+
+Licence detail validation: targeted ESLint and full TypeScript passed. Both local policy routes returned HTTP 200 and contained the company name, licence number, authority and registered address after refresh. No build, commit or push performed.
+
+6 Nov 2026: TASK-094 Terms page replaces Coming Soon with simple UAE storefront terms. Uses saved store identity/contact details and return window, with links to shipping, returns and privacy. Registered legal entity/licensing disclosures and Arabic legal wording still need client/legal review before release.
+
+Terms page validation: targeted ESLint and full TypeScript passed. Local `/policies/terms` returned HTTP 200 with the new sections and policy links. No build, commit or push performed.
+
+6 Nov 2026: TASK-094 Privacy Policy simplified into readable sections covering collected data, order processing, service-provider sharing, Stripe, cookies, retention, requests and updates. Store name and contact email continue to use Admin Settings.
+
+Validation: Privacy page ESLint passed and local `/policies/privacy` returned HTTP 200 with the revised content. Full TypeScript check reported existing `size_name` and `style_code` type errors in `lib/invoice.ts` (lines 175–176). No production build run.
+
+6 Nov 2026: Implemented dynamic Store Email routing for Contact inquiries, live Privacy Policy page (UAE PDPL compliant), dynamic cart delivery & 14-day return sync, and Stripe webhook email fallback.
+
 > The project's current state. Update it after every task. Permanent decisions go in `DECISIONS.md`.
 
 ## Current Status

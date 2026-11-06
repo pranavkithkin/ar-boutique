@@ -1,6 +1,6 @@
 import type { OrderReturnEligibility, OrderItemReturnEligibility } from "./types"
 
-export const RETURN_WINDOW_DAYS = 7
+export const RETURN_WINDOW_DAYS = 14
 
 export interface OrderItemForEligibility {
   id: string
@@ -29,7 +29,8 @@ export interface ExistingReturnedItem {
 export function evaluateOrderReturnEligibility(
   order: OrderForEligibility,
   existingReturnedItems: ExistingReturnedItem[] = [],
-  currentTime: Date = new Date()
+  currentTime: Date = new Date(),
+  returnWindowDays: number = RETURN_WINDOW_DAYS
 ): OrderReturnEligibility {
   // 1. Must be delivered
   if (order.status !== "delivered") {
@@ -52,19 +53,19 @@ export function evaluateOrderReturnEligibility(
     }
   }
 
-  // 2. Check 7-day return window
+  // 2. Check return window
   const deliveryIso = order.deliveredAt || order.createdAt
   const deliveryDate = new Date(deliveryIso)
   const diffMs = currentTime.getTime() - deliveryDate.getTime()
   const daysElapsed = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
-  if (daysElapsed > RETURN_WINDOW_DAYS) {
+  if (daysElapsed > returnWindowDays) {
     return {
       orderId: order.id,
       orderNumber: order.orderNumber,
       isEligible: false,
-      ineligibleReason: `The ${RETURN_WINDOW_DAYS}-day return window expired on ${new Date(
-        deliveryDate.getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000
+      ineligibleReason: `The ${returnWindowDays}-day return window expired on ${new Date(
+        deliveryDate.getTime() + returnWindowDays * 24 * 60 * 60 * 1000
       ).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}.`,
       deliveredAt: deliveryIso,
       daysRemaining: 0,
@@ -79,7 +80,7 @@ export function evaluateOrderReturnEligibility(
     }
   }
 
-  const daysRemaining = Math.max(0, RETURN_WINDOW_DAYS - daysElapsed)
+  const daysRemaining = Math.max(0, returnWindowDays - daysElapsed)
 
   // 3. Map returned quantities per item
   const returnedCountMap = new Map<string, number>()

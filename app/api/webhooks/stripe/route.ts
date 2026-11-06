@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         // Fetch current order
         const { data: order, error: orderFetchErr } = await supabase
           .from("orders")
-          .select("id, status, payment_status, order_number")
+          .select("id, status, payment_status, order_number, email, clerk_user_id, discount_fils")
           .eq("id", orderId)
           .maybeSingle()
 
@@ -162,6 +162,47 @@ export async function POST(req: NextRequest) {
             note: `Payment confirmed via Stripe Checkout (Session: ${session.id}).`,
             actor_sub: "stripe_webhook",
           })
+
+          // Record coupon redemption now that payment is confirmed
+          const promoCode = session.metadata?.promo_code
+          const discountFilsStr = session.metadata?.discount_fils
+          const discountFils = discountFilsStr ? parseInt(discountFilsStr, 10) : (order.discount_fils || 0)
+
+          if (promoCode && discountFils > 0) {
+            try {
+              const { data: dbCoupon } = await supabase
+                .from("coupons")
+                .select("id, usage_count")
+                .ilike("code", promoCode.trim())
+                .maybeSingle()
+
+              if (dbCoupon) {
+                const customerEmail =
+                  order.email?.toLowerCase().trim() ||
+                  session.customer_details?.email?.toLowerCase().trim() ||
+                  session.customer_email?.toLowerCase().trim() ||
+                  ""
+
+                await supabase.from("coupon_redemptions").insert({
+                  coupon_id: dbCoupon.id,
+                  order_id: orderId,
+                  customer_email: customerEmail,
+                  clerk_user_id: order.clerk_user_id || null,
+                  discount_fils: discountFils,
+                })
+
+                await supabase
+                  .from("coupons")
+                  .update({
+                    usage_count: (dbCoupon.usage_count || 0) + 1,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", dbCoupon.id)
+              }
+            } catch (couponErr) {
+              console.warn("[Stripe Webhook] Error recording coupon redemption:", couponErr)
+            }
+          }
 
           // Trigger customer confirmation and admin alert emails asynchronously
           void sendOrderConfirmationEmail(orderId).catch((err) =>

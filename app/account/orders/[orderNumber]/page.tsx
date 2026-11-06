@@ -6,6 +6,7 @@ import { auth, currentUser } from "@clerk/nextjs/server"
 import { isClerkConfigured } from "@/lib/clerk"
 import { getCurrentCustomerAction } from "@/features/auth/actions"
 import { getCustomerOrderDetailsAction } from "@/features/account/actions"
+import { OrderCancelButton } from "@/features/account/components/OrderCancelButton"
 import { AnnouncementBar } from "@/components/store/AnnouncementBar"
 import { StoreHeader } from "@/components/store/StoreHeader"
 import { StoreFooter } from "@/components/store/StoreFooter"
@@ -97,7 +98,9 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
   const isCancelled = order.status === "cancelled"
   const isDelivered = order.status === "delivered"
   const isShipped = order.status === "shipped" || isDelivered
-  const isConfirmed = order.status === "confirmed" || isShipped || isDelivered
+  const isPacked = order.status === "packed" || isShipped || isDelivered
+  const isConfirmed = order.status === "confirmed" || isPacked || isShipped || isDelivered
+  const isPending = order.status === "pending"
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -153,10 +156,22 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                       Out for Delivery
                     </Badge>
                   )}
+                  {order.status === "packed" && (
+                    <Badge className="bg-secondary text-secondary-foreground border border-border font-sans font-medium text-xs">
+                      <Package className="mr-1 h-3.5 w-3.5" />
+                      Being Prepared
+                    </Badge>
+                  )}
                   {order.status === "confirmed" && (
                     <Badge className="bg-secondary text-secondary-foreground border border-border font-sans font-medium text-xs">
-                      <Clock className="mr-1 h-3.5 w-3.5" />
+                      <CheckCircle2 className="mr-1 h-3.5 w-3.5 text-primary" />
                       Confirmed
+                    </Badge>
+                  )}
+                  {order.status === "pending" && (
+                    <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-sans font-medium text-xs">
+                      <Clock className="mr-1 h-3.5 w-3.5" />
+                      {order.paymentMethod === "cod" ? "Awaiting Confirmation" : "Pending Payment"}
                     </Badge>
                   )}
                   {order.status === "cancelled" && (
@@ -221,38 +236,48 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
 
               {/* Progress Milestones */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
-                {/* 1. Confirmed */}
+                {/* 1. Confirmed / Awaiting Confirmation */}
                 <div
                   className={`p-4 rounded-xs border transition-colors ${
                     isConfirmed
                       ? "bg-muted/30 border-primary/40 text-foreground"
+                      : isPending
+                      ? "bg-amber-500/5 border-amber-500/30 text-foreground"
                       : "bg-muted/10 border-border/50 text-muted-foreground opacity-50"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2
-                      className={`h-4 w-4 ${isConfirmed ? "text-primary" : "text-muted-foreground"}`}
-                    />
+                    {isConfirmed ? (
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                    ) : isPending ? (
+                      <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 animate-pulse" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                    )}
                     <span className="text-xs font-semibold uppercase tracking-wider">
-                      1. Confirmed
+                      1. {isPending ? "Pending Confirmation" : "Confirmed"}
                     </span>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Order confirmed and allocated for atelier preparation.
+                    {isPending
+                      ? order.paymentMethod === "cod"
+                        ? "Order placed. Awaiting concierge phone or WhatsApp confirmation."
+                        : "Order initiated. Awaiting card payment confirmation."
+                      : "Order confirmed and allocated for atelier preparation."}
                   </p>
                 </div>
 
                 {/* 2. Packed */}
                 <div
                   className={`p-4 rounded-xs border transition-colors ${
-                    isConfirmed
+                    isPacked
                       ? "bg-muted/30 border-primary/40 text-foreground"
                       : "bg-muted/10 border-border/50 text-muted-foreground opacity-50"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Package
-                      className={`h-4 w-4 ${isConfirmed ? "text-primary" : "text-muted-foreground"}`}
+                      className={`h-4 w-4 ${isPacked ? "text-primary" : "text-muted-foreground"}`}
                     />
                     <span className="text-xs font-semibold uppercase tracking-wider">
                       2. Prepared
@@ -319,8 +344,21 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                   This order was cancelled
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  If you paid via card, any authorization hold was released or refunded back to your payment card. If you placed this as cash on delivery, your reserved items were released.
+                  {order.paymentMethod === "card" ? (
+                    order.paymentStatus === "refunded" ? (
+                      "Your card payment has been refunded via Stripe. Depending on your bank, it will reflect on your statement within 5–10 business days."
+                    ) : (
+                      "Your order is cancelled. Our boutique administration will process your full refund directly back to your original payment card via Stripe."
+                    )
+                  ) : (
+                    "This order was placed as Cash on Delivery; your reserved items have been released with zero charge."
+                  )}
                 </p>
+                {order.cancellationReason && (
+                  <p className="text-xs text-muted-foreground mt-2 italic font-sans">
+                    Reason: {order.cancellationReason}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -507,6 +545,19 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                       Request Return
                     </StoreButton>
                   </Link>
+                )}
+
+                {!isCancelled && !isShipped && !isDelivered && (
+                  <div className="pt-1">
+                    <OrderCancelButton
+                      orderNumber={order.orderNumber}
+                      orderId={order.id}
+                      totalFils={order.totalFils}
+                      paymentMethod={order.paymentMethod}
+                      paymentStatus={order.paymentStatus}
+                      userEmail={email}
+                    />
+                  </div>
                 )}
 
                 <a

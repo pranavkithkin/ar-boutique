@@ -125,6 +125,7 @@ export function StoreFooter() {
           <div>
             <h4 className="text-[14px] font-medium mb-6 text-foreground tracking-wide">Customer Care</h4>
             <ul className="flex flex-col gap-4 text-[14px] text-muted-foreground">
+              <li><Link href="/track-order" className="hover:text-foreground transition-colors">Track Your Order</Link></li>
               <li><Link href="/policies/shipping" className="hover:text-foreground transition-colors">Shipping & Delivery</Link></li>
               <li><Link href="/policies/returns" className="hover:text-foreground transition-colors">Returns</Link></li>
               <li><Link href="/size-guide" className="hover:text-foreground transition-colors">Size Guide</Link></li>

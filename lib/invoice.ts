@@ -53,6 +53,7 @@ export interface InvoiceData {
   // Items & Financials
   items: InvoiceLineItem[]
   subtotalNetFils: number
+  discountFils?: number
   deliveryFeeFils: number
   totalVatFils: number
   totalGrossFils: number
@@ -151,7 +152,18 @@ export async function getInvoiceData(orderId: string): Promise<InvoiceData | nul
     const totalGrossFils = order.total_fils || 0
 
     // Compute item level tax splits
-    const items: InvoiceLineItem[] = (order.order_items || []).map((it: any) => {
+    const rawItems = (order.order_items || []) as Array<{
+      id: string
+      product_name?: string | null
+      colour_name?: string | null
+      size_name?: string | null
+      size_label?: string | null
+      style_code?: string | null
+      sku?: string | null
+      quantity?: number | null
+      price_fils?: number | null
+    }>
+    const items: InvoiceLineItem[] = rawItems.map((it) => {
       const grossTotal = (it.price_fils || 0) * (it.quantity || 1)
       const vat = calculateVatPortion(grossTotal)
       const netTotal = grossTotal - vat
@@ -188,7 +200,7 @@ export async function getInvoiceData(orderId: string): Promise<InvoiceData | nul
       supplier: {
         nameEn: settings.store_name || "AR Boutique Atelier LLC",
         nameAr: "أي آر بوتيك لتصميم الأزياء ذ.م.م",
-        trn: settings.trn || "100234567800003",
+        trn: (settings.trn || "").trim(),
         addressEn: settings.store_address || "Al Wasl Road, Jumeirah, Dubai, United Arab Emirates",
         addressAr: "طريق الوصل، جميرا، دبي، الإمارات العربية المتحدة",
         email: settings.store_email || "concierge@arboutique.ae",
@@ -209,6 +221,7 @@ export async function getInvoiceData(orderId: string): Promise<InvoiceData | nul
       },
       items,
       subtotalNetFils,
+      discountFils: order.discount_fils || 0,
       deliveryFeeFils,
       totalVatFils,
       totalGrossFils,

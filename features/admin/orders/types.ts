@@ -93,6 +93,8 @@ export interface AdminOrderDetail {
   cancelled_at: string | null
   returned_at: string | null
   cash_collected_fils: number | null
+  stripe_payment_intent_id?: string | null
+  stripe_session_id?: string | null
   created_at: string
   updated_at: string
   items: AdminOrderItem[]

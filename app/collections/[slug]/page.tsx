@@ -1,3 +1,4 @@
+import { getStoreSettings } from "@/features/admin/settings/actions"
 import * as React from "react"
 import { notFound } from "next/navigation"
 import { StoreHeader } from "@/components/store/StoreHeader"
@@ -26,7 +27,7 @@ export default async function ProductPage({
 }) {
   const { slug } = await params
   const { colour } = await searchParams
-  const product = await getProductBySlug(slug, colour)
+  const [product, settings] = await Promise.all([getProductBySlug(slug, colour), getStoreSettings()])
 
   if (!product) {
     notFound()
@@ -69,6 +70,7 @@ export default async function ProductPage({
 
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 pb-24">
           <ProductDetailView
+            returnWindowDays={settings.return_window_days}
             product={product}
             initialColourSlug={colour}
             reviewSummary={reviewsData.breakdown}

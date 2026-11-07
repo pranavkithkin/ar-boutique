@@ -86,15 +86,16 @@ export async function sendOrderConfirmationEmail(
     }
 
     const orderItems: OrderItemEmailData[] = (items || []).map((it) => {
-      const lineTotalFils = (it.price_fils || 0) * (it.quantity || 1)
+      const unitPriceFils = it.unit_price_fils ?? it.price_fils ?? 0
+      const lineTotalFils = it.total_fils ?? (unitPriceFils * (it.quantity || 1))
       return {
         id: it.id,
         product_name: it.product_name || "Garment",
         colour_name: it.colour_name || "Standard",
-        size_name: it.size_name || null,
+        size_name: it.size_label || it.size_name || null,
         sku: it.sku || null,
         quantity: it.quantity || 1,
-        unit_price_aed: formatAED(it.price_fils || 0),
+        unit_price_aed: formatAED(unitPriceFils),
         total_aed: formatAED(lineTotalFils),
       }
     })

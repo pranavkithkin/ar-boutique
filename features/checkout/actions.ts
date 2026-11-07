@@ -688,14 +688,12 @@ export async function placeCheckoutOrderAction(
     // (For Card payments, emails are triggered exclusively upon verified Stripe webhook completion - ADR-008)
     if (isCod) {
       try {
-        void sendOrderConfirmationEmail(orderId).catch((err) =>
-          console.warn("[Checkout] Background confirmation email error:", err)
-        )
-        void sendAdminNewOrderNotification(orderId).catch((err) =>
-          console.warn("[Checkout] Background admin notification error:", err)
-        )
+        await Promise.allSettled([
+          sendOrderConfirmationEmail(orderId),
+          sendAdminNewOrderNotification(orderId),
+        ])
       } catch (emailErr) {
-        console.warn("[Checkout] Could not trigger background emails:", emailErr)
+        console.warn("[Checkout] Background confirmation email error:", emailErr)
       }
     }
 

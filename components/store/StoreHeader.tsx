@@ -4,13 +4,14 @@ import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { Search, User, ShoppingBag, Menu, Heart } from "lucide-react"
+import { Search, User, ShoppingBag, Menu, Heart, LogOut } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { CartDrawer } from "@/features/cart/components/CartDrawer"
 import { useCartStore } from "@/features/cart/store"
 import { useWishlistStore } from "@/features/wishlist/store"
 import { CategoryMenu, useMenuCategories } from "@/components/store/CategoryMenu"
 import { SearchModal } from "@/components/store/SearchModal"
+import { SignOutDialog } from "@/components/store/SignOutDialog"
 
 const subscribeToHydration = () => () => {}
 
@@ -22,6 +23,7 @@ export function StoreHeader() {
   const [isHovered, setIsHovered] = React.useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
   const [isSearchOpen, setIsSearchOpen] = React.useState(false)
+  const [isSignOutOpen, setIsSignOutOpen] = React.useState(false)
 
   const categories = useMenuCategories()
   const handleMobileMenu = (open: boolean) => {
@@ -110,10 +112,19 @@ export function StoreHeader() {
                     <Heart className="h-5 w-5" strokeWidth={1.5} />
                     <span>My Wishlist {mounted && wishlistCount > 0 ? `(${wishlistCount})` : ""}</span>
                   </Link>
-                  <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-muted-foreground hover:text-foreground">
-                    <User className="h-5 w-5" />
-                    Account
-                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false)
+                      setTimeout(() => {
+                        setIsSignOutOpen(true)
+                      }, 150)
+                    }}
+                    className="flex items-center gap-3 text-muted-foreground hover:text-destructive transition-colors text-left font-sans cursor-pointer"
+                  >
+                    <LogOut className="h-5 w-5" strokeWidth={1.5} />
+                    <span>Sign Out</span>
+                  </button>
                 </div>
               </div>
             </SheetContent>
@@ -206,7 +217,7 @@ export function StoreHeader() {
               </span>
             )}
           </Link>
-          <Link href="/account" aria-label="Account" className="hidden sm:flex h-11 w-11 shrink-0 items-center justify-center">
+          <Link href="/account" aria-label="Account" className="flex h-11 w-11 shrink-0 items-center justify-center hover:opacity-75">
             <User className="h-5 w-5" strokeWidth={1.5} />
           </Link>
           <button onClick={openCart} aria-label="Open Shopping Bag" className="relative flex h-11 w-11 shrink-0 items-center justify-center hover:opacity-75">
@@ -221,6 +232,7 @@ export function StoreHeader() {
       </div>
       <CartDrawer />
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <SignOutDialog open={isSignOutOpen} onOpenChange={setIsSignOutOpen} />
     </header>
   )
 }

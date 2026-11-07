@@ -204,13 +204,15 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // Trigger customer confirmation and admin alert emails asynchronously
-          void sendOrderConfirmationEmail(orderId).catch((err) =>
-            console.warn("[Stripe Webhook] Error sending customer email:", err)
-          )
-          void sendAdminNewOrderNotification(orderId).catch((err) =>
-            console.warn("[Stripe Webhook] Error sending admin notification:", err)
-          )
+          // Trigger customer confirmation and admin alert emails safely
+          try {
+            await Promise.allSettled([
+              sendOrderConfirmationEmail(orderId),
+              sendAdminNewOrderNotification(orderId),
+            ])
+          } catch (emailErr) {
+            console.warn("[Stripe Webhook] Error sending emails:", emailErr)
+          }
         }
         break
       }

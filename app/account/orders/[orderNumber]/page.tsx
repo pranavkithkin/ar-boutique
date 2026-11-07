@@ -145,7 +145,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                     Order {order.orderNumber}
                   </h1>
                   {order.status === "delivered" && (
-                    <Badge className="bg-success/15 text-success border-success/30 font-sans font-medium text-xs">
+                    <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 font-sans font-medium text-xs">
                       <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
                       Delivered
                     </Badge>
@@ -186,29 +186,29 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                 </p>
               </div>
 
-              {/* Quick Actions */}
-              <div className="flex flex-wrap items-center gap-2">
-                <a
-                  href={`/api/invoices/${order.id}?print=1`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-card border border-border text-foreground font-medium rounded-xs hover:bg-muted/50 transition-colors text-xs"
-                >
-                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>Tax Invoice PDF</span>
-                </a>
-                <a
-                  href={STORE_CONTACT.whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-card border border-border text-foreground font-medium rounded-xs hover:bg-muted/50 transition-colors text-xs"
-                >
-                  <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>WhatsApp Concierge</span>
-                </a>
+                {/* Quick Actions */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <a
+                    href={`/api/invoices/${order.id}?print=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-card border border-border text-foreground font-medium rounded-xs hover:bg-muted/50 transition-colors text-xs"
+                  >
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span>Tax Invoice PDF</span>
+                  </a>
+                  <a
+                    href={STORE_CONTACT.whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-card border border-border text-foreground font-medium rounded-xs hover:bg-muted/50 transition-colors text-xs"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>WhatsApp Concierge</span>
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
         </section>
 
         {/* Content Workspace */}
@@ -239,7 +239,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                 {/* 1. Confirmed / Awaiting Confirmation */}
                 <div
                   className={`p-4 rounded-xs border transition-colors ${
-                    isConfirmed
+                    isConfirmed && !isPending
                       ? "bg-muted/30 border-primary/40 text-foreground"
                       : isPending
                       ? "bg-amber-500/5 border-amber-500/30 text-foreground"
@@ -247,7 +247,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    {isConfirmed ? (
+                    {isConfirmed && !isPending ? (
                       <CheckCircle2 className="h-4 w-4 text-primary" />
                     ) : isPending ? (
                       <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 animate-pulse" />
@@ -270,14 +270,20 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                 {/* 2. Packed */}
                 <div
                   className={`p-4 rounded-xs border transition-colors ${
-                    isPacked
+                    order.status === "packed"
+                      ? "bg-primary/5 border-primary text-foreground"
+                      : isPacked
                       ? "bg-muted/30 border-primary/40 text-foreground"
                       : "bg-muted/10 border-border/50 text-muted-foreground opacity-50"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Package
-                      className={`h-4 w-4 ${isPacked ? "text-primary" : "text-muted-foreground"}`}
+                      className={`h-4 w-4 ${
+                        order.status === "packed" || isPacked
+                          ? "text-primary"
+                          : "text-muted-foreground"
+                      }`}
                     />
                     <span className="text-xs font-semibold uppercase tracking-wider">
                       2. Prepared
@@ -291,14 +297,22 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                 {/* 3. Shipped */}
                 <div
                   className={`p-4 rounded-xs border transition-colors ${
-                    isShipped
+                    order.status === "shipped"
                       ? "bg-primary/5 border-primary text-foreground"
+                      : isDelivered
+                      ? "bg-muted/30 border-primary/40 text-foreground"
                       : "bg-muted/10 border-border/50 text-muted-foreground opacity-50"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Truck
-                      className={`h-4 w-4 ${isShipped ? "text-primary animate-pulse" : "text-muted-foreground"}`}
+                      className={`h-4 w-4 ${
+                        order.status === "shipped"
+                          ? "text-primary animate-pulse"
+                          : isDelivered
+                          ? "text-primary"
+                          : "text-muted-foreground"
+                      }`}
                     />
                     <span className="text-xs font-semibold uppercase tracking-wider">
                       3. Dispatched
@@ -315,13 +329,17 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                 <div
                   className={`p-4 rounded-xs border transition-colors ${
                     isDelivered
-                      ? "bg-success/10 border-success/40 text-foreground"
+                      ? "bg-emerald-500/10 border-emerald-500/40 text-foreground"
                       : "bg-muted/10 border-border/50 text-muted-foreground opacity-50"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle2
-                      className={`h-4 w-4 ${isDelivered ? "text-success" : "text-muted-foreground"}`}
+                      className={`h-4 w-4 ${
+                        isDelivered
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-muted-foreground"
+                      }`}
                     />
                     <span className="text-xs font-semibold uppercase tracking-wider">
                       4. Delivered
@@ -365,215 +383,215 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
 
           {/* Two-Column Order Content */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            {/* Left 2 Cols: Items & Delivery Details */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Garment Line Items */}
-              <div className="bg-card border border-border rounded-xs overflow-hidden shadow-xs">
-                <div className="p-4 sm:p-5 border-b border-border bg-muted/20 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground">
-                    Purchased Pieces ({order.items.length})
-                  </h3>
-                  <span className="text-xs text-muted-foreground">
-                    Fils pricing compliant
-                  </span>
-                </div>
+  {/* Left 2 Cols: Items & Delivery Details */}
+  <div className="lg:col-span-2 space-y-6">
+    {/* Garment Line Items */}
+    <div className="bg-card border border-border rounded-xs overflow-hidden shadow-xs">
+      <div className="p-4 sm:p-5 border-b border-border bg-muted/20 flex items-center justify-between">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground">
+          Purchased Pieces ({order.items.length})
+        </h3>
+        <span className="text-xs text-muted-foreground">
+          Fils pricing compliant
+        </span>
+      </div>
 
-                <div className="divide-y divide-border/40 p-4 sm:p-5">
-                  {order.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="py-4 first:pt-0 last:pb-0 flex items-start justify-between gap-4"
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* Portrait 4:5 fashion thumbnail with object-top */}
-                        <div className="relative w-16 h-20 bg-muted shrink-0 border border-border overflow-hidden rounded-xs">
-                          {item.imageSrc ? (
-                            <Image
-                              src={item.imageSrc}
-                              alt={item.productName}
-                              fill
-                              sizes="64px"
-                              className="object-cover object-top"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">
-                              No Image
-                            </div>
-                          )}
-                        </div>
-
-                        <div>
-                          <h4 className="text-sm font-sans font-medium text-foreground">
-                            {item.productName}
-                          </h4>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
-                            <span>Colour: <strong className="text-foreground font-normal">{item.colourName}</strong></span>
-                            <span>•</span>
-                            <span>Size: <strong className="text-foreground font-normal">{item.sizeLabel}</strong></span>
-                            <span>•</span>
-                            <span>Style: <strong className="font-mono text-foreground font-normal">{item.styleCode}</strong></span>
-                          </div>
-                          <div className="mt-1 text-xs text-muted-foreground font-mono">
-                            Qty: <strong className="text-foreground font-normal">{item.quantity}</strong> × {formatAED(item.priceFils)}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="text-right shrink-0">
-                        <span className="text-sm font-semibold text-foreground font-mono">
-                          {formatAED(item.priceFils * item.quantity)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+      <div className="divide-y divide-border/40 p-4 sm:p-5">
+        {order.items.map((item) => (
+          <div
+            key={item.id}
+            className="py-4 first:pt-0 last:pb-0 flex items-start justify-between gap-4"
+          >
+            <div className="flex items-start gap-4">
+              {/* Portrait 4:5 fashion thumbnail with object-top */}
+              <div className="relative w-16 h-20 bg-muted shrink-0 border border-border overflow-hidden rounded-xs">
+                {item.imageSrc ? (
+                  <Image
+                    src={item.imageSrc}
+                    alt={item.productName}
+                    fill
+                    sizes="64px"
+                    className="object-cover object-top"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">
+                    No Image
+                  </div>
+                )}
               </div>
 
-              {/* Delivery Destination & Payment Breakdown */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {/* Destination */}
-                <div className="bg-card border border-border rounded-xs p-5 shadow-xs space-y-3">
-                  <div className="flex items-center gap-2 border-b border-border/50 pb-2.5">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
-                      Delivery Destination
-                    </h4>
-                  </div>
-                  <div className="text-xs space-y-1">
-                    <div className="font-semibold text-foreground">
-                      {order.deliveryAddress.recipientName}
-                    </div>
-                    <div className="text-muted-foreground font-mono">
-                      {order.deliveryAddress.phone}
-                    </div>
-                    <div className="text-muted-foreground pt-1 leading-relaxed">
-                      {order.deliveryAddress.building && `${order.deliveryAddress.building}, `}
-                      {order.deliveryAddress.street && `${order.deliveryAddress.street}, `}
-                      {order.deliveryAddress.area && `${order.deliveryAddress.area}, `}
-                      <span className="font-medium text-foreground">{order.deliveryAddress.emirate}</span>
-                    </div>
-                    {order.deliveryAddress.landmark && (
-                      <div className="text-[11px] text-muted-foreground/80 italic pt-0.5">
-                        Landmark: {order.deliveryAddress.landmark}
-                      </div>
-                    )}
-                  </div>
+              <div>
+                <h4 className="text-sm font-sans font-medium text-foreground">
+                  {item.productName}
+                </h4>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
+                  <span>Colour: <strong className="text-foreground font-normal">{item.colourName}</strong></span>
+                  <span>•</span>
+                  <span>Size: <strong className="text-foreground font-normal">{item.sizeLabel}</strong></span>
+                  <span>•</span>
+                  <span>Style: <strong className="font-mono text-foreground font-normal">{item.styleCode}</strong></span>
                 </div>
-
-                {/* Payment Method */}
-                <div className="bg-card border border-border rounded-xs p-5 shadow-xs space-y-3">
-                  <div className="flex items-center gap-2 border-b border-border/50 pb-2.5">
-                    {order.paymentMethod === "card" ? (
-                      <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Banknote className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
-                      Payment Method
-                    </h4>
-                  </div>
-                  <div className="text-xs space-y-1.5">
-                    <div className="font-semibold text-foreground">
-                      {order.paymentMethod === "card"
-                        ? "Online Card Payment"
-                        : "Cash on Delivery (COD)"}
-                    </div>
-                    <p className="text-muted-foreground leading-relaxed text-[11px]">
-                      {order.paymentMethod === "card"
-                        ? "Paid securely via Stripe. Verification authorization settled."
-                        : "Cash to be handed directly to courier driver upon doorstep arrival."}
-                    </p>
-                    <div className="pt-1">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-2.5 py-0.5 rounded-xs border border-border/50">
-                        <ShieldCheck className="h-3 w-3 text-primary" />
-                        Status: {order.status === "cancelled" ? "Cancelled" : "Verified"}
-                      </span>
-                    </div>
-                  </div>
+                <div className="mt-1 text-xs text-muted-foreground font-mono">
+                  Qty: <strong className="text-foreground font-normal">{item.quantity}</strong> × {formatAED(item.priceFils)}
                 </div>
               </div>
             </div>
 
-            {/* Right 1 Col: Summary & Return Actions */}
-            <div className="space-y-6">
-              {/* Financial Calculation Card */}
-              <div className="bg-card border border-border rounded-xs p-5 shadow-xs space-y-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground border-b border-border/60 pb-3">
-                  Payment Summary
-                </h3>
-
-                <div className="space-y-2.5 text-xs">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Items Subtotal</span>
-                    <span className="font-mono text-foreground">{formatAED(order.subtotalFils)}</span>
-                  </div>
-
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Doorstep UAE Delivery</span>
-                    <span className="font-mono text-foreground">
-                      {order.deliveryFeeFils === 0 ? "Complimentary" : formatAED(order.deliveryFeeFils)}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>5% UAE VAT</span>
-                    <span className="font-mono text-foreground">{formatAED(order.vatFils)}</span>
-                  </div>
-
-                  <div className="pt-3 border-t border-border flex justify-between items-baseline font-semibold text-sm">
-                    <span className="text-foreground">Total (AED)</span>
-                    <span className="font-mono text-base text-foreground font-bold">
-                      {formatAED(order.totalFils)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Returns & Concierge Assistance Card */}
-              <div className="bg-card border border-border rounded-xs p-5 shadow-xs space-y-3 text-xs">
-                <h4 className="font-semibold uppercase tracking-wider text-foreground border-b border-border/60 pb-2">
-                  Need Help or Return?
-                </h4>
-                <p className="text-muted-foreground leading-relaxed text-[11px]">
-                  All boutique pieces enjoy complimentary 7-day returns from delivery date, subject to original tags intact.
-                </p>
-
-                {order.status === "delivered" && (
-                  <Link href={`/account?tab=returns&orderId=${order.id}`} className="block pt-1">
-                    <StoreButton variant="outline" className="w-full text-xs uppercase tracking-wider h-9">
-                      <RotateCcw className="mr-1.5 h-3.5 w-3.5 text-primary" />
-                      Request Return
-                    </StoreButton>
-                  </Link>
-                )}
-
-                {!isCancelled && !isShipped && !isDelivered && (
-                  <div className="pt-1">
-                    <OrderCancelButton
-                      orderNumber={order.orderNumber}
-                      orderId={order.id}
-                      totalFils={order.totalFils}
-                      paymentMethod={order.paymentMethod}
-                      paymentStatus={order.paymentStatus}
-                      userEmail={email}
-                    />
-                  </div>
-                )}
-
-                <a
-                  href={STORE_CONTACT.whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block pt-1"
-                >
-                  <StoreButton variant="outline" className="w-full text-xs uppercase tracking-wider h-9">
-                    <MessageCircle className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
-                    WhatsApp Atelier Concierge
-                  </StoreButton>
-                </a>
-              </div>
+            <div className="text-right shrink-0">
+              <span className="text-sm font-semibold text-foreground font-mono">
+                {formatAED(item.priceFils * item.quantity)}
+              </span>
             </div>
           </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Delivery Destination & Payment Breakdown */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {/* Destination */}
+      <div className="bg-card border border-border rounded-xs p-5 shadow-xs space-y-3">
+        <div className="flex items-center gap-2 border-b border-border/50 pb-2.5">
+          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            Delivery Destination
+          </h4>
+        </div>
+        <div className="text-xs space-y-1">
+          <div className="font-semibold text-foreground">
+            {order.deliveryAddress.recipientName}
+          </div>
+          <div className="text-muted-foreground font-mono">
+            {order.deliveryAddress.phone}
+          </div>
+          <div className="text-muted-foreground pt-1 leading-relaxed">
+            {order.deliveryAddress.building && `${order.deliveryAddress.building}, `}
+            {order.deliveryAddress.street && `${order.deliveryAddress.street}, `}
+            {order.deliveryAddress.area && `${order.deliveryAddress.area}, `}
+            <span className="font-medium text-foreground">{order.deliveryAddress.emirate}</span>
+          </div>
+          {order.deliveryAddress.landmark && (
+            <div className="text-[11px] text-muted-foreground/80 italic pt-0.5">
+              Landmark: {order.deliveryAddress.landmark}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Payment Method */}
+      <div className="bg-card border border-border rounded-xs p-5 shadow-xs space-y-3">
+        <div className="flex items-center gap-2 border-b border-border/50 pb-2.5">
+          {order.paymentMethod === "card" ? (
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <Banknote className="h-4 w-4 text-muted-foreground" />
+          )}
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            Payment Method
+          </h4>
+        </div>
+        <div className="text-xs space-y-1.5">
+          <div className="font-semibold text-foreground">
+            {order.paymentMethod === "card"
+              ? "Online Card Payment"
+              : "Cash on Delivery (COD)"}
+          </div>
+          <p className="text-muted-foreground leading-relaxed text-[11px]">
+            {order.paymentMethod === "card"
+              ? "Paid securely via Stripe. Verification authorization settled."
+              : "Cash to be handed directly to courier driver upon doorstep arrival."}
+          </p>
+          <div className="pt-1">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-2.5 py-0.5 rounded-xs border border-border/50">
+              <ShieldCheck className="h-3 w-3 text-primary" />
+              Status: {order.status === "cancelled" ? "Cancelled" : "Verified"}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Right 1 Col: Summary & Return Actions */}
+  <div className="space-y-6">
+    {/* Financial Calculation Card */}
+    <div className="bg-card border border-border rounded-xs p-5 shadow-xs space-y-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground border-b border-border/60 pb-3">
+        Payment Summary
+      </h3>
+
+      <div className="space-y-2.5 text-xs">
+        <div className="flex justify-between text-muted-foreground">
+          <span>Items Subtotal</span>
+          <span className="font-mono text-foreground">{formatAED(order.subtotalFils)}</span>
+        </div>
+
+        <div className="flex justify-between text-muted-foreground">
+          <span>Doorstep UAE Delivery</span>
+          <span className="font-mono text-foreground">
+            {order.deliveryFeeFils === 0 ? "Complimentary" : formatAED(order.deliveryFeeFils)}
+          </span>
+        </div>
+
+        <div className="flex justify-between text-muted-foreground">
+          <span>5% UAE VAT</span>
+          <span className="font-mono text-foreground">{formatAED(order.vatFils)}</span>
+        </div>
+
+        <div className="pt-3 border-t border-border flex justify-between items-baseline font-semibold text-sm">
+          <span className="text-foreground">Total (AED)</span>
+          <span className="font-mono text-base text-foreground font-bold">
+            {formatAED(order.totalFils)}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    {/* Returns & Concierge Assistance Card */}
+    <div className="bg-card border border-border rounded-xs p-5 shadow-xs space-y-3 text-xs">
+      <h4 className="font-semibold uppercase tracking-wider text-foreground border-b border-border/60 pb-2">
+        Need Help or Return?
+      </h4>
+      <p className="text-muted-foreground leading-relaxed text-[11px]">
+        All boutique pieces enjoy complimentary 7-day returns from delivery date, subject to original tags intact.
+      </p>
+
+      {order.status === "delivered" && (
+        <Link href={`/account?tab=returns&orderId=${order.id}`} className="block pt-1">
+          <StoreButton variant="outline" className="w-full text-xs uppercase tracking-wider h-9">
+            <RotateCcw className="mr-1.5 h-3.5 w-3.5 text-primary" />
+            Request Return
+          </StoreButton>
+        </Link>
+      )}
+
+      {!isCancelled && !isShipped && !isDelivered && (
+        <div className="pt-1">
+          <OrderCancelButton
+            orderNumber={order.orderNumber}
+            orderId={order.id}
+            totalFils={order.totalFils}
+            paymentMethod={order.paymentMethod}
+            paymentStatus={order.paymentStatus}
+            userEmail={email}
+          />
+        </div>
+      )}
+
+      <a
+        href={STORE_CONTACT.whatsappHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block pt-1"
+      >
+        <StoreButton variant="outline" className="w-full text-xs uppercase tracking-wider h-9">
+          <MessageCircle className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
+          WhatsApp Atelier Concierge
+        </StoreButton>
+      </a>
+    </div>
+  </div>
+</div>
         </div>
       </main>
 

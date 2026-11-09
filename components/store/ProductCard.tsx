@@ -35,6 +35,17 @@ export function ProductCard({
   // Extract slug from href e.g. /collections/dress-j0395 -> dress-j0395
   const slug = href.replace(/^\/collections\//, "").replace(/^\//, "")
 
+  // Calculate discount percentage if both price and compareAtPrice are numeric
+  const discountPercent = React.useMemo(() => {
+    if (!compareAtPrice) return null
+    const p = parseFloat(price.replace(/[^0-9.]/g, ""))
+    const c = parseFloat(compareAtPrice.replace(/[^0-9.]/g, ""))
+    if (!isNaN(p) && !isNaN(c) && c > p && p > 0) {
+      return Math.round(((c - p) / c) * 100)
+    }
+    return null
+  }, [price, compareAtPrice])
+
   return (
     <>
       <div className="group relative flex flex-col w-full">
@@ -50,6 +61,15 @@ export function ProductCard({
               unoptimized
             />
           </div>
+
+          {/* Red Sale Badge */}
+          {compareAtPrice && (
+            <div className="absolute bottom-2.5 left-2.5 sm:bottom-3 sm:left-3 z-10 pointer-events-none">
+              <span className="inline-flex items-center px-2 py-0.5 text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider bg-destructive text-destructive-foreground rounded-xs shadow-xs">
+                {discountPercent ? `Sale -${discountPercent}%` : "Sale"}
+              </span>
+            </div>
+          )}
 
           {/* Wishlist Heart Button */}
           <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 z-10">
@@ -101,9 +121,14 @@ export function ProductCard({
               {price}
             </span>
             {compareAtPrice && (
-              <span className="text-[13px] sm:text-[14px] text-muted-foreground line-through font-sans">
-                {compareAtPrice}
-              </span>
+              <>
+                <span className="text-[13px] sm:text-[14px] text-muted-foreground line-through font-sans">
+                  {compareAtPrice}
+                </span>
+                <span className="text-[11px] font-sans font-semibold text-destructive">
+                  {discountPercent ? `Save ${discountPercent}%` : "Sale"}
+                </span>
+              </>
             )}
           </div>
         </div>

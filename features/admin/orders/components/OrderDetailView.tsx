@@ -410,16 +410,16 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
                 {order.events.map((ev: AdminOrderEvent) => (
                   <div key={ev.id} className="flex items-start gap-3 text-xs">
                     <div className="size-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium text-foreground">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4">
+                        <span className="font-medium text-foreground text-xs break-all sm:break-normal [overflow-wrap:anywhere] min-w-0">
                           {ev.note ? ev.note : <span className="capitalize">{ev.event_type.replace(/_/g, " ")}</span>}
                         </span>
-                        <span className="text-[10px] font-mono text-muted-foreground">
+                        <span className="text-[10px] font-mono text-muted-foreground shrink-0 whitespace-nowrap self-start">
                           {new Date(ev.created_at).toLocaleString("en-AE")}
                         </span>
                       </div>
-                      <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                      <div className="text-[10px] text-muted-foreground flex flex-wrap items-center gap-1.5 mt-1">
                         <span>Actor:</span>
                         <span className="font-medium text-foreground">
                           {formatActorLabel(ev.actor_sub, order.customer_name)}

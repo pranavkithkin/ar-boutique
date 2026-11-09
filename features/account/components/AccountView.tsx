@@ -72,12 +72,14 @@ interface AccountViewProps {
   initialProfile?: AccountUserProfile
   initialOrders?: AccountOrder[]
   initialAddresses?: AccountAddress[]
+  returnWindowDays?: number
 }
 
 export function AccountView({
   initialProfile,
   initialOrders = [],
   initialAddresses = [],
+  returnWindowDays = 7,
 }: AccountViewProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -400,6 +402,7 @@ export function AccountView({
               customerEmail={profile.email}
               preselectedOrderId={returnTargetOrderId}
               onClearPreselectedOrder={() => setReturnTargetOrderId(undefined)}
+              returnWindowDays={returnWindowDays}
             />
           )}
           {activeTab === "wishlist" && <WishlistTab />}

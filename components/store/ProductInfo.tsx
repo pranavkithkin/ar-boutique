@@ -150,6 +150,21 @@ export function ProductInfo({
       ? formatAED(compareAtFils)
       : product.compareAtPrice
 
+  // Calculate discount percentage if compareAtPrice is greater than selling price
+  const discountPercent = React.useMemo(() => {
+    if (compareAtFils && compareAtFils > priceFils) {
+      return Math.round(((compareAtFils - priceFils) / compareAtFils) * 100)
+    }
+    if (compareAtPrice) {
+      const p = parseFloat(formatAED(priceFils).replace(/[^0-9.]/g, ""))
+      const c = parseFloat(compareAtPrice.replace(/[^0-9.]/g, ""))
+      if (!isNaN(p) && !isNaN(c) && c > p && p > 0) {
+        return Math.round(((c - p) / c) * 100)
+      }
+    }
+    return null
+  }, [compareAtFils, priceFils, compareAtPrice])
+
   // Active details object for accordions
   const activeDetails = activeColourway?.details || product.details || {}
   const activeImage =
@@ -217,7 +232,7 @@ export function ProductInfo({
           href="#product-reviews"
           className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group"
         >
-          <StarRating rating={reviewSummary?.averageRating || 5} size="sm" />
+          <StarRating rating={reviewSummary?.totalCount ? reviewSummary.averageRating : 0} size="sm" />
           <span className="font-sans font-medium text-foreground/80 group-hover:text-foreground underline-offset-4 group-hover:underline">
             {reviewSummary && reviewSummary.totalCount > 0
               ? `${reviewSummary.averageRating.toFixed(1)} (${reviewSummary.totalCount} ${
@@ -229,14 +244,19 @@ export function ProductInfo({
       </div>
 
       {/* Price Header */}
-      <div className="flex items-baseline gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
         <span className="text-2xl sm:text-3xl font-semibold text-foreground font-sans tracking-tight">
           {formatAED(priceFils)}
         </span>
         {compareAtPrice && (
-          <span className="text-sm sm:text-base text-muted-foreground line-through font-sans">
-            {compareAtPrice}
-          </span>
+          <>
+            <span className="text-sm sm:text-base text-muted-foreground line-through font-sans">
+              {compareAtPrice}
+            </span>
+            <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold uppercase tracking-wider bg-destructive text-destructive-foreground rounded-xs shadow-xs">
+              {discountPercent ? `${discountPercent}% OFF` : "SALE"}
+            </span>
+          </>
         )}
       </div>
 

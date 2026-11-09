@@ -21,6 +21,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { AccountView } from "@/features/account/components/AccountView"
+import { getStoreSettings } from "@/features/admin/settings/actions"
 
 export const dynamic = "force-dynamic"
 
@@ -85,13 +86,20 @@ export default async function AccountPage() {
   }
   let initialOrders: AccountOrder[] = []
   let initialAddresses: AccountAddress[] = []
+  let returnWindowDays = 7
 
   try {
-    const accountData = await getCustomerAccountDataAction(email, { fullName, phone })
+    const [accountData, settings] = await Promise.all([
+      getCustomerAccountDataAction(email, { fullName, phone }),
+      getStoreSettings(),
+    ])
     if (accountData.success) {
       if (accountData.profile) initialProfile = accountData.profile
       if (accountData.orders) initialOrders = accountData.orders
       if (accountData.addresses) initialAddresses = accountData.addresses
+    }
+    if (settings && typeof settings.return_window_days === "number") {
+      returnWindowDays = settings.return_window_days
     }
   } catch (err) {
     console.error("Failed to load customer account data on server:", err)
@@ -134,6 +142,7 @@ export default async function AccountPage() {
           initialProfile={initialProfile}
           initialOrders={initialOrders}
           initialAddresses={initialAddresses}
+          returnWindowDays={returnWindowDays}
         />
       </main>
 

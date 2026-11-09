@@ -5,7 +5,7 @@ import Link from "next/link"
 import { AdminOrderListItem, OrderStatus, PaymentMethod, PaymentStatus } from "../types"
 import { formatAED } from "@/lib/money"
 import { Button } from "@/components/ui/button"
-import { Eye, CreditCard, Banknote } from "lucide-react"
+import { CreditCard, Banknote } from "lucide-react"
 
 // ── Status badge ─────────────────────────────────────────────────────────────
 
@@ -154,17 +154,17 @@ export const orderColumns: ColumnDef<AdminOrderListItem>[] = [
   },
   {
     id: "actions",
-    header: () => <div className="text-right">View</div>,
+    header: () => <div className="text-right">Action</div>,
     cell: ({ row }) => (
       <div className="flex justify-end">
         <Button
-          size="icon-xs"
-          variant="ghost"
-          className="size-7 rounded-none text-muted-foreground hover:text-foreground"
-          title="View order"
+          size="sm"
+          variant="outline"
+          className="h-7 px-2.5 text-xs font-sans rounded-none text-foreground border-border hover:bg-muted"
+          title="View order details"
           render={<Link href={`/admin/orders/${row.original.id}`} />}
         >
-          <Eye className="size-3.5" />
+          Details
         </Button>
       </div>
     ),

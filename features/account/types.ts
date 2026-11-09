@@ -29,6 +29,8 @@ export interface AccountOrder {
   id: string
   orderNumber: string
   date: string
+  createdAt?: string
+  deliveredAt?: string
   status: "pending" | "confirmed" | "packed" | "shipped" | "delivered" | "cancelled"
   statusLabel: string
   trackingNumber?: string

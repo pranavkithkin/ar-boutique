@@ -1,5 +1,14 @@
 # Project Memory
 
+9 Nov 2026: Storefront Return Window, Compare-at Sale Badges, PDP Rating Fix, and Admin Enhancements:
+- Wired dynamic `return_window_days` from Supabase store settings into `/account` customer return flows (`evaluateOrderReturnEligibility`, subtitle text, and singular/plural badge rendering). Added Vitest unit test coverage.
+- Updated inventory Stock Adjustment Modal (`/admin/stock`): resolved Backspace on zero issue by using text state and select-on-focus, and replaced raw select element with luxury shadcn Select component.
+- Replaced orders table action icon with a distinct luxury outlined "Details" button (`/admin/orders`).
+- Fixed mobile timeline and audit trail alignment (`/admin/orders/[id]`): wrapped long Stripe session IDs with `[overflow-wrap:anywhere]` and locked timestamps to single lines.
+- Added red Sale badge (`bg-destructive`) and discount percentage indicator on product cards (`ProductCard.tsx`) and Product Detail Page (`ProductInfo.tsx`).
+- Fixed initial 5-star rating fallback on unreviewed products to show 0 stars (unfilled outline stars) instead of 5 solid gold stars.
+- Successfully ran Next.js production build (`npm run build`) and pushed commit `623b269` to remote branch `bugfix/TASK-069-order-delivered-milestones`.
+
 6 Nov 2026: Implemented Customer Order Cancellation & One-Click Admin Stripe Refund:
 - Added customer order cancellation on `/account/orders/[orderNumber]`: customers can cancel pre-dispatch orders (`confirmed`, `pending`, `packed`, `awaiting_confirmation`) with reason selection and custom notes via `CustomerOrderCancelDialog` and `OrderCancelButton`. Cancelling updates status to `cancelled`, releases reserved inventory back to `stock_levels`, logs audit timeline event, and triggers cancellation email.
 - Added live Stripe Card Refund in Admin Orders (`/admin/orders/[id]`): implemented `OrderStripeRefundDialog` and `refundOrderViaStripeAction` allowing admins to issue full card refunds via Stripe API (`stripe.refunds.create`). Updates order `payment_status` to `refunded`, inserts audit log into `refunds` table, logs timeline event, and sends confirmation email.

@@ -97,6 +97,7 @@ export default async function ProductPage({
                     brand={item.brand}
                     name={item.name}
                     price={item.price}
+                    compareAtPrice={item.compareAtPrice}
                     imageSrc={item.imageSrc}
                     href={`/collections/${item.slug}`}
                     sizes={item.sizes}

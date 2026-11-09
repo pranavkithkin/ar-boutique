@@ -163,3 +163,28 @@ test("customerReturnFormSchema: validates COD UAE bank transfer requirements", (
   })
   expect(validCard.success).toBe(true)
 })
+
+test("evaluateOrderReturnEligibility: accurately calculates remaining days with dynamic store setting", () => {
+  const deliveredAt = new Date("2026-11-07T10:00:00Z").toISOString()
+  const today = new Date("2026-11-09T10:00:00Z") // 2 days elapsed
+
+  const order = {
+    id: "ord_ar_1045",
+    orderNumber: "AR-1045",
+    status: "delivered",
+    deliveredAt,
+    createdAt: deliveredAt,
+    items: [{ id: "item_dress", quantity: 1 }],
+  }
+
+  // With store setting = 7 days
+  const result7 = evaluateOrderReturnEligibility(order, [], today, 7)
+  expect(result7.isEligible).toBe(true)
+  expect(result7.daysRemaining).toBe(5) // 7 - 2 = 5 days
+
+  // Order older than 7 days is rejected when returnWindowDays is 7
+  const day8 = new Date("2026-11-15T10:00:00Z")
+  const expiredResult = evaluateOrderReturnEligibility(order, [], day8, 7)
+  expect(expiredResult.isEligible).toBe(false)
+  expect(expiredResult.daysRemaining).toBe(0)
+})

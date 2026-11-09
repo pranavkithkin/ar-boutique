@@ -3,6 +3,7 @@ export interface ProductVariantSize {
   name: string
   sku: string
   priceFils: number
+  compareAtFils?: number | null
   stock?: number
 }
 
@@ -116,10 +117,11 @@ export async function getProductsPage({
 
   const productIds = data.map((item) => item.id)
   let variantsMap: Record<string, ProductVariantSize[]> = {}
+  const compareAtMap: Record<string, string> = {}
 
   if (productIds.length > 0) {
     try {
-      const variantsUrl = `${supabaseUrl}/rest/v1/products?select=id,product_variants(id,sku,price_fils,is_active,sizes(id,label))&id=in.(${productIds.join(",")})`
+      const variantsUrl = `${supabaseUrl}/rest/v1/products?select=id,product_variants(id,sku,price_fils,compare_at_fils,is_active,sizes(id,label))&id=in.(${productIds.join(",")})`
       const vRes = await fetch(variantsUrl, {
         headers: {
           apikey: supabaseKey,
@@ -134,6 +136,7 @@ export async function getProductsPage({
             id: string
             sku: string
             price_fils: number
+            compare_at_fils?: number | null
             is_active: boolean
             sizes: { id: string; label: string } | null
           }>
@@ -146,8 +149,16 @@ export async function getProductsPage({
             name: v.sizes?.label || "One Size",
             sku: v.sku,
             priceFils: v.price_fils,
+            compareAtFils: v.compare_at_fils || null,
             stock: 5,
           }))
+
+          const saleVariant = activeVariants.find(
+            (v) => typeof v.compare_at_fils === "number" && v.compare_at_fils > v.price_fils
+          )
+          if (saleVariant && saleVariant.compare_at_fils) {
+            compareAtMap[row.id] = `AED ${(saleVariant.compare_at_fils / 100).toFixed(2)}`
+          }
         }
       }
     } catch (err) {
@@ -170,6 +181,7 @@ export async function getProductsPage({
       brand: "AR Boutique Exclusive",
       category: item.category_name || "Boutique",
       price: `AED ${priceAed}`,
+      compareAtPrice: compareAtMap[item.id],
       mediaKey: primaryMediaKey,
       imageSrc,
       sizes: variantsMap[item.id] || [],

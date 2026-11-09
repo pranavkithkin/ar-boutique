@@ -127,6 +127,7 @@ export default async function Home() {
                         brand={prod.brand}
                         name={prod.name}
                         price={prod.price}
+                        compareAtPrice={prod.compareAtPrice}
                         imageSrc={prod.imageSrc}
                         href={`/collections/${prod.slug}`}
                         sizes={prod.sizes}

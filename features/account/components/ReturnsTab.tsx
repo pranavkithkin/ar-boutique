@@ -27,6 +27,7 @@ interface ReturnsTabProps {
   customerEmail: string
   preselectedOrderId?: string
   onClearPreselectedOrder?: () => void
+  returnWindowDays?: number
 }
 
 export function ReturnsTab({
@@ -34,6 +35,7 @@ export function ReturnsTab({
   customerEmail,
   preselectedOrderId,
   onClearPreselectedOrder,
+  returnWindowDays = 7,
 }: ReturnsTabProps) {
   const [returnsList, setReturnsList] = React.useState<CustomerReturnRequest[]>([])
   const [isLoadingReturns, setIsLoadingReturns] = React.useState(false)
@@ -167,17 +169,16 @@ export function ReturnsTab({
                     </div>
 
                     <span
-                      className={`inline-flex items-center px-2.5 py-1 text-[11px] font-sans font-medium rounded-full ${
-                        isClosed
+                      className={`inline-flex items-center px-2.5 py-1 text-[11px] font-sans font-medium rounded-full ${isClosed
                           ? "bg-emerald-500/10 text-emerald-700 border border-emerald-500/20"
                           : isApproved
-                          ? "bg-primary/10 text-primary border border-primary/20"
-                          : isReceived
-                          ? "bg-amber-500/10 text-amber-700 border border-amber-500/20"
-                          : isRejected
-                          ? "bg-destructive/10 text-destructive border border-destructive/20"
-                          : "bg-muted text-foreground border border-border"
-                      }`}
+                            ? "bg-primary/10 text-primary border border-primary/20"
+                            : isReceived
+                              ? "bg-amber-500/10 text-amber-700 border border-amber-500/20"
+                              : isRejected
+                                ? "bg-destructive/10 text-destructive border border-destructive/20"
+                                : "bg-muted text-foreground border border-border"
+                        }`}
                     >
                       {ret.statusLabel}
                     </span>
@@ -436,6 +437,7 @@ export function ReturnsTab({
         onReturnSubmitted={handleReturnSubmitted}
         existingReturns={returnsList}
         customerEmail={customerEmail}
+        returnWindowDays={returnWindowDays}
       />
     </div>
   )

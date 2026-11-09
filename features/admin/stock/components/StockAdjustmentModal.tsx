@@ -12,6 +12,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { adjustVariantStock } from "../actions"
 import { Loader2, Boxes, ArrowRight, AlertTriangle } from "lucide-react"
 
@@ -50,7 +57,9 @@ export function StockAdjustmentModal({
   target,
   onSuccess,
 }: StockAdjustmentModalProps) {
-  const [newOnHand, setNewOnHand] = React.useState<number>(target?.on_hand ?? 0)
+  const [onHandInput, setOnHandInput] = React.useState<string>(
+    String(target?.on_hand ?? 0)
+  )
   const [reason, setReason] = React.useState<typeof reasons[number]["value"]>("restock")
   const [note, setNote] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -71,7 +80,7 @@ export function StockAdjustmentModal({
 
   React.useEffect(() => {
     if (target) {
-      setNewOnHand(target.on_hand)
+      setOnHandInput(String(target.on_hand))
       setNote("")
       setErrorMessage(null)
       setReason("restock")
@@ -82,6 +91,8 @@ export function StockAdjustmentModal({
 
   const currentOnHand = target.on_hand
   const reserved = target.reserved
+  const parsed = onHandInput.trim() === "" ? 0 : parseInt(onHandInput, 10)
+  const newOnHand = isNaN(parsed) ? 0 : Math.max(0, parsed)
   const delta = newOnHand - currentOnHand
   const isBelowReserved = newOnHand < reserved
 
@@ -165,15 +176,26 @@ export function StockAdjustmentModal({
               <div className="flex items-center gap-2">
                 <Input
                   ref={inputRef}
-                  type="number"
-                  min={0}
-                  value={Number.isNaN(newOnHand) ? "" : newOnHand}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={onHandInput}
+                  onFocus={(e) => e.target.select()}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value, 10)
-                    setNewOnHand(isNaN(val) ? 0 : Math.max(0, val))
+                    const val = e.target.value
+                    // Allow clearing input to empty string so user can freely delete zero
+                    if (val === "" || /^\d+$/.test(val)) {
+                      setOnHandInput(val)
+                    }
                   }}
-                  onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
-                  className="w-24 h-8 text-right font-mono text-sm rounded-none border-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  onBlur={() => {
+                    if (onHandInput.trim() === "") {
+                      setOnHandInput("0")
+                    } else {
+                      setOnHandInput(String(parseInt(onHandInput, 10)))
+                    }
+                  }}
+                  className="w-24 h-8 text-right font-mono text-sm rounded-none border-input"
                   required
                 />
                 <span className="text-xs text-muted-foreground font-sans">units</span>
@@ -214,18 +236,23 @@ export function StockAdjustmentModal({
             <label className="text-[11px] font-sans font-semibold uppercase tracking-wider text-muted-foreground block">
               Audit Reason <span className="text-foreground">*</span>
             </label>
-            <select
+            <Select
               value={reason}
-              onChange={(e) => setReason(e.target.value as typeof reason)}
-              className="w-full h-9 px-3 text-xs bg-background border border-input rounded-none focus:outline-none focus:ring-1 focus:ring-ring text-foreground font-sans"
-              required
+              onValueChange={(val) => {
+                if (val) setReason(val as typeof reasons[number]["value"])
+              }}
             >
-              {reasons.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full h-9 px-3 text-xs bg-background border border-input rounded-none text-foreground font-sans cursor-pointer">
+                <SelectValue placeholder="Select an audit reason" />
+              </SelectTrigger>
+              <SelectContent>
+                {reasons.map((r) => (
+                  <SelectItem key={r.value} value={r.value} className="text-xs font-sans">
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Optional Note */}

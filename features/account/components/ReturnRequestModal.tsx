@@ -53,6 +53,7 @@ interface ReturnRequestModalProps {
   onReturnSubmitted: (returnNumber: string) => void
   existingReturns?: CustomerReturnRequest[]
   customerEmail?: string
+  returnWindowDays?: number
 }
 
 interface SelectedItemState {
@@ -82,6 +83,7 @@ interface ReturnRequestFormProps {
   onReturnSubmitted: (returnNumber: string) => void
   existingReturns?: CustomerReturnRequest[]
   customerEmail?: string
+  returnWindowDays?: number
 }
 
 function formatUaeIban(val: string): string {
@@ -108,6 +110,7 @@ function ReturnRequestForm({
   onReturnSubmitted,
   existingReturns,
   customerEmail,
+  returnWindowDays = 7,
 }: ReturnRequestFormProps) {
   const [internalReturns, setInternalReturns] = React.useState<CustomerReturnRequest[]>(
     existingReturns || []
@@ -153,15 +156,20 @@ function ReturnRequestForm({
       id: activeOrder.id,
       orderNumber: activeOrder.orderNumber,
       status: activeOrder.status,
-      deliveredAt: activeOrder.date,
-      createdAt: activeOrder.date,
+      deliveredAt: activeOrder.deliveredAt || activeOrder.createdAt || activeOrder.date,
+      createdAt: activeOrder.createdAt || activeOrder.date,
       items: activeOrder.items.map((it) => ({
         id: it.id,
         quantity: it.quantity,
       })),
     }
-    return evaluateOrderReturnEligibility(orderForCheck, existingItemsForOrder)
-  }, [activeOrder, existingItemsForOrder])
+    return evaluateOrderReturnEligibility(
+      orderForCheck,
+      existingItemsForOrder,
+      new Date(),
+      returnWindowDays
+    )
+  }, [activeOrder, existingItemsForOrder, returnWindowDays])
 
   // Form states initialized clean per key
   const [selectedItems, setSelectedItems] = React.useState<Map<string, SelectedItemState>>(
@@ -464,7 +472,8 @@ function ReturnRequestForm({
           </div>
           {eligibility?.daysRemaining !== undefined && (
             <span className="text-[11px] text-emerald-600 font-medium">
-              {eligibility.daysRemaining} days remaining in return window
+              {eligibility.daysRemaining}{" "}
+              {eligibility.daysRemaining === 1 ? "day" : "days"} remaining in return window
             </span>
           )}
         </div>
@@ -812,6 +821,7 @@ export function ReturnRequestModal({
   onReturnSubmitted,
   existingReturns,
   customerEmail,
+  returnWindowDays = 7,
 }: ReturnRequestModalProps) {
   const deliveredOrders = React.useMemo(() => {
     return orders.filter((o) => o.status === "delivered")
@@ -835,7 +845,7 @@ export function ReturnRequestModal({
                 Request a Return or Exchange
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground mt-0.5 font-sans">
-                7-day complimentary atelier return pickup across the UAE.
+                {returnWindowDays}-day complimentary atelier return pickup across the UAE.
               </DialogDescription>
             </div>
           </div>
@@ -851,6 +861,7 @@ export function ReturnRequestModal({
             onReturnSubmitted={onReturnSubmitted}
             existingReturns={existingReturns}
             customerEmail={customerEmail}
+            returnWindowDays={returnWindowDays}
           />
         )}
       </DialogContent>

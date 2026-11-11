@@ -148,6 +148,7 @@ Done when: a customer submits a return with photos and the admin approves, recei
 Done when: a received return is refunded through Stripe, with a credit note when VAT is on.
 - [x] TASK-084 Migration: `refunds`, `credit_notes`; refundable balance function
 - [x] TASK-085 Refund action: prefilled amount, lower with a reason, capped at the balance, Stripe refund with idempotency key (COD orders: TASK-124)
+- [x] TASK-085 follow-up (11 Nov 2026): allow verified active admins to refund without mandatory 2FA; retain role checks and add authorization regression tests (ADR-040).
 - [ ] TASK-086 Webhook handlers: `refund.created`, `refund.updated`, `refund.failed`, `charge.dispute.created`
 - [ ] TASK-087 Credit note PDF (when VAT is on) and refund email
 - [x] TASK-088 "Adjust stock" shortcut from the return (reason Return restock, back to the same SKU, linked to the return)

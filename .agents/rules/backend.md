@@ -11,6 +11,7 @@ Applies to `src/services/**`, `src/lib/**`, `src/app/api/**`, `src/features/**/a
 - Orders, stock, returns and refunds change only through Postgres functions that check the current state in one transaction.
 
 ## Auth
+- Refunds allow verified signed-in, active admins without 2FA (ADR-040); retain role and active-admin checks.
 - Customers: `requireCustomer()` (Clerk `auth()`). Admins: `requireAdmin()` (`supabase.auth.getClaims()`, `aal2`, active admin).
 - `proxy.ts` only routes. Never rely on it for security. Its matcher excludes the Sentry tunnel (`/sentry-tunnel`).
 - Use the right Supabase client (see "Supabase Clients" in `docs/ARCHITECTURE.md`). The service client is only for webhooks, cron jobs and PDFs.

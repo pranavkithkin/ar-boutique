@@ -3,6 +3,7 @@
 import "server-only"
 import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/server"
+import { requireAdmin } from "@/lib/supabase/admin-auth"
 import {
   sendOrderConfirmationEmail,
   sendOrderShippedEmail,
@@ -334,6 +335,12 @@ export async function refundOrderViaStripeAction(input: {
   reason?: string
 }): Promise<{ success: boolean; error?: string; refundId?: string }> {
   try {
+    // 0. Verify the signed-in user is an active admin.
+    const admin = await requireAdmin()
+    if (!admin) {
+      return { success: false, error: "Unauthorized. Staff authentication required." }
+    }
+
     const adminDb = createAdminClient()
 
     // 1. Fetch order
@@ -383,32 +390,49 @@ export async function refundOrderViaStripeAction(input: {
       }
     }
 
-    // 2. Execute live refund via Stripe API
+    // 2. Execute live refund via Stripe API with idempotency key
     const refundReason = input.reason?.trim() || "Customer cancellation refund"
-    const stripeRefund = await stripe.refunds.create({
-      payment_intent: paymentIntentId,
-      reason: "requested_by_customer",
-      metadata: {
-        order_id: order.id,
-        order_number: order.order_number,
-        customer_email: order.email,
-        admin_reason: refundReason,
-      },
-    })
+    let stripeRefund
+    try {
+      stripeRefund = await stripe.refunds.create(
+        {
+          payment_intent: paymentIntentId,
+          reason: "requested_by_customer",
+          metadata: {
+            order_id: order.id,
+            order_number: order.order_number,
+            customer_email: order.email,
+            admin_reason: refundReason,
+            admin_user_id: admin.id,
+          },
+        },
+        {
+          idempotencyKey: `ref_order_${order.id}_${order.total_fils}_${paymentIntentId}`,
+        }
+      )
+    } catch (stripeErr: unknown) {
+      console.error("[Stripe Refund] API error:", stripeErr)
+      return {
+        success: false,
+        error: `Stripe refund failed: ${stripeErr instanceof Error ? stripeErr.message : "Unknown error"}`,
+      }
+    }
 
     if (!stripeRefund || stripeRefund.status === "failed") {
       return { success: false, error: "Stripe declined the refund request. Please check Stripe dashboard." }
     }
+
+    const refundDbStatus = stripeRefund.status === "succeeded" ? "succeeded" : "pending"
 
     // 3. Insert record into `refunds` table
     const { error: refInsertErr } = await adminDb.from("refunds").insert({
       order_id: order.id,
       amount_fils: order.total_fils,
       method: "card",
-      status: "succeeded",
+      status: refundDbStatus,
       stripe_refund_id: stripeRefund.id,
       reason: refundReason,
-      processed_by: "admin",
+      processed_by: admin.email || admin.id,
     })
 
     if (refInsertErr) {
@@ -416,60 +440,37 @@ export async function refundOrderViaStripeAction(input: {
     }
 
     // 4. Update order payment status and cancellation status
-    const updatePayload: Record<string, unknown> = {
-      payment_status: "refunded",
-      updated_at: new Date().toISOString(),
-    }
-    if (order.status !== "cancelled") {
-      updatePayload.status = "cancelled"
-      updatePayload.cancelled_at = order.cancelled_at || new Date().toISOString()
-      updatePayload.cancellation_reason = refundReason
-    }
-
-    await adminDb.from("orders").update(updatePayload).eq("id", order.id)
-
-    // 5. Release any reserved stock
-    const { data: items } = await adminDb
-      .from("order_items")
-      .select("variant_id, quantity")
-      .eq("order_id", order.id)
-
-    if (items) {
-      for (const it of items) {
-        if (it.variant_id) {
-          const { data: st } = await adminDb
-            .from("stock_levels")
-            .select("reserved")
-            .eq("variant_id", it.variant_id)
-            .maybeSingle()
-
-          if (st && typeof st.reserved === "number" && st.reserved > 0) {
-            await adminDb
-              .from("stock_levels")
-              .update({ reserved: Math.max(0, st.reserved - (it.quantity || 1)) })
-              .eq("variant_id", it.variant_id)
-          }
-        }
+    if (refundDbStatus === "succeeded") {
+      const updatePayload: Record<string, unknown> = {
+        payment_status: "refunded",
+        updated_at: new Date().toISOString(),
       }
+      if (order.status !== "cancelled") {
+        updatePayload.status = "cancelled"
+        updatePayload.cancelled_at = order.cancelled_at || new Date().toISOString()
+        updatePayload.cancellation_reason = refundReason
+      }
+      await adminDb.from("orders").update(updatePayload).eq("id", order.id)
     }
 
-    // 6. Record audit event in order_events
+    // 5. Record audit event in order_events
     const formattedAmount = formatAED(order.total_fils)
     await adminDb.from("order_events").insert({
       order_id: order.id,
-      event_type: "refund_processed",
+      event_type: refundDbStatus === "succeeded" ? "refund_processed" : "refund_pending",
       from_status: order.status,
-      to_status: "cancelled",
-      note: `Full Stripe card refund of ${formattedAmount} processed. (Stripe Refund ID: ${stripeRefund.id})`,
-      actor_sub: "admin",
+      to_status: refundDbStatus === "succeeded" ? "cancelled" : order.status,
+      note: `Full Stripe card refund of ${formattedAmount} ${refundDbStatus === "succeeded" ? "processed" : "submitted and pending"}. (Stripe Refund ID: ${stripeRefund.id})`,
+      actor_sub: admin.id,
     })
 
-    // 7. Send refund confirmation email
-    void sendRefundConfirmationEmail({
-      orderId: order.id,
-      amountFils: order.total_fils,
-      method: "card",
-    }).catch((e) => console.warn("[Stripe Refund] Email error:", e))
+    if (refundDbStatus === "succeeded") {
+      void sendRefundConfirmationEmail({
+        orderId: order.id,
+        amountFils: order.total_fils,
+        method: "card",
+      }).catch((e) => console.warn("[Stripe Refund] Email error:", e))
+    }
 
     revalidatePath(`/admin/orders/${order.id}`)
     revalidatePath("/admin/orders")

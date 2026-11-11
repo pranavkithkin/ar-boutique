@@ -1,5 +1,6 @@
 import "server-only"
 import { Resend } from "resend"
+import { render } from "@react-email/components"
 import { createAdminClient } from "@/lib/supabase/server"
 import { formatAED, calculateVatPortion } from "@/lib/money"
 import { getStoreSettings } from "@/features/admin/settings/actions"
@@ -124,11 +125,8 @@ export async function sendOrderConfirmationEmail(
       return { success: true, id: "mock_id" }
     }
 
-    const { data: result, error: sendErr } = await resend.emails.send({
-      from: sender,
-      to: [toEmail],
-      subject,
-      react: OrderConfirmationEmail({
+    const emailHtml = await render(
+      OrderConfirmationEmail({
         orderId: order.id,
         trackingUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://www.thearboutique.com").replace(/\/$/, "")}/track-order`,
         orderNumber: order.order_number,
@@ -154,7 +152,14 @@ export async function sendOrderConfirmationEmail(
         storeEmail: settings.store_email || "concierge@arboutique.ae",
         storePhone: settings.store_phone || "+971 50 123 4567",
         invoiceUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://arboutique.ae"}/api/invoices/${orderId}?download=1`,
-      }),
+      })
+    )
+
+    const { data: result, error: sendErr } = await resend.emails.send({
+      from: sender,
+      to: [toEmail],
+      subject,
+      html: emailHtml,
     })
 
     if (sendErr) {
@@ -238,11 +243,8 @@ export async function sendAdminNewOrderNotification(orderId: string): Promise<Se
       return { success: true, id: "mock_id" }
     }
 
-    const { data: result, error: sendErr } = await resend.emails.send({
-      from: sender,
-      to: [adminEmail],
-      subject: `[New Order] #${order.order_number} - ${order.customer_name || "Customer"} (${totalAed})`,
-      react: AdminNewOrderEmail({
+    const emailHtml = await render(
+      AdminNewOrderEmail({
         orderNumber: order.order_number,
         orderDate,
         customerName: order.customer_name || "Valued Patron",
@@ -253,7 +255,14 @@ export async function sendAdminNewOrderNotification(orderId: string): Promise<Se
         itemCount: itemCount || 1,
         adminOrderUrl,
         emirate: order.emirate || "Dubai",
-      }),
+      })
+    )
+
+    const { data: result, error: sendErr } = await resend.emails.send({
+      from: sender,
+      to: [adminEmail],
+      subject: `[New Order] #${order.order_number} - ${order.customer_name || "Customer"} (${totalAed})`,
+      html: emailHtml,
     })
 
     if (sendErr) {
@@ -324,11 +333,8 @@ export async function sendOrderShippedEmail(
       .filter(Boolean)
       .join(", ")
 
-    const { data: result, error: sendErr } = await resend.emails.send({
-      from: sender,
-      to: [toEmail],
-      subject: `Your AR Boutique Order #${order.order_number} has Shipped`,
-      react: OrderShippedEmail({
+    const emailHtml = await render(
+      OrderShippedEmail({
         orderNumber: order.order_number,
         customerName: order.customer_name || "Valued Patron",
         customerPhone: order.phone || "",
@@ -338,7 +344,14 @@ export async function sendOrderShippedEmail(
         deliveryAddress,
         storeEmail: settings.store_email || "concierge@arboutique.ae",
         storePhone: settings.store_phone || "+971 50 123 4567",
-      }),
+      })
+    )
+
+    const { data: result, error: sendErr } = await resend.emails.send({
+      from: sender,
+      to: [toEmail],
+      subject: `Your AR Boutique Order #${order.order_number} has Shipped`,
+      html: emailHtml,
     })
 
     if (sendErr) {
@@ -393,18 +406,22 @@ export async function sendOrderCancelledEmail(
       return { success: true, id: "mock_id" }
     }
 
-    const { data: result, error: sendErr } = await resend.emails.send({
-      from: sender,
-      to: [toEmail],
-      subject: `Order #${order.order_number} Cancellation - AR Boutique`,
-      react: OrderCancelledEmail({
+    const emailHtml = await render(
+      OrderCancelledEmail({
         orderNumber: order.order_number,
         customerName: order.customer_name || "Valued Patron",
         cancellationReason: cancellationReason || order.cancellation_reason || undefined,
         paymentMethod: order.payment_method === "cod" ? "cod" : "card",
         storeEmail: settings.store_email || "concierge@arboutique.ae",
         storePhone: settings.store_phone || "+971 50 123 4567",
-      }),
+      })
+    )
+
+    const { data: result, error: sendErr } = await resend.emails.send({
+      from: sender,
+      to: [toEmail],
+      subject: `Order #${order.order_number} Cancellation - AR Boutique`,
+      html: emailHtml,
     })
 
     if (sendErr) {
@@ -472,11 +489,8 @@ export async function sendReturnRequestedEmails(returnId: string): Promise<SendE
     }
 
     // Send customer acknowledgement
-    await resend.emails.send({
-      from: sender,
-      to: [ret.email],
-      subject: `Return Request Received #${ret.return_number} - AR Boutique`,
-      react: ReturnRequestedEmail({
+    const customerHtml = await render(
+      ReturnRequestedEmail({
         returnNumber: ret.return_number,
         orderNumber,
         customerName: ret.customer_name || "Valued Patron",
@@ -492,17 +506,22 @@ export async function sendReturnRequestedEmails(returnId: string): Promise<SendE
           : undefined,
         storeEmail: settings.store_email || "concierge@arboutique.ae",
         storePhone: settings.store_phone || "+971 50 123 4567",
-      }),
+      })
+    )
+
+    // Send customer acknowledgement
+    await resend.emails.send({
+      from: sender,
+      to: [ret.email],
+      subject: `Return Request Received #${ret.return_number} - AR Boutique`,
+      html: customerHtml,
     })
 
     // Alert admin if configured
     const adminEmail = settings.admin_notification_email || settings.store_email
     if (adminEmail) {
-      await resend.emails.send({
-        from: sender,
-        to: [adminEmail],
-        subject: `[New Return Request] #${ret.return_number} from ${ret.customer_name || "Customer"}`,
-        react: AdminNewOrderEmail({
+      const adminHtml = await render(
+        AdminNewOrderEmail({
           orderNumber: `${ret.return_number} (${orderNumber})`,
           orderDate: new Date().toLocaleDateString("en-AE"),
           customerName: ret.customer_name || "Customer",
@@ -513,7 +532,14 @@ export async function sendReturnRequestedEmails(returnId: string): Promise<SendE
           itemCount: returnItems.length,
           adminOrderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://arboutique.ae"}/admin/returns/${ret.id}`,
           emirate: "UAE",
-        }),
+        })
+      )
+
+      await resend.emails.send({
+        from: sender,
+        to: [adminEmail],
+        subject: `[New Return Request] #${ret.return_number} from ${ret.customer_name || "Customer"}`,
+        html: adminHtml,
       }).catch((e) => console.warn("Admin return alert email warning:", e))
     }
 
@@ -570,11 +596,8 @@ export async function sendReturnDecisionEmail(
         ? `Return Approved: Instructions for Return #${ret.return_number} - AR Boutique`
         : `Update on Return Request #${ret.return_number} - AR Boutique`
 
-    const { data: result, error: sendErr } = await resend.emails.send({
-      from: sender,
-      to: [ret.email],
-      subject,
-      react: ReturnDecisionEmail({
+    const emailHtml = await render(
+      ReturnDecisionEmail({
         returnNumber: ret.return_number,
         orderNumber,
         customerName: ret.customer_name || "Valued Patron",
@@ -582,7 +605,14 @@ export async function sendReturnDecisionEmail(
         instructionsOrReason,
         storeEmail: settings.store_email || "concierge@arboutique.ae",
         storePhone: settings.store_phone || "+971 50 123 4567",
-      }),
+      })
+    )
+
+    const { data: result, error: sendErr } = await resend.emails.send({
+      from: sender,
+      to: [ret.email],
+      subject,
+      html: emailHtml,
     })
 
     if (sendErr) {
@@ -652,11 +682,8 @@ export async function sendRefundConfirmationEmail(input: {
 
     const refundAmountAed = formatAED(input.amountFils)
 
-    const { data: result, error: sendErr } = await resend.emails.send({
-      from: sender,
-      to: [order.email],
-      subject: `Refund Processed: ${refundAmountAed} - AR Boutique`,
-      react: RefundConfirmationEmail({
+    const emailHtml = await render(
+      RefundConfirmationEmail({
         orderNumber: order.order_number,
         returnNumber,
         customerName: order.customer_name || "Valued Patron",
@@ -666,7 +693,14 @@ export async function sendRefundConfirmationEmail(input: {
         bankTransferReference: input.bankTransferReference || undefined,
         storeEmail: settings.store_email || "concierge@arboutique.ae",
         storePhone: settings.store_phone || "+971 50 123 4567",
-      }),
+      })
+    )
+
+    const { data: result, error: sendErr } = await resend.emails.send({
+      from: sender,
+      to: [order.email],
+      subject: `Refund Processed: ${refundAmountAed} - AR Boutique`,
+      html: emailHtml,
     })
 
     if (sendErr) {
@@ -720,18 +754,22 @@ export async function sendContactInquiryEmail(input: {
     }
 
     // 1. Send alert to boutique concierge / operations team
-    const { data: adminResult, error: adminSendErr } = await resend.emails.send({
-      from: sender,
-      to: [contactRecipient],
-      replyTo: input.email,
-      subject: `[Concierge Inquiry] ${input.topic} - ${input.name}`,
-      react: ContactInquiryEmail({
+    const adminHtml = await render(
+      ContactInquiryEmail({
         name: input.name,
         email: input.email,
         phone: input.phone,
         topic: input.topic,
         message: input.message,
-      }),
+      })
+    )
+
+    const { data: adminResult, error: adminSendErr } = await resend.emails.send({
+      from: sender,
+      to: [contactRecipient],
+      replyTo: input.email,
+      subject: `[Concierge Inquiry] ${input.topic} - ${input.name}`,
+      html: adminHtml,
     })
 
     if (adminSendErr) {
@@ -740,17 +778,21 @@ export async function sendContactInquiryEmail(input: {
     }
 
     // 2. Send acknowledgment to the patron (asynchronous, non-blocking)
+    const patronHtml = await render(
+      CustomerInquiryAcknowledgmentEmail({
+        name: input.name,
+        topic: input.topic,
+        storeEmail: settings.store_email || "concierge@arboutique.ae",
+        storePhone: settings.store_phone || "+971 50 273 6767",
+      })
+    )
+
     void resend.emails
       .send({
         from: sender,
         to: [input.email],
         subject: `Thank you for contacting ${storeName} Concierge`,
-        react: CustomerInquiryAcknowledgmentEmail({
-          name: input.name,
-          topic: input.topic,
-          storeEmail: settings.store_email || "concierge@arboutique.ae",
-          storePhone: settings.store_phone || "+971 50 273 6767",
-        }),
+        html: patronHtml,
       })
       .catch((err) => {
         console.warn("[Email Service] Non-blocking patron acknowledgment email failed:", err)

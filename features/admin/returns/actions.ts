@@ -3,6 +3,7 @@
 import "server-only"
 import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/server"
+import { requireAdmin } from "@/lib/supabase/admin-auth"
 import { sendReturnDecisionEmail, sendRefundConfirmationEmail } from "@/lib/email"
 import {
   AdminReturnListItem,
@@ -434,24 +435,94 @@ export async function processReturnRefundAction(input: {
   adminNotes?: string
 }): Promise<{ success: boolean; error?: string }> {
   try {
+    // 0. Verify the signed-in user is an active admin.
+    const admin = await requireAdmin()
+    if (!admin) {
+      return { success: false, error: "Unauthorized. Staff authentication required." }
+    }
+
     const adminDb = createAdminClient()
 
-    // 1. Insert refund row
+    let stripeRefundId: string | null = null
+    let refundStatus: "succeeded" | "pending" | "failed" = "succeeded"
+
+    if (input.method === "card") {
+      const stripeSecretKey = process.env.STRIPE_SECRET_KEY
+      if (!stripeSecretKey) {
+        return { success: false, error: "Stripe secret key is not configured on the server." }
+      }
+
+      const { default: Stripe } = await import("stripe")
+      const stripe = new Stripe(stripeSecretKey, {
+        apiVersion: "2025-02-24.acacia" as any,
+      })
+
+      // Fetch payment intent from order
+      const { data: order } = await adminDb
+        .from("orders")
+        .select("stripe_payment_intent_id, stripe_session_id")
+        .eq("id", input.orderId)
+        .single()
+
+      let paymentIntentId = order?.stripe_payment_intent_id
+      if (!paymentIntentId && order?.stripe_session_id) {
+        try {
+          const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id)
+          if (typeof session.payment_intent === "string") {
+            paymentIntentId = session.payment_intent
+          }
+        } catch (e) {
+          console.warn("[Return Refund] Could not retrieve session for payment intent:", e)
+        }
+      }
+
+      if (!paymentIntentId) {
+        return {
+          success: false,
+          error: "Unable to find Stripe Payment Intent for this order. Please verify transaction in Stripe Dashboard.",
+        }
+      }
+
+      try {
+        const refund = await stripe.refunds.create(
+          {
+            payment_intent: paymentIntentId,
+            amount: input.amountFils,
+            reason: "requested_by_customer",
+            metadata: {
+              return_id: input.returnId,
+              order_id: input.orderId,
+              admin_user_id: admin.id,
+            },
+          },
+          {
+            idempotencyKey: `ref_ret_${input.returnId}_${input.amountFils}_${paymentIntentId}`,
+          }
+        )
+        stripeRefundId = refund.id
+        refundStatus = refund.status === "succeeded" ? "succeeded" : "pending"
+      } catch (stripeErr: unknown) {
+        console.error("[Return Refund] Stripe refund error:", stripeErr)
+        return {
+          success: false,
+          error: `Stripe refund failed: ${stripeErr instanceof Error ? stripeErr.message : "Unknown error"}`,
+        }
+      }
+    }
+
+    // 1. Insert refund row with verified details
     const { error: refErr } = await adminDb.from("refunds").insert({
       order_id: input.orderId,
       return_id: input.returnId,
       amount_fils: input.amountFils,
       method: input.method,
-      status: "succeeded",
-      stripe_refund_id:
-        input.method === "card"
-          ? `re_${Math.random().toString(36).substring(2, 12)}`
-          : null,
+      status: refundStatus,
+      stripe_refund_id: stripeRefundId,
       bank_transfer_date: input.bankTransferDate || null,
       bank_transfer_reference: input.bankTransferReference || null,
       reason: input.reason || "Customer return approved",
       admin_notes: input.adminNotes || null,
-      processed_by: "admin",
+      processed_by: admin.email || admin.id,
     })
 
     if (refErr) return { success: false, error: refErr.message }
@@ -459,35 +530,37 @@ export async function processReturnRefundAction(input: {
     // 2. Log return event
     const refundDescription =
       input.method === "card"
-        ? `Processed Card refund of ${(input.amountFils / 100).toFixed(2)} AED`
+        ? `Processed Card refund of ${(input.amountFils / 100).toFixed(2)} AED (Status: ${refundStatus}, ID: ${stripeRefundId})`
         : `Recorded COD bank transfer refund of ${(input.amountFils / 100).toFixed(2)} AED (Ref: ${input.bankTransferReference || "N/A"})`
 
     await adminDb.from("return_events").insert({
       return_id: input.returnId,
       event_type: "refund_processed",
       note: refundDescription,
-      actor_sub: "admin",
+      actor_sub: admin.id,
     })
 
-    // Trigger refund confirmation email to customer
-    void sendRefundConfirmationEmail({
-      returnId: input.returnId,
-      orderId: input.orderId,
-      amountFils: input.amountFils,
-      method: input.method,
-      bankTransferDate: input.bankTransferDate,
-      bankTransferReference: input.bankTransferReference,
-    }).catch((e) => console.warn("[Refunds] Background refund email error:", e))
+    if (refundStatus === "succeeded") {
+      void sendRefundConfirmationEmail({
+        returnId: input.returnId,
+        orderId: input.orderId,
+        amountFils: input.amountFils,
+        method: input.method,
+        bankTransferDate: input.bankTransferDate,
+        bankTransferReference: input.bankTransferReference,
+      }).catch((e) => console.warn("[Refunds] Background refund email error:", e))
+    }
 
-    // 3. Mark return closed if desired, or keep as received/refunded
-    await adminDb
-      .from("return_requests")
-      .update({
-        status: "closed",
-        closed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", input.returnId)
+    if (refundStatus === "succeeded") {
+      await adminDb
+        .from("return_requests")
+        .update({
+          status: "closed",
+          closed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", input.returnId)
+    }
 
     revalidatePath(`/admin/returns/${input.returnId}`)
     revalidatePath("/admin/returns")

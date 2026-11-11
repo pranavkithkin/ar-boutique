@@ -30,6 +30,7 @@
 - Keep business logic out of components.
 
 ## Data and Auth
+- Refund authorization overrides the MFA requirement below: a verified signed-in, active admin may refund without 2FA (ADR-040).
 - Customers: `requireCustomer()` (Clerk `auth()`). Admins: `requireAdmin()` (Supabase `getClaims()`, `aal2`, active admin).
 - Never use `auth.uid()` in RLS policies. Compare `auth.jwt()->>'sub'` as text.
 - Every new table gets RLS, policies and tests in `supabase/tests`.

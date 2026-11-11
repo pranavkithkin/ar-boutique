@@ -311,9 +311,9 @@ const itemRow: React.CSSProperties = {
 }
 
 const itemName: React.CSSProperties = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: main.fontFamily,
   fontSize: "14px",
-  fontWeight: 500,
+  fontWeight: 600,
   color: "#111111",
   margin: "0 0 4px",
 }

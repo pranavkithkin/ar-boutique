@@ -47,7 +47,6 @@ export interface CodEligibilityStatus {
   eligible: boolean
   reason?: string
   isSignedIn: boolean
-  hasOpenCodOrder: boolean
   isBlocked: boolean
   refusalsCount: number
   maxOrderFils: number

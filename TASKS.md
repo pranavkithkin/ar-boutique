@@ -101,6 +101,7 @@ Done when: a shopper pays in Stripe test mode and the order is Confirmed and Pai
 - [ ] TASK-057 Reconciliation job `/api/cron/reconcile-checkouts` every 15 min, protected by `CRON_SECRET`, wrapped in `Sentry.withMonitor()`, writing `job_runs`; also cancels COD orders past `confirm_by` (releasing their stock) and deletes stock sheet previews older than 24 hours
 - [ ] TASK-058 Needs-attention path when a paid order has no stock left
 - [x] TASK-117 COD settings and `getCodEligibility()` (signed in, maximum, open orders, refusals per account and phone, turned off per customer, COD off)
+- [x] TASK-117 follow-up (11 Nov 2026, ADR-041): remove open-COD-order restriction from database and checkout UI; permit distinct orders and retain duplicate-submission protection. Migration applied and regression tests passed.
 - [x] COD reliability follow-up (11 Nov 2026): atomic/idempotent COD creation with locked stock/coupon updates; consume holds once at shipping; release holds once on admin/customer cancellation; SQL rollback and retry tests. Migration applied; historical orders left unchanged.
 - [x] TASK-118 `place_cod_order()` and the `placeCheckoutOrderAction` action (reservation until `confirm_by`, server re-pricing, inventory verification, customer sync, and audit logging)
 - [x] TASK-119 COD order received page `/checkout/received/[orderNumber]` per `docs/DESIGN.md` (prominent cash amount, concierge phone/WhatsApp confirmation notice)
@@ -110,6 +111,8 @@ Done when: a shopper pays in Stripe test mode and the order is Confirmed and Pai
 ## Phase 7: Emails and Invoices
 Done when: each paid order (card at payment, COD when the cash is collected) sends one customer email with a correct English/Arabic invoice and one admin email.
 - [x] TASK-060 Resend service + React Email base layout (`lib/email.ts`, `OrderConfirmationEmail.tsx`, `AdminNewOrderEmail.tsx`) with audit logging in `order_events`
+- [x] Email URL follow-up (11 Nov 2026): use `NEXT_PUBLIC_SITE_URL` for invoice, tracking and admin email links; remove `NEXT_PUBLIC_APP_URL` dependency.
+- [x] Email typography follow-up (11 Nov 2026): product names use the existing sans-serif font across confirmation, shipping and return-request emails; one updated AR-1050 confirmation sent to the user for review.
 - [x] TASK-061 Order confirmation (customer) and new order (admin) emails triggered on checkout order placement (Card and COD); lines show colour, size and SKU with UAE delivery address, concierge contact, and COD cash-to-prepare alerts; Resend Email action added to admin order details view (TASK-068 partial)
 - [ ] TASK-062 Spike: English/Arabic PDF (Arabic shaping, right-to-left); pick the engine and record it in ADR-022
 - [ ] TASK-063 Gapless invoice numbers (locked counter row) assigned in `mark_order_paid()`, and in `record_cod_delivery()` when COD cash is collected
@@ -123,6 +126,7 @@ Done when: the admin moves an order to Delivered (a COD order through confirm, s
 - [x] TASK-067 Packed and Delivered actions through a Postgres function (sets `delivered_at`, logs the event); Shipped comes in TASK-121 and the COD actions in TASK-120 and TASK-122
 - [x] TASK-068 Resend confirmation email and 1-click download bilingual invoice PDF from the admin order detail and customer account orders tab
 - [x] TASK-069 My orders: list and detail for customers, with every status from ADR-035 and the tracking number
+- [x] Public tracking timeline (11 Nov 2026): add actual fulfilment milestones and timestamps to the verified `/track-order` result; cover pending, shipped, cancelled and returned orders without exposing admin notes.
 - [ ] TASK-070 Link guest orders to the account by verified email (Clerk webhook + first account visit)
 - [ ] TASK-120 Admin: confirm or cancel COD orders (with cancellation email via `OrderCancelledEmail`); dashboard queue with the time left
 - [x] TASK-121 Shipped status for orders with courier and tracking number + automated `OrderShippedEmail` dispatch with tracking details

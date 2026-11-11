@@ -1,5 +1,6 @@
 import "server-only"
 import { createAdminClient } from "@/lib/supabase/server"
+import { buildTrackingTimeline, type TrackingTimelineStep } from "./timeline"
 
 export interface TrackedOrder {
   orderId: string
@@ -7,6 +8,7 @@ export interface TrackedOrder {
   status: string
   courier: string | null
   trackingNumber: string | null
+  timeline: TrackingTimelineStep[]
 }
 
 const statusLabels: Record<string, string> = {
@@ -19,6 +21,7 @@ const statusLabels: Record<string, string> = {
   cancelled: "Cancelled",
   expired: "Expired",
   returned_to_sender: "Returned to sender",
+  returned: "Returned",
 }
 
 /** Guest access requires both the Order Number (or UUID) and the exact checkout email. */
@@ -29,7 +32,7 @@ export async function findTrackedOrder(orderIdentifier: string, email: string): 
 
   let query = db
     .from("orders")
-    .select("id, order_number, status, payment_method, courier, tracking_number")
+    .select("id, order_number, status, payment_method, courier, tracking_number, created_at, confirmed_at, packed_at, shipped_at, delivered_at, cancelled_at, returned_at")
     .ilike("email", email.trim())
 
   if (isUuid) {
@@ -56,5 +59,6 @@ export async function findTrackedOrder(orderIdentifier: string, email: string): 
     status,
     courier: data.courier || null,
     trackingNumber: data.tracking_number || null,
+    timeline: buildTrackingTimeline(data),
   }
 }

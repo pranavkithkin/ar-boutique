@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { orderTrackingSchema } from "@/features/order-tracking/schemas"
 import { canRevealTrackingId } from "@/features/order-tracking/access"
+import { buildTrackingTimeline } from "@/features/order-tracking/timeline"
 
 const db = vi.hoisted(() => ({
   from: vi.fn(), select: vi.fn(), eq: vi.fn(), ilike: vi.fn(), or: vi.fn(), maybeSingle: vi.fn(),
@@ -60,9 +61,9 @@ describe("guest tracking", () => {
       email: input.email, customer_name: "Private", street_address: "Private",
     }, error: null })
     expect(await trackOrderAction(input)).toEqual({ success: true, order: {
-      orderId, orderNumber: undefined, status: "Shipped", courier: "Test Courier", trackingNumber: "TRACK-1",
+      orderId, orderNumber: undefined, status: "Shipped", courier: "Test Courier", trackingNumber: "TRACK-1", timeline: buildTrackingTimeline({ status: "shipped" }),
     } })
-    expect(db.select).toHaveBeenCalledWith("id, order_number, status, payment_method, courier, tracking_number")
+    expect(db.select).toHaveBeenCalledWith("id, order_number, status, payment_method, courier, tracking_number, created_at, confirmed_at, packed_at, shipped_at, delivered_at, cancelled_at, returned_at")
   })
 
   it.each([
@@ -78,7 +79,7 @@ describe("guest tracking", () => {
   ])("handles %s for %s", async (status, payment_method, label) => {
     db.maybeSingle.mockResolvedValue({ data: { id: orderId, status, payment_method }, error: null })
     expect(await trackOrderAction(input)).toEqual({ success: true, order: {
-      orderId, orderNumber: undefined, status: label, courier: null, trackingNumber: null,
+      orderId, orderNumber: undefined, status: label, courier: null, trackingNumber: null, timeline: buildTrackingTimeline({ status, payment_method }),
     } })
   })
 

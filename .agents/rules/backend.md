@@ -32,7 +32,7 @@ Applies to `src/services/**`, `src/lib/**`, `src/app/api/**`, `src/features/**/a
 - Never restock automatically.
 
 ## Cash on delivery
-- COD orders are created only by `place_cod_order()`. It checks every rule again in one transaction (COD on, signed in, maximum order value, one open COD order, refusals per account and per phone, turned off per customer), re-prices, adds the fee and reserves stock in variant ID order. One idempotency key per cart.
+- COD orders are created only by `place_cod_order()`. It checks every rule again in one transaction (COD on, signed in, maximum order value, refusals per account and per phone, turned off per customer), re-prices, adds the fee and reserves stock in variant ID order. Multiple open COD orders are allowed (ADR-041). One idempotency key per checkout attempt prevents duplicate submissions.
 - Stock is deducted at Shipped (`mark_shipped()`), not when the order is placed or confirmed.
 - A COD order is paid only through `record_cod_delivery()` (admin with `aal2`), which also assigns the invoice number.
 - Unconfirmed COD orders are cancelled by the reconciliation job after `confirm_by`, releasing their stock.

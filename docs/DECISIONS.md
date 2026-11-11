@@ -1,5 +1,10 @@
 # Architecture Decisions
 
+## ADR-041: Allow multiple open COD orders per customer
+**Status:** Accepted by the user, 11 Nov 2026.
+**Decision:** Do not reject a new COD order because the customer already has pending, confirmed, packed or shipped COD orders. Supersedes the open-order limit in ADR-033. Preserve stock checks, configured COD availability/value limits, customer/refusal restrictions and idempotency for retries of the same checkout attempt.
+**Reason:** The user wants customers to place additional COD orders while earlier orders remain open.
+
 ## ADR-040: Refunds require active admin login without mandatory 2FA
 **Status:** Accepted by the user, 11 Nov 2026.
 **Decision:** Order and return refund actions verify the signed Supabase session, admin role and active `admin_users` row. They do not require `aal2`. This supersedes ADR-004's mandatory 2FA requirement for these refund actions.

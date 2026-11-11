@@ -689,11 +689,6 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                                     {customerContext.codEligibility.reason ||
                                       "Cash on delivery has been restricted for this account."}
                                   </span>
-                                ) : customerContext?.codEligibility.hasOpenCodOrder ? (
-                                  <span>
-                                    {customerContext.codEligibility.reason ||
-                                      "You already have an active Cash on Delivery order in progress."}
-                                  </span>
                                 ) : !isCodEligibleByAmount ? (
                                   <span>
                                     Available only for orders up to AED {config.codMaxOrderFils / 100} (Current total:{" "}

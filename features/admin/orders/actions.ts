@@ -237,17 +237,38 @@ export async function updateOrderStatusAction(input: {
   note?: string
 }): Promise<{ success: boolean; error?: string }> {
   try {
+    const admin = await requireAdmin()
+    if (!admin) return { success: false, error: "Unauthorized. Staff authentication required." }
     const adminDb = createAdminClient()
 
     // Get current order status
     const { data: current, error: getErr } = await adminDb
       .from("orders")
-      .select("status")
+      .select("status, payment_method")
       .eq("id", input.orderId)
       .single()
 
     if (getErr || !current) {
       return { success: false, error: "Order not found." }
+    }
+
+    if (current.payment_method === "cod") {
+      const { data: changed, error } = await adminDb.rpc("transition_cod_order", {
+        p_order_id: input.orderId,
+        p_status: input.newStatus,
+        p_admin_id: admin.id,
+        p_courier: input.courier || null,
+        p_tracking_number: input.trackingNumber || null,
+        p_note: input.note || null,
+      })
+      if (error) return { success: false, error: error.code === "P0001" ? error.message : "Unable to update the COD order. Please retry." }
+      if (changed === true) {
+        if (input.newStatus === "shipped") await sendOrderShippedEmail(input.orderId, input.courier, input.trackingNumber)
+        if (input.newStatus === "cancelled") await sendOrderCancelledEmail(input.orderId, input.note)
+      }
+      revalidatePath(`/admin/orders/${input.orderId}`)
+      revalidatePath("/admin/orders")
+      return { success: true }
     }
 
     const fromStatus = current.status

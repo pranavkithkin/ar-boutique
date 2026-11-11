@@ -338,7 +338,7 @@ export async function sendOrderShippedEmail(
         orderNumber: order.order_number,
         customerName: order.customer_name || "Valued Patron",
         customerPhone: order.phone || "",
-        courier: courier || order.courier || "Express Boutique Courier",
+        courier: courier?.trim() || order.courier?.trim() || undefined,
         trackingNumber: trackingNumber || order.tracking_number || undefined,
         items: shippedItems,
         deliveryAddress,

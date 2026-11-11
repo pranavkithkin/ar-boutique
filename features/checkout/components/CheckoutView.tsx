@@ -15,6 +15,7 @@ import {
   type CheckoutFormValues,
 } from "../schemas"
 import { placeCheckoutOrderAction } from "../actions"
+import { getCheckoutAttempt } from "../checkout-key"
 import { validateCouponAction } from "@/features/coupons/actions"
 import type { ValidateCouponResult } from "@/features/coupons/types"
 import type { CheckoutConfig, CustomerCheckoutContext, SavedAddressCandidate } from "../types"
@@ -42,6 +43,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
   const router = useRouter()
   const cartItems = useCartStore((state) => state.items)
   const clearCart = useCartStore((state) => state.clearCart)
+  const checkoutAttempt = React.useRef<ReturnType<typeof getCheckoutAttempt> | null>(null)
 
   const initialServerAddresses = React.useMemo(
     () => customerContext?.savedAddresses || [],
@@ -234,7 +236,14 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
     }
 
     try {
-      const result = await placeCheckoutOrderAction(values, cartItems, appliedCoupon?.code)
+      const fingerprint = JSON.stringify({ values, items: cartItems.map(({ variantId, sku, quantity }) => ({ variantId, sku, quantity })), coupon: appliedCoupon?.code })
+      let previous = checkoutAttempt.current
+      if (!previous) {
+        try { previous = JSON.parse(sessionStorage.getItem("ar_checkout_attempt") || "null") } catch { /* Storage may be unavailable. */ }
+      }
+      checkoutAttempt.current = getCheckoutAttempt(fingerprint, previous, () => crypto.randomUUID())
+      try { sessionStorage.setItem("ar_checkout_attempt", JSON.stringify(checkoutAttempt.current)) } catch { /* Keep the in-memory key for retries. */ }
+      const result = await placeCheckoutOrderAction(values, cartItems, appliedCoupon?.code, checkoutAttempt.current.key)
 
       if (!result.success || !result.redirectUrl) {
         setSubmitError(result.error || "Failed to complete checkout. Please review your details.")
@@ -265,6 +274,8 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
       }
 
       if (values.paymentMethod === "cod") {
+        try { sessionStorage.removeItem("ar_checkout_attempt") } catch { /* Optional storage. */ }
+        checkoutAttempt.current = null
         // Clear shopping bag after COD order is recorded
         clearCart()
         router.push(result.redirectUrl)

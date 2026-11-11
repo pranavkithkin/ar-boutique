@@ -26,7 +26,7 @@ export interface OrderShippedEmailProps {
   orderNumber: string
   customerName: string
   customerPhone?: string
-  courier: string
+  courier?: string
   trackingNumber?: string
   trackingUrl?: string
   items: ShippedItemEmailData[]
@@ -38,8 +38,8 @@ export interface OrderShippedEmailProps {
 export function OrderShippedEmail({
   orderNumber = "AR-1001",
   customerName = "Valued Patron",
-  courier = "Careem Express",
-  trackingNumber = "CR-98721345",
+  courier,
+  trackingNumber,
   trackingUrl,
   items = [],
   deliveryAddress = "Jumeirah 1, Dubai, United Arab Emirates",
@@ -74,13 +74,13 @@ export function OrderShippedEmail({
           {/* Courier & Tracking Card */}
           <Section style={courierCard}>
             <Row>
-              <Column style={{ width: "50%" }}>
+              {courier?.trim() && <Column style={{ width: "50%" }}>
                 <Text style={metaLabel}>COURIER PARTNER</Text>
                 <Text style={metaValue}>{courier}</Text>
-              </Column>
+              </Column>}
               <Column style={{ width: "50%" }}>
                 <Text style={metaLabel}>TRACKING NUMBER</Text>
-                <Text style={trackingMono}>{trackingNumber || "Assigned upon route pickup"}</Text>
+                <Text style={trackingMono}>{trackingNumber?.trim() || "Tracking details are not available yet."}</Text>
               </Column>
             </Row>
             {trackingUrl && (

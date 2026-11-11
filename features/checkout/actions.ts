@@ -18,8 +18,8 @@ import type {
   SavedAddressCandidate,
 } from "./types"
 import { calculateVatPortion } from "@/lib/money"
-import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email"
 import { createStripeCheckoutSession } from "./stripe"
+import { placeCodOrder } from "./cod-service"
 
 /**
  * Fetch checkout delivery and payment configuration from database settings.
@@ -206,29 +206,12 @@ export async function getCheckoutInitialDataAction(): Promise<CheckoutPageData> 
 }
 
 /**
- * Generates a clean, gapless order number formatted like AR-1049.
+ * Generates a unique order number using the database sequence shared with COD.
  */
 async function generateOrderNumber(supabase: ReturnType<typeof createAdminClient>): Promise<string> {
-  const { data: latest } = await supabase
-    .from("orders")
-    .select("order_number")
-    .order("created_at", { ascending: false })
-    .limit(1)
-
-  if (latest && latest.length > 0 && latest[0]?.order_number) {
-    const match = latest[0].order_number.match(/AR-(\d+)/)
-    if (match && match[1]) {
-      const nextNum = parseInt(match[1], 10) + 1
-      return `AR-${nextNum}`
-    }
-  }
-
-  const { count } = await supabase
-    .from("orders")
-    .select("id", { count: "exact", head: true })
-
-  const baseNumber = 1045 + (count || 0)
-  return `AR-${baseNumber}`
+  const { data, error } = await supabase.rpc("next_order_number")
+  if (error || typeof data !== "string") throw new Error("Could not generate an order number. Please retry.")
+  return data
 }
 
 /**
@@ -244,7 +227,8 @@ import type { Coupon } from "@/features/coupons/types"
 export async function placeCheckoutOrderAction(
   formData: CheckoutFormValues,
   cartItems: CartItem[],
-  couponCode?: string
+  couponCode?: string,
+  checkoutKey?: string,
 ): Promise<PlaceOrderResult> {
   try {
     if (!cartItems || cartItems.length === 0) {
@@ -274,6 +258,12 @@ export async function placeCheckoutOrderAction(
       }
     } catch {
       // Guest or local session
+    }
+
+    // COD pricing, eligibility, items, holds and coupon redemption are one transaction.
+    // Do not perform stock prechecks before this call: retries must work after stock is reserved.
+    if (data.paymentMethod === "cod") {
+      return placeCodOrder(data, cartItems, clerkUserId, checkoutKey, couponCode)
     }
 
     // 3. Re-price all cart items on the server from the product_variants database
@@ -459,64 +449,25 @@ export async function placeCheckoutOrderAction(
     }
 
     const deliveryFeeFils = appliedDeliveryFeeFils
-    const isCod = data.paymentMethod === "cod"
-    const codFeeFils = isCod ? settings.cod_fee_fils : 0
+    const codFeeFils = 0 // COD has already returned through place_cod_order().
     const totalFils = Math.max(0, subtotalFils - discountFils) + deliveryFeeFils + codFeeFils
     const isVatEnabled = Boolean(settings.vat_enabled)
     const vatFils = isVatEnabled ? calculateVatPortion(totalFils) : 0
 
     // 6. Validate Payment Method availability rules
-    if (isCod) {
-      if (!settings.cod_enabled) {
-        return {
-          success: false,
-          error: "Cash on delivery is currently unavailable. Please select card payment.",
-        }
-      }
-      if (totalFils > settings.cod_max_order_fils) {
-        return {
-          success: false,
-          error: `Cash on delivery is only available for orders up to AED ${settings.cod_max_order_fils / 100}. Please choose card payment or adjust your bag.`,
-        }
-      }
-
-      // Check for past refused orders and open COD orders on customer email
-      const cleanEmail = data.email.toLowerCase().trim()
-      const { data: customerPastOrders } = await supabase
-        .from("orders")
-        .select("id, status, payment_method")
-        .ilike("email", cleanEmail)
-
-      if (customerPastOrders && customerPastOrders.length > 0) {
-        const refusedCount = customerPastOrders.filter((o) => o.status === "returned_to_sender").length
-        const allowedRefusals = settings.cod_refused_block_count || 2
-        if (refusedCount >= allowedRefusals) {
-          return {
-            success: false,
-            error: "Cash on delivery has been restricted due to past delivery refusals.",
-          }
-        }
-      }
-    } else {
-      if (!settings.card_enabled) {
-        return {
-          success: false,
-          error: "Online card payment is currently disabled. Please select Cash on Delivery.",
-        }
+    if (!settings.card_enabled) {
+      return {
+        success: false,
+        error: "Online card payment is currently disabled. Please select Cash on Delivery.",
       }
     }
 
     // 7. Generate Order Number
     const orderNumber = await generateOrderNumber(supabase)
 
-    // 8. Determine confirmation deadline for COD or 31-min stock hold for Card
-    const confirmHours = settings.cod_confirm_hours || 24
-    const confirmBy = isCod
-      ? new Date(Date.now() + confirmHours * 60 * 60 * 1000).toISOString()
-      : null
-    const holdExpiresAt = !isCod
-      ? new Date(Date.now() + 31 * 60 * 1000).toISOString()
-      : null
+    // 8. Card checkout holds stock for 31 minutes.
+    const confirmBy = null
+    const holdExpiresAt = new Date(Date.now() + 31 * 60 * 1000).toISOString()
 
     // 9. Insert Order Header into `orders`
     const { data: insertedOrder, error: orderError } = await supabase
@@ -661,39 +612,15 @@ export async function placeCheckoutOrderAction(
     // 12. Insert Audit Event in `order_events`
     await supabase.from("order_events").insert({
       order_id: orderId,
-      event_type: isCod ? "cod_order_placed" : "card_order_placed",
+      event_type: "card_order_placed",
       from_status: null,
       to_status: "pending",
-      note: isCod
-        ? `Order placed via Cash on Delivery. Awaiting phone or WhatsApp confirmation within ${confirmHours} hours.`
-        : "Order initiated. Awaiting card payment confirmation from Stripe.",
+      note: "Order initiated. Awaiting card payment confirmation from Stripe.",
       actor_sub: clerkUserId || "storefront_shopper",
     })
 
-    // 13. If promo code was applied on COD, record redemption immediately.
-    // (For Card payments, redemption is recorded exclusively upon verified Stripe webhook completion so abandoned sessions do not consume the coupon).
+    // Card coupon redemption is recorded only by the verified Stripe webhook.
     const cleanEmail = data.email.toLowerCase().trim()
-    if (appliedCoupon && isCod) {
-      try {
-        await supabase.from("coupon_redemptions").insert({
-          coupon_id: appliedCoupon.id,
-          order_id: orderId,
-          customer_email: cleanEmail,
-          clerk_user_id: clerkUserId,
-          discount_fils: discountFils,
-        })
-
-        await supabase
-          .from("coupons")
-          .update({
-            usage_count: (appliedCoupon.usage_count || 0) + 1,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", appliedCoupon.id)
-      } catch (couponRedeemErr) {
-        console.warn("Failed to record coupon redemption:", couponRedeemErr)
-      }
-    }
 
     // 14. Sync customer profile in `customers` table
     try {
@@ -711,23 +638,10 @@ export async function placeCheckoutOrderAction(
       console.warn("Failed to update customer registry on checkout:", custSyncErr)
     }
 
-    // 14. If COD, dispatch confirmation emails immediately.
-    // (For Card payments, emails are triggered exclusively upon verified Stripe webhook completion - ADR-008)
-    if (isCod) {
-      try {
-        await Promise.allSettled([
-          sendOrderConfirmationEmail(orderId),
-          sendAdminNewOrderNotification(orderId),
-        ])
-      } catch (emailErr) {
-        console.warn("[Checkout] Background confirmation email error:", emailErr)
-      }
-    }
+    // 15. Create the card payment session. COD has already returned above.
+    let redirectUrl: string
 
-    // 15. Create Stripe Checkout Session if Card payment was selected
-    let redirectUrl = `/checkout/received/${encodeURIComponent(orderNumber)}`
-
-    if (!isCod) {
+    {
       let detectedOrigin: string | null = null
       try {
         const headerList = await headers()

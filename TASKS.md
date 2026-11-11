@@ -101,6 +101,7 @@ Done when: a shopper pays in Stripe test mode and the order is Confirmed and Pai
 - [ ] TASK-057 Reconciliation job `/api/cron/reconcile-checkouts` every 15 min, protected by `CRON_SECRET`, wrapped in `Sentry.withMonitor()`, writing `job_runs`; also cancels COD orders past `confirm_by` (releasing their stock) and deletes stock sheet previews older than 24 hours
 - [ ] TASK-058 Needs-attention path when a paid order has no stock left
 - [x] TASK-117 COD settings and `getCodEligibility()` (signed in, maximum, open orders, refusals per account and phone, turned off per customer, COD off)
+- [x] COD reliability follow-up (11 Nov 2026): atomic/idempotent COD creation with locked stock/coupon updates; consume holds once at shipping; release holds once on admin/customer cancellation; SQL rollback and retry tests. Migration applied; historical orders left unchanged.
 - [x] TASK-118 `place_cod_order()` and the `placeCheckoutOrderAction` action (reservation until `confirm_by`, server re-pricing, inventory verification, customer sync, and audit logging)
 - [x] TASK-119 COD order received page `/checkout/received/[orderNumber]` per `docs/DESIGN.md` (prominent cash amount, concierge phone/WhatsApp confirmation notice)
 - [x] TASK-127 Coupons & Promo Codes: database schema & validation engine (percentage, fixed fils, free shipping, min spend, max discount cap, global & per-customer limits, scheduling), checkout bag integration with instant recalculation & chip UI, server-side redemption recording upon order placement, admin coupon manager (`/admin/coupons`) with live metrics and redemptions audit history, and unit test suite (`tests/coupons.test.ts`)
@@ -145,6 +146,7 @@ Done when: a customer submits a return with photos and the admin approves, recei
 - [ ] TASK-083 Jobs: expire approved returns after N days; purge photos 90 days after close (both write `job_runs`)
 
 ## Phase 10: Refunds
+- [x] Shipping email correction (11 Nov 2026): remove invented courier/tracking defaults and verify rendering with supplied and missing details.
 Done when: a received return is refunded through Stripe, with a credit note when VAT is on.
 - [x] TASK-084 Migration: `refunds`, `credit_notes`; refundable balance function
 - [x] TASK-085 Refund action: prefilled amount, lower with a reason, capped at the balance, Stripe refund with idempotency key (COD orders: TASK-124)

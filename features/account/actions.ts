@@ -532,6 +532,17 @@ export async function cancelCustomerOrderAction(input: {
 
     const previousStatus = order.status
 
+    if (order.payment_method === "cod") {
+      const { data: cancelled, error: cancellationError } = await adminDb.rpc("cancel_customer_cod_order", {
+        p_order_id: order.id,
+        p_email: authorizedEmail,
+        p_note: cleanReason,
+      })
+      if (cancellationError) return { success: false, error: "Unable to cancel this order. Please refresh and try again." }
+      if (cancelled === true) await sendOrderCancelledEmail(order.id, cleanReason, order.email)
+      return { success: true }
+    }
+
     // 4. Update order to cancelled
     const { error: updateErr } = await adminDb
       .from("orders")

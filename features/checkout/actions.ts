@@ -373,6 +373,23 @@ export async function placeCheckoutOrderAction(
       }
     }
 
+    // Verify every single item has a valid server price in product_variants (ADR-035 & backend security)
+    for (const item of cartItems) {
+      const fallbackVariant = item.sku ? skuToVariantMap.get(item.sku.toLowerCase()) : null
+      const variantDetails = item.variantId ? variantDetailsMap.get(item.variantId) : null
+      const resolvedDetails = variantDetails || fallbackVariant
+      const serverPrice =
+        resolvedDetails?.price_fils ??
+        (item.variantId ? variantPriceMap.get(item.variantId) : null)
+
+      if (typeof serverPrice !== "number") {
+        return {
+          success: false,
+          error: `Price could not be verified from the server catalogue for "${item.productName || item.sku || "item"}". Please remove or re-add this piece.`,
+        }
+      }
+    }
+
     let subtotalFils = 0
     const verifiedLines = cartItems.map((item) => {
       const fallbackVariant = item.sku ? skuToVariantMap.get(item.sku.toLowerCase()) : null
@@ -384,10 +401,10 @@ export async function placeCheckoutOrderAction(
       const actualColourId = resolvedDetails?.colourId || null
       const actualStyleCode = resolvedDetails?.styleCode || item.sku || "N/A"
 
-      const verifiedUnitPrice =
+      const verifiedUnitPrice = (
         resolvedDetails?.price_fils ??
-        (actualVariantId ? variantPriceMap.get(actualVariantId) : null) ??
-        item.priceFils
+        (actualVariantId ? variantPriceMap.get(actualVariantId) : null)
+      )!
 
       const lineTotal = verifiedUnitPrice * item.quantity
       subtotalFils += lineTotal
@@ -608,7 +625,8 @@ export async function placeCheckoutOrderAction(
       }
     }
 
-    // 11. Reserve stock in `stock_levels`
+    // 11. Reserve stock through a conditional database update so concurrent checkouts cannot oversell.
+    const reservedLines: Array<{ variantId: string; quantity: number }> = []
     for (const line of verifiedLines) {
       const fallbackVariant = line.sku ? skuToVariantMap.get(line.sku.toLowerCase()) : null
       const actualVariantId = (line.variantId && isUuid(line.variantId))
@@ -616,18 +634,27 @@ export async function placeCheckoutOrderAction(
         : (isUuid(fallbackVariant?.id) ? fallbackVariant.id : null)
 
       if (actualVariantId) {
-        const { data: curStock } = await supabase
-          .from("stock_levels")
-          .select("reserved")
-          .eq("variant_id", actualVariantId)
-          .maybeSingle()
+        const { data: didReserve, error: reserveError } = await supabase.rpc("reserve_stock", {
+          p_variant_id: actualVariantId,
+          p_quantity: line.quantity,
+        })
 
-        if (curStock) {
-          await supabase
-            .from("stock_levels")
-            .update({ reserved: (curStock.reserved || 0) + line.quantity })
-            .eq("variant_id", actualVariantId)
+        if (reserveError || didReserve !== true) {
+          for (const reserved of reservedLines) {
+            await supabase.rpc("release_reserved_stock", {
+              p_variant_id: reserved.variantId,
+              p_quantity: reserved.quantity,
+            })
+          }
+          await supabase.from("order_items").delete().eq("order_id", orderId)
+          await supabase.from("orders").delete().eq("id", orderId)
+          return {
+            success: false,
+            error: `Sorry, ${line.productName} is no longer available in the requested quantity. Please update your bag.`,
+          }
         }
+
+        reservedLines.push({ variantId: actualVariantId, quantity: line.quantity })
       }
     }
 

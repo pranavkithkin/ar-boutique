@@ -12,6 +12,7 @@
 - Customers can only read their own orders, invoices and returns (RLS on `auth.jwt()->>'sub'`).
 - Admin data and actions require `is_admin()`: Supabase issuer, `user_role = 'admin'`, `aal2`, active `admin_users` row.
 - Deactivated admins lose access immediately (checked inside `is_admin()`).
+- Refund authorization exception (ADR-040): verified signed-in admins with the admin role and an active `admin_users` row may issue refunds without 2FA.
 - Refunds can never exceed the refundable balance. Every admin change is written to `audit_log`, including stock sheet applies and every COD action (confirm, cancel, ship, cash collected, returned to sender, payout).
 - Only admins with `aal2` can upload, apply or export the stock sheet.
 - Invoice and credit note downloads check ownership (customer) or admin access.

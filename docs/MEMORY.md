@@ -1,5 +1,14 @@
 # Project Memory
 
+11 Nov 2026: Per user decision ADR-040, order and return refunds now accept verified signed-in, active admins without 2FA. `requireAdmin()` still checks signed claims, the admin role and the active admin database record. Added six regression tests for password-only admin access and denial of logged-out, non-admin, inactive, missing-record and lookup-error requests. No refunds issued as part of this change.
+
+11 Nov 2026: Stripe Webhook Resilience, Refund Idempotency, Pricing & Success Page Hardening:
+- Webhooks (`app/api/webhooks/stripe/route.ts`): Enforced `session.payment_status === "paid"` before marking orders paid; handled asynchronous payment success/failure; added processing-state event claims; moved paid fulfilment and stock consumption into the `fulfill_card_order()` transaction; and synchronised external Stripe refunds using cumulative refund totals.
+- Refunds (`features/admin/returns/actions.ts` & `features/admin/orders/actions.ts`): Added active-admin verification (2FA later removed per ADR-040), deterministic Stripe `idempotencyKey` values, pending-refund handling, and no automatic restocking. Fixed Resend HTML pre-rendering in `lib/email.ts`.
+- Checkout & Stock (`features/checkout/actions.ts`): Enforced strict server-side pricing and conditional atomic stock reservation through `reserve_stock()` with cleanup on failure.
+- Order Success Page (`app/checkout/success/page.tsx`): Verified Stripe session status against the order, protected customer PII for unauthenticated visitors, differentiated payment badges, and only cleared the cart after paid or COD order confirmation.
+- All 110 Vitest unit tests pass and TypeScript checks pass. The production build was not run by instruction. No git commit or push performed.
+
 9 Nov 2026: Storefront Return Window, Compare-at Sale Badges, PDP Rating Fix, and Admin Enhancements:
 - Wired dynamic `return_window_days` from Supabase store settings into `/account` customer return flows (`evaluateOrderReturnEligibility`, subtitle text, and singular/plural badge rendering). Added Vitest unit test coverage.
 - Updated inventory Stock Adjustment Modal (`/admin/stock`): resolved Backspace on zero issue by using text state and select-on-focus, and replaced raw select element with luxury shadcn Select component.

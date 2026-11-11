@@ -1,5 +1,10 @@
 # Architecture Decisions
 
+## ADR-040: Refunds require active admin login without mandatory 2FA
+**Status:** Accepted by the user, 11 Nov 2026.
+**Decision:** Order and return refund actions verify the signed Supabase session, admin role and active `admin_users` row. They do not require `aal2`. This supersedes ADR-004's mandatory 2FA requirement for these refund actions.
+**Reason:** The user requires logged-in admins to refund through the existing password login. Logged-out users, non-admins and deactivated admins remain blocked.
+
 > Permanent decisions and why we made them. Don't change one without approval: add a new ADR that replaces it.
 > The current project state lives in `MEMORY.md`.
 

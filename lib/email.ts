@@ -128,7 +128,7 @@ export async function sendOrderConfirmationEmail(
     const emailHtml = await render(
       OrderConfirmationEmail({
         orderId: order.id,
-        trackingUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://www.thearboutique.com").replace(/\/$/, "")}/track-order`,
+        trackingUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || "https://www.thearboutique.com").replace(/\/$/, "")}/track-order`,
         orderNumber: order.order_number,
         orderDate,
         customerName: order.customer_name || "Valued Patron",
@@ -151,7 +151,7 @@ export async function sendOrderConfirmationEmail(
         },
         storeEmail: settings.store_email || "concierge@arboutique.ae",
         storePhone: settings.store_phone || "+971 50 123 4567",
-        invoiceUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://arboutique.ae"}/api/invoices/${orderId}?download=1`,
+        invoiceUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || "https://www.thearboutique.com").replace(/\/$/, "")}/api/invoices/${orderId}?download=1`,
       })
     )
 
@@ -234,7 +234,7 @@ export async function sendAdminNewOrderNotification(orderId: string): Promise<Se
     const isCod = order.payment_method === "cod"
     const totalAed = formatAED(order.total_fils || 0)
     const sender = getSenderAddress(settings.store_name || "AR Boutique")
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://arboutique.ae"
+    const appUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.thearboutique.com").replace(/\/$/, "")
     const adminOrderUrl = `${appUrl}/admin/orders/${order.id}`
 
     const resend = getResendClient()
@@ -530,7 +530,7 @@ export async function sendReturnRequestedEmails(returnId: string): Promise<SendE
           paymentMethod: ordersRel?.payment_method === "cod" ? "cod" : "card",
           totalAed: "Review items",
           itemCount: returnItems.length,
-          adminOrderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://arboutique.ae"}/admin/returns/${ret.id}`,
+          adminOrderUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || "https://www.thearboutique.com").replace(/\/$/, "")}/admin/returns/${ret.id}`,
           emirate: "UAE",
         })
       )

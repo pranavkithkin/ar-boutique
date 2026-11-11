@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { StoreButton } from "@/components/store/StoreButton"
 import { orderTrackingSchema, type OrderTrackingInput } from "../schemas"
 import { trackOrderAction, type TrackingResult } from "../actions"
+import { OrderTimeline } from "./OrderTimeline"
 
 export function OrderTrackingForm() {
   const [result, setResult] = useState<TrackingResult | null>(null)
@@ -66,6 +67,7 @@ export function OrderTrackingForm() {
                 {result.order.trackingNumber && <div><dt className="text-muted-foreground">Tracking number</dt><dd className="break-all font-mono">{result.order.trackingNumber}</dd></div>}
               </dl>
               {!result.order.trackingNumber && <p className="text-sm text-muted-foreground">Courier tracking details will appear here when available.</p>}
+              <OrderTimeline steps={result.order.timeline} />
             </section>
           )}
         </div>

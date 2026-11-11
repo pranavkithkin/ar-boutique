@@ -29,6 +29,7 @@ Each file in `.agents/rules/` is always on. Read the ones for the files you touc
 - `npm run db:reset`, `npm run db:types`: reset the local database, regenerate types
 
 ## Always
+- Multiple open COD orders per customer are allowed; keep retry idempotency (ADR-041).
 - Refund authorization: a verified signed-in, active admin may refund without 2FA (ADR-040).
 - Read the relevant docs and inspect the existing code before changing anything.
 - Work on one task from `TASKS.md` at a time. For large changes, write a plan and wait for approval.

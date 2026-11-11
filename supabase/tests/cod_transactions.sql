@@ -96,11 +96,12 @@ BEGIN
     RAISE EXCEPTION 'Unsigned COD accepted' USING ERRCODE='XX000';
   EXCEPTION WHEN SQLSTATE 'P0001' THEN NULL; END;
   UPDATE public.settings SET cod_signed_in_only=false,cod_max_open_orders=1 WHERE id=true;
-  -- The first order is shipped and still open; a new attempt must be rejected.
-  BEGIN
-    PERFORM public.place_cod_order(gen_random_uuid(),customer,items,NULL,NULL);
-    RAISE EXCEPTION 'Open COD order limit ignored' USING ERRCODE='XX000';
-  EXCEPTION WHEN SQLSTATE 'P0001' THEN NULL; END;
+  -- The existing shipped order and the legacy setting must not block distinct COD checkouts.
+  cancel_result := public.place_cod_order(gen_random_uuid(),customer,items,NULL,NULL);
+  retry_result := public.place_cod_order(gen_random_uuid(),customer,items,NULL,NULL);
+  ASSERT cancel_result->>'order_id' <> retry_result->>'order_id','Distinct COD attempts create distinct orders';
+  ASSERT (SELECT count(*)=2 FROM public.orders WHERE email=customer->>'email' AND status='pending'),'Multiple pending COD orders allowed';
+  ASSERT (SELECT reserved=2 FROM public.stock_levels WHERE variant_id=v1),'Each distinct order reserves its own stock';
 END;
 $$;
 SELECT 'COD transaction assertions passed' AS result;

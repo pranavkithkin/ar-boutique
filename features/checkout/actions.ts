@@ -102,7 +102,6 @@ export async function getCheckoutInitialDataAction(): Promise<CheckoutPageData> 
   const savedAddresses: SavedAddressCandidate[] = []
   let codEligible = config.codEnabled
   let codReason: string | undefined
-  let hasOpenCodOrder = false
   let isBlocked = false
   let refusalsCount = 0
 
@@ -161,7 +160,6 @@ export async function getCheckoutInitialDataAction(): Promise<CheckoutPageData> 
           })
         }
 
-        // Active open COD order check
         // Refused / returned order count
         if (ord.status === "returned_to_sender") {
           refusalsCount++
@@ -184,7 +182,6 @@ export async function getCheckoutInitialDataAction(): Promise<CheckoutPageData> 
     eligible: codEligible,
     reason: codReason,
     isSignedIn,
-    hasOpenCodOrder,
     isBlocked,
     refusalsCount,
     maxOrderFils: config.codMaxOrderFils,

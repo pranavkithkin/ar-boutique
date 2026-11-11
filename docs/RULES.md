@@ -39,6 +39,7 @@
 - Regenerate database types after schema changes (`npm run db:types`).
 
 ## Catalogue, Payments and Stock
+- Multiple open COD orders per customer are allowed; keep retry idempotency (ADR-041).
 - A product has colourways; each colourway has SKUs, usually one per size (`product_variants` rows). Cart lines, holds, order lines, returns and stock changes always reference the SKU.
 - The client's data is used exactly as written (ADR-029). Never generate, suggest, tidy or fix SKUs, style codes, names, details, descriptions or prices. If something looks wrong, return an error or a warning with the row; never change the value.
 - Price and compare-at price live on the SKU. Style code and details live on the colourway.

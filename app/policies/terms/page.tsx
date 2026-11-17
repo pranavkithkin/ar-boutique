@@ -13,7 +13,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { getStoreSettings } from "@/features/admin/settings/actions"
-import { STORE_CONTACT } from "@/lib/contact"
 
 export const metadata: Metadata = {
   title: "Terms & Conditions | AR Boutique",
@@ -23,7 +22,7 @@ export const metadata: Metadata = {
 export default async function TermsPage() {
   const settings = await getStoreSettings()
   const storeName = settings.store_name || "AR Boutique"
-  const storeEmail = settings.store_email || STORE_CONTACT.email
+  const storeEmail = settings.store_email || ""
   const returnDays = settings.return_window_days
   const returnWindow = `${returnDays} ${returnDays === 1 ? "day" : "days"}`
 

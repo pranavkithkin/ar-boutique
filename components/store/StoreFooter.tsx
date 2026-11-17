@@ -1,7 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { TrustStrip } from "@/components/store/TrustStrip"
-import { STORE_CONTACT } from "@/lib/contact"
+import { getStoreSettings } from "@/features/admin/settings/actions"
 import { JOURNAL_ENABLED } from "@/lib/journal"
 
 function InstagramIcon({ className = "w-4 h-4" }: { className?: string }) {
@@ -61,7 +61,15 @@ function WhatsAppIcon({ className = "w-5 h-5" }: { className?: string }) {
   )
 }
 
-export function StoreFooter() {
+export async function StoreFooter() {
+  const settings = await getStoreSettings()
+  const instagramUrl = settings.instagram_url?.trim() || null
+  const facebookUrl = settings.facebook_url?.trim() || null
+  const whatsappNumber = (settings.whatsapp_number || settings.store_phone || "").trim()
+  const cleanNumber = whatsappNumber.replace(/[^0-9]/g, "")
+  const whatsappUrl = cleanNumber ? `https://wa.me/${cleanNumber}` : null
+  const hasSocial = Boolean(instagramUrl || facebookUrl || whatsappUrl)
+
   return (
     <footer className="mt-16">
       <TrustStrip />
@@ -76,41 +84,49 @@ export function StoreFooter() {
               Timeless style meets modern elegance. Designed for the way you live.
             </p>
 
-            {/* Social & Concierge Links (Item 13) */}
-            <div className="mt-8">
-              <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80 block mb-3.5">
-                Connect With Us
-              </span>
-              <div className="flex items-center gap-5 text-muted-foreground">
-                <a
-                  href={STORE_CONTACT.instagramHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Follow AR Boutique on Instagram"
-                  className="hover:text-foreground transition-colors p-1 -m-1"
-                >
-                  <InstagramIcon className="w-5 h-5" />
-                </a>
-                <a
-                  href={STORE_CONTACT.facebookHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Follow AR Boutique on Facebook"
-                  className="hover:text-foreground transition-colors p-1 -m-1"
-                >
-                  <FacebookIcon className="w-5 h-5" />
-                </a>
-                <a
-                  href={STORE_CONTACT.whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Connect with AR Boutique on WhatsApp"
-                  className="hover:text-foreground transition-colors p-1 -m-1"
-                >
-                  <WhatsAppIcon className="w-5 h-5" />
-                </a>
+            {/* Social & Concierge Links */}
+            {hasSocial && (
+              <div className="mt-8">
+                <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80 block mb-3.5">
+                  Connect With Us
+                </span>
+                <div className="flex items-center gap-5 text-muted-foreground">
+                  {instagramUrl && (
+                    <a
+                      href={instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Follow AR Boutique on Instagram"
+                      className="hover:text-foreground transition-colors p-1 -m-1"
+                    >
+                      <InstagramIcon className="w-5 h-5" />
+                    </a>
+                  )}
+                  {facebookUrl && (
+                    <a
+                      href={facebookUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Follow AR Boutique on Facebook"
+                      className="hover:text-foreground transition-colors p-1 -m-1"
+                    >
+                      <FacebookIcon className="w-5 h-5" />
+                    </a>
+                  )}
+                  {whatsappUrl && (
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Connect with AR Boutique on WhatsApp"
+                      className="hover:text-foreground transition-colors p-1 -m-1"
+                    >
+                      <WhatsAppIcon className="w-5 h-5" />
+                    </a>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <div>
             <h4 className="text-[14px] font-medium mb-6 text-foreground tracking-wide">Explore</h4>

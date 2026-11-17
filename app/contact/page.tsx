@@ -20,9 +20,10 @@ import {
 import { MessageSquare, Mail, MapPin, Clock, Truck, ShieldCheck } from "lucide-react"
 import { ContactForm } from "@/features/contact/components/ContactForm"
 import { AnimatedSection, FadeIn } from "@/components/store/AnimatedSection"
-import { STORE_CONTACT } from "@/lib/contact"
 import { DEFAULT_FAQS } from "@/features/admin/settings/types"
 import { getStoreSettings } from "@/features/admin/settings/actions"
+
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Contact Us | AR Boutique",
@@ -34,40 +35,62 @@ export default async function ContactPage() {
   const settings = await getStoreSettings()
   const faqs = settings.faqs && settings.faqs.length > 0 ? settings.faqs : DEFAULT_FAQS
 
-  const phone = settings.store_phone || STORE_CONTACT.phone
-  const phoneClean = phone.replace(/[^0-9+]/g, "")
-  const whatsappHref = `https://wa.me/${phoneClean.replace("+", "")}`
-  const email = settings.store_email || STORE_CONTACT.email
-  const emailHref = `mailto:${email}`
-  const atelier = settings.store_address || STORE_CONTACT.atelier
-  const atelierHref = `https://maps.google.com/?q=${encodeURIComponent(atelier)}`
+  const whatsappNumber = (settings.whatsapp_number || settings.store_phone || "").trim()
+  const whatsappClean = whatsappNumber.replace(/[^0-9]/g, "")
+  const whatsappHref = whatsappClean ? `https://wa.me/${whatsappClean}` : null
 
-  const conciergeChannels = [
-    {
+  const email = settings.store_email?.trim() || null
+  const emailHref = email ? `mailto:${email}` : null
+
+  const atelier = settings.store_address?.trim() || null
+  const atelierHref =
+    settings.google_maps_url?.trim() ||
+    (atelier ? `https://maps.google.com/?q=${encodeURIComponent(atelier)}` : null)
+
+  const instagramUrl = settings.instagram_url?.trim() || null
+  const facebookUrl = settings.facebook_url?.trim() || null
+
+  const conciergeChannels: Array<{
+    icon: React.ComponentType<{ className?: string }>
+    title: string
+    subtitle: string
+    detail: string
+    action: string
+    href: string
+  }> = []
+
+  if (whatsappHref) {
+    conciergeChannels.push({
       icon: MessageSquare,
       title: "WhatsApp Concierge",
       subtitle: "Instant styling & order chat",
-      detail: phone,
+      detail: whatsappNumber,
       action: "Chat on WhatsApp",
       href: whatsappHref,
-    },
-    {
+    })
+  }
+
+  if (email) {
+    conciergeChannels.push({
       icon: Mail,
       title: "Email Assistance",
       subtitle: "Dedicated client responses",
       detail: email,
       action: "Send an Email",
-      href: emailHref,
-    },
-    {
+      href: emailHref!,
+    })
+  }
+
+  if (atelier) {
+    conciergeChannels.push({
       icon: MapPin,
       title: "Private Atelier",
       subtitle: "By private appointment",
       detail: atelier,
       action: "View Location",
-      href: atelierHref,
-    },
-  ]
+      href: atelierHref || "#",
+    })
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -105,45 +128,81 @@ export default async function ContactPage() {
 
         <div className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-8 mt-12 md:mt-16 flex flex-col gap-14 md:gap-20">
           {/* Quick Concierge Cards */}
-          <FadeIn delay={0.05}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-              {conciergeChannels.map((item, i) => {
-                const Icon = item.icon
-                return (
-                  <Card
-                    key={i}
-                    className="border-border/60 hover:border-foreground/30 transition-all duration-500 shadow-xs hover:shadow-md bg-card p-6 sm:p-7 flex flex-col justify-between gap-4"
-                  >
-                    <div className="flex flex-col gap-3">
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground">
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-heading text-lg sm:text-xl font-normal text-foreground">
-                          {item.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {item.subtitle}
+          {conciergeChannels.length > 0 && (
+            <FadeIn delay={0.05}>
+              <div
+                className={`grid grid-cols-1 ${
+                  conciergeChannels.length === 1
+                    ? "max-w-md mx-auto"
+                    : conciergeChannels.length === 2
+                    ? "md:grid-cols-2 max-w-3xl mx-auto"
+                    : "md:grid-cols-3"
+                } gap-6 md:gap-8`}
+              >
+                {conciergeChannels.map((item, i) => {
+                  const Icon = item.icon
+                  return (
+                    <Card
+                      key={i}
+                      className="border-border/60 hover:border-foreground/30 transition-all duration-500 shadow-xs hover:shadow-md bg-card p-6 sm:p-7 flex flex-col justify-between gap-4"
+                    >
+                      <div className="flex flex-col gap-3">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-heading text-lg sm:text-xl font-normal text-foreground">
+                            {item.title}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            {item.subtitle}
+                          </p>
+                        </div>
+                        <p className="text-sm font-medium text-foreground pt-1">
+                          {item.detail}
                         </p>
                       </div>
-                      <p className="text-sm font-medium text-foreground pt-1">
-                        {item.detail}
-                      </p>
-                    </div>
 
+                      <a
+                        href={item.href}
+                        target={item.href.startsWith("http") ? "_blank" : undefined}
+                        rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                        className="text-xs font-semibold uppercase tracking-wider text-primary hover:underline inline-flex items-center gap-1 pt-2"
+                      >
+                        {item.action} &rarr;
+                      </a>
+                    </Card>
+                  )
+                })}
+              </div>
+
+              {(instagramUrl || facebookUrl) && (
+                <div className="mt-8 pt-6 border-t border-border/50 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
+                  <span className="font-medium uppercase tracking-wider text-[11px]">Follow Our Atelier:</span>
+                  {instagramUrl && (
                     <a
-                      href={item.href}
+                      href={instagramUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs font-semibold uppercase tracking-wider text-primary hover:underline inline-flex items-center gap-1 pt-2"
+                      className="hover:text-foreground transition-colors font-medium underline underline-offset-4"
                     >
-                      {item.action} &rarr;
+                      Instagram &rarr;
                     </a>
-                  </Card>
-                )
-              })}
-            </div>
-          </FadeIn>
+                  )}
+                  {facebookUrl && (
+                    <a
+                      href={facebookUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-foreground transition-colors font-medium underline underline-offset-4"
+                    >
+                      Facebook &rarr;
+                    </a>
+                  )}
+                </div>
+              )}
+            </FadeIn>
+          )}
 
           {/* Form and FAQ 2-Column Section */}
           <AnimatedSection delay={0.08}>

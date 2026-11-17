@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Ruler, Minus, Plus, Check, Clock, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { STORE_CONTACT } from "@/lib/contact"
+import { buildWhatsAppHref } from "@/lib/contact"
 
 function WhatsAppIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
@@ -67,6 +67,7 @@ interface ProductInfoProps {
     averageRating: number
     totalCount: number
   }
+  whatsappNumber?: string
 }
 
 export function ProductInfo({
@@ -76,6 +77,7 @@ export function ProductInfo({
   activeColourway: controlledColourway,
   onSelectColourway,
   reviewSummary,
+  whatsappNumber,
 }: ProductInfoProps) {
   const colourways = (product as ProductDetail).colourways || []
   const hasMultipleColours = colourways.length > 1
@@ -176,9 +178,7 @@ export function ProductInfo({
       ? `, Size: ${selectedSize.name}`
       : ""
   const whatsappInquiryText = `Hello AR Boutique Concierge, I would like to inquire about "${product.name}" (SKU: ${currentSku}, Colour: ${currentColourName}${selectedSizeText}). Is this piece currently available?`
-  const whatsappInquiryHref = `${STORE_CONTACT.whatsappHref}?text=${encodeURIComponent(
-    whatsappInquiryText
-  )}`
+  const whatsappInquiryHref = buildWhatsAppHref(whatsappNumber, whatsappInquiryText)
 
   const handleAddToCart = () => {
     if (!isAvailable) return
@@ -476,17 +476,19 @@ export function ProductInfo({
           />
         </div>
 
-        {/* WhatsApp Product Inquiry Button (Item 6) */}
-        <a
-          href={whatsappInquiryHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 w-full h-11 border border-border bg-background hover:bg-muted/40 hover:border-foreground/40 text-foreground text-xs uppercase font-medium tracking-wider flex items-center justify-center gap-2 transition-colors rounded-none"
-          aria-label={`Inquire about ${product.name} on WhatsApp`}
-        >
-          <WhatsAppIcon className="w-4 h-4" />
-          <span>Inquire on WhatsApp</span>
-        </a>
+        {/* WhatsApp Product Inquiry Button - shown only when WhatsApp is configured */}
+        {whatsappInquiryHref && (
+          <a
+            href={whatsappInquiryHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 w-full h-11 border border-border bg-background hover:bg-muted/40 hover:border-foreground/40 text-foreground text-xs uppercase font-medium tracking-wider flex items-center justify-center gap-2 transition-colors rounded-none"
+            aria-label={`Inquire about ${product.name} on WhatsApp`}
+          >
+            <WhatsAppIcon className="w-4 h-4" />
+            <span>Inquire on WhatsApp</span>
+          </a>
+        )}
       </div>
 
       {/* Tax & Delivery Footnote */}
@@ -511,6 +513,7 @@ export function ProductInfo({
       <SizeChartModal
         isOpen={isSizeChartOpen}
         onClose={() => setIsSizeChartOpen(false)}
+        whatsappNumber={whatsappNumber}
       />
 
       {/* ── Mobile Sticky Add-to-Bag Bar ── */}

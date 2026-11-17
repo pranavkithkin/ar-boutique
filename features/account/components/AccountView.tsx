@@ -73,6 +73,7 @@ interface AccountViewProps {
   initialOrders?: AccountOrder[]
   initialAddresses?: AccountAddress[]
   returnWindowDays?: number
+  whatsappNumber?: string
 }
 
 export function AccountView({
@@ -80,6 +81,7 @@ export function AccountView({
   initialOrders = [],
   initialAddresses = [],
   returnWindowDays = 7,
+  whatsappNumber,
 }: AccountViewProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -382,6 +384,7 @@ export function AccountView({
               onViewReturn={() => {
                 setActiveTab("returns")
               }}
+              whatsappNumber={whatsappNumber}
             />
           )}
           {activeTab === "addresses" && (
@@ -403,6 +406,7 @@ export function AccountView({
               preselectedOrderId={returnTargetOrderId}
               onClearPreselectedOrder={() => setReturnTargetOrderId(undefined)}
               returnWindowDays={returnWindowDays}
+              whatsappNumber={whatsappNumber}
             />
           )}
           {activeTab === "wishlist" && <WishlistTab />}

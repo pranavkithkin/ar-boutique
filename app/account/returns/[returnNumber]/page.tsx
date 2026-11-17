@@ -20,7 +20,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { formatAED } from "@/lib/money"
-import { STORE_CONTACT } from "@/lib/contact"
+import { buildWhatsAppHref } from "@/lib/contact"
+import { getStoreSettings } from "@/features/admin/settings/actions"
 import {
   RotateCcw,
   CheckCircle2,
@@ -93,6 +94,9 @@ export default async function ReturnDetailsPage({ params }: ReturnDetailsPagePro
   }
 
   const ret = res.returnRequest
+  const settings = await getStoreSettings()
+  const whatsappNumber = (settings.whatsapp_number || settings.store_phone || "").trim()
+  const whatsappHref = buildWhatsAppHref(whatsappNumber) || "/contact"
 
   // Status flags
   const isRequested = ret.status === "requested"
@@ -207,9 +211,9 @@ export default async function ReturnDetailsPage({ params }: ReturnDetailsPagePro
                   />
                 )}
                 <a
-                  href={STORE_CONTACT.whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={whatsappHref}
+                  target={whatsappHref.startsWith("http") ? "_blank" : undefined}
+                  rel={whatsappHref.startsWith("http") ? "noopener noreferrer" : undefined}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-card border border-border text-foreground font-medium rounded-xs hover:bg-muted/50 transition-colors text-xs"
                 >
                   <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
@@ -652,9 +656,9 @@ export default async function ReturnDetailsPage({ params }: ReturnDetailsPagePro
                   Our bespoke concierge team is available on WhatsApp daily (9 AM – 9 PM GST) to answer queries regarding courier pickup or refund timing.
                 </p>
                 <a
-                  href={STORE_CONTACT.whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={whatsappHref}
+                  target={whatsappHref.startsWith("http") ? "_blank" : undefined}
+                  rel={whatsappHref.startsWith("http") ? "noopener noreferrer" : undefined}
                   className="block pt-1"
                 >
                   <StoreButton variant="outline" className="w-full text-xs uppercase tracking-wider h-9">

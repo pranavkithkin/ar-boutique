@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { createAdminClient } from "@/lib/supabase/server"
 import { formatAED } from "@/lib/money"
 import { ClearCartOnSuccess } from "@/features/checkout/components/ClearCartOnSuccess"
-import { STORE_CONTACT } from "@/lib/contact"
+import { buildWhatsAppHref } from "@/lib/contact"
+import { getStoreSettings } from "@/features/admin/settings/actions"
 import {
   CheckCircle2,
   MessageCircle,
@@ -50,33 +51,38 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
   const decodedOrderNumber = decodeURIComponent(orderNumber)
 
   const supabase = createAdminClient()
-  const { data: order } = await supabase
-    .from("orders")
-    .select(
+  const [{ data: order }, settings] = await Promise.all([
+    supabase
+      .from("orders")
+      .select(
+        `
+        *,
+        order_items (
+          id,
+          product_name,
+          colour_name,
+          size_label,
+          sku,
+          media_key,
+          unit_price_fils,
+          quantity,
+          total_fils
+        )
       `
-      *,
-      order_items (
-        id,
-        product_name,
-        colour_name,
-        size_label,
-        sku,
-        media_key,
-        unit_price_fils,
-        quantity,
-        total_fils
       )
-    `
-    )
-    .eq("order_number", decodedOrderNumber)
-    .maybeSingle()
+      .eq("order_number", decodedOrderNumber)
+      .maybeSingle(),
+    getStoreSettings(),
+  ])
 
-  const phoneToCall = order?.phone || STORE_CONTACT.phone
+  const phoneToCall = order?.phone || settings.store_phone || ""
   const totalToPayFils = order?.total_fils || 0
 
-  const whatsappHref = `${STORE_CONTACT.whatsappHref}?text=${encodeURIComponent(
-    `Hello AR Boutique Concierge, I placed order ${decodedOrderNumber} via Cash on Delivery and would like to confirm my delivery.`
-  )}`
+  const whatsappInquiryText = `Hello AR Boutique Concierge, I placed order ${decodedOrderNumber} via Cash on Delivery and would like to confirm my delivery.`
+  const whatsappHref = buildWhatsAppHref(
+    settings.whatsapp_number || settings.store_phone,
+    whatsappInquiryText
+  )
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -130,17 +136,19 @@ export default async function CodOrderReceivedPage({ params }: ReceivedPageProps
           </div>
 
           {/* Direct WhatsApp Concierge Confirmation Button */}
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background font-medium text-xs uppercase tracking-wider rounded-none hover:bg-foreground/90 transition-colors"
-            >
-              <MessageCircle className="w-4 h-4 text-emerald-400" />
-              <span>Confirm via WhatsApp Concierge</span>
-            </a>
-          </div>
+          {whatsappHref && (
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background font-medium text-xs uppercase tracking-wider rounded-none hover:bg-foreground/90 transition-colors"
+              >
+                <MessageCircle className="w-4 h-4 text-emerald-400" />
+                <span>Confirm via WhatsApp Concierge</span>
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Order Details Grid */}

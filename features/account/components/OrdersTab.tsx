@@ -6,7 +6,7 @@ import Link from "next/link"
 import { AccountOrder } from "../types"
 import type { CustomerReturnRequest } from "../returns/types"
 import { formatAED } from "@/lib/money"
-import { STORE_CONTACT } from "@/lib/contact"
+import { buildWhatsAppHref } from "@/lib/contact"
 import { Badge } from "@/components/ui/badge"
 import { StoreButton } from "@/components/store/StoreButton"
 import {
@@ -33,9 +33,11 @@ interface OrdersTabProps {
   returnsList?: CustomerReturnRequest[]
   onRequestReturn?: (orderId: string) => void
   onViewReturn?: (returnId: string) => void
+  whatsappNumber?: string
 }
 
-export function OrdersTab({ orders, returnsList, onRequestReturn, onViewReturn }: OrdersTabProps) {
+export function OrdersTab({ orders, returnsList, onRequestReturn, onViewReturn, whatsappNumber }: OrdersTabProps) {
+  const whatsappHref = buildWhatsAppHref(whatsappNumber) || "/contact"
   const [filter, setFilter] = React.useState<"all" | "active" | "delivered">("all")
   const [selectedOrderForTracking, setSelectedOrderForTracking] =
     React.useState<AccountOrder | null>(null)
@@ -320,9 +322,9 @@ export function OrdersTab({ orders, returnsList, onRequestReturn, onViewReturn }
                     </button>
                   )}
                   <a
-                    href={STORE_CONTACT.whatsappHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={whatsappHref}
+                    target={whatsappHref.startsWith("http") ? "_blank" : undefined}
+                    rel={whatsappHref.startsWith("http") ? "noopener noreferrer" : undefined}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border text-foreground font-medium rounded-xs hover:bg-muted/40 transition-colors text-xs"
                   >
                     <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
@@ -417,9 +419,9 @@ export function OrdersTab({ orders, returnsList, onRequestReturn, onViewReturn }
               {/* Actions */}
               <div className="flex justify-end gap-2 pt-2">
                 <a
-                  href={STORE_CONTACT.whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={whatsappHref}
+                  target={whatsappHref.startsWith("http") ? "_blank" : undefined}
+                  rel={whatsappHref.startsWith("http") ? "noopener noreferrer" : undefined}
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-foreground text-background font-medium rounded-xs hover:bg-foreground/90 transition-colors text-xs"
                 >
                   <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />

@@ -23,6 +23,7 @@ import {
   CreditCard,
   ArrowRight,
   ImageIcon,
+  Share2,
 } from "lucide-react"
 
 interface SettingsFormProps {
@@ -223,13 +224,59 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
               placeholder="+971 50 000 0000"
             />
           </FieldRow>
-          <FieldRow label="Address" hint="Shown on invoices">
+          <FieldRow label="Address" hint="Shown on invoices & contact page">
             <Textarea
               value={s.store_address}
               onChange={(e) => set("store_address", e.target.value)}
               rows={3}
               className="text-xs font-sans bg-background border-input rounded-none leading-relaxed resize-y"
-              placeholder="Dubai, UAE"
+              placeholder="e.g. Building 4, Dubai Design District (d3), Dubai, UAE"
+            />
+          </FieldRow>
+          <FieldRow label="WhatsApp" hint="Direct chat concierge. If blank, uses Store Phone.">
+            <Input
+              type="tel"
+              value={s.whatsapp_number || ""}
+              onChange={(e) => set("whatsapp_number", e.target.value)}
+              className="h-9 text-xs font-mono bg-background border-input rounded-none"
+              placeholder="+971 50 273 6767"
+            />
+          </FieldRow>
+          <FieldRow label="Google Maps Link" hint="Opened when patrons click 'View Location' on Contact page">
+            <Input
+              type="url"
+              value={s.google_maps_url || ""}
+              onChange={(e) => set("google_maps_url", e.target.value)}
+              className="h-9 text-xs font-mono bg-background border-input rounded-none"
+              placeholder="https://maps.google.com/?q=..."
+            />
+          </FieldRow>
+        </div>
+      </SectionCard>
+
+      {/* ── Social Channels ── */}
+      <SectionCard
+        icon={<Share2 className="size-4" />}
+        title="Social Media & Community"
+        description="Links displayed in the website footer and contact channels."
+      >
+        <div className="space-y-4">
+          <FieldRow label="Instagram URL" hint="Full link to your Instagram profile">
+            <Input
+              type="url"
+              value={s.instagram_url || ""}
+              onChange={(e) => set("instagram_url", e.target.value)}
+              className="h-9 text-xs font-mono bg-background border-input rounded-none"
+              placeholder="https://instagram.com/arboutique.ae"
+            />
+          </FieldRow>
+          <FieldRow label="Facebook URL" hint="Full link to your Facebook page">
+            <Input
+              type="url"
+              value={s.facebook_url || ""}
+              onChange={(e) => set("facebook_url", e.target.value)}
+              className="h-9 text-xs font-mono bg-background border-input rounded-none"
+              placeholder="https://facebook.com/arboutique.ae"
             />
           </FieldRow>
         </div>

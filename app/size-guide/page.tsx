@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Card } from "@/components/ui/card"
 import { SIZE_CHART_DATA } from "@/lib/size-chart"
-import { STORE_CONTACT } from "@/lib/contact"
+import { buildWhatsAppHref } from "@/lib/contact"
+import { getStoreSettings } from "@/features/admin/settings/actions"
 import { Ruler, MessageSquare, CheckCircle2, ArrowRight } from "lucide-react"
 import { AnimatedSection, FadeIn } from "@/components/store/AnimatedSection"
 
@@ -42,7 +43,12 @@ const MEASUREMENT_POINTS = [
   },
 ]
 
-export default function SizeGuidePage() {
+export const dynamic = "force-dynamic"
+
+export default async function SizeGuidePage() {
+  const settings = await getStoreSettings()
+  const whatsappNumber = (settings.whatsapp_number || settings.store_phone || "").trim()
+  const whatsappHref = buildWhatsAppHref(whatsappNumber)
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <AnnouncementBar />
@@ -205,27 +211,52 @@ export default function SizeGuidePage() {
                       Between two sizes?
                     </h3>
                     <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                      Message us on WhatsApp at{" "}
-                      <a
-                        href={STORE_CONTACT.whatsappHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
-                      >
-                        {STORE_CONTACT.whatsapp}
-                      </a>{" "}
-                      and we will help you choose.
+                      {whatsappHref ? (
+                        <>
+                          Message us on WhatsApp at{" "}
+                          <a
+                            href={whatsappHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
+                          >
+                            {whatsappNumber}
+                          </a>{" "}
+                          and we will help you choose.
+                        </>
+                      ) : (
+                        <>
+                          Reach out to our concierge team via our{" "}
+                          <Link
+                            href="/contact"
+                            className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
+                          >
+                            Contact Page
+                          </Link>{" "}
+                          and our stylists will guide your measurements.
+                        </>
+                      )}
                     </p>
                   </div>
-                  <a
-                    href={STORE_CONTACT.whatsappHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md text-xs sm:text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs shrink-0"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    Chat on WhatsApp
-                  </a>
+                  {whatsappHref ? (
+                    <a
+                      href={whatsappHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md text-xs sm:text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs shrink-0"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Chat on WhatsApp
+                    </a>
+                  ) : (
+                    <Link
+                      href="/contact"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md text-xs sm:text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs shrink-0"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Contact Concierge
+                    </Link>
+                  )}
                 </div>
               </div>
             </Card>

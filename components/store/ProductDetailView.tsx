@@ -14,6 +14,7 @@ interface ProductDetailViewProps {
     averageRating: number
     totalCount: number
   }
+  whatsappNumber?: string
 }
 
 export function ProductDetailView({
@@ -21,6 +22,7 @@ export function ProductDetailView({
   product,
   initialColourSlug,
   reviewSummary,
+  whatsappNumber,
 }: ProductDetailViewProps) {
   // Find matching initial colourway or default to first
   const initialColourway = React.useMemo(() => {
@@ -74,6 +76,7 @@ export function ProductDetailView({
           activeColourway={currentColourway}
           onSelectColourway={handleSelectColourway}
           reviewSummary={reviewSummary}
+          whatsappNumber={whatsappNumber}
         />
       }
     />

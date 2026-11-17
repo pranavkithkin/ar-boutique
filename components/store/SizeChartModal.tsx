@@ -10,16 +10,18 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Ruler } from "lucide-react"
 import { SIZE_CHART_DATA, type SizeMeasurement } from "@/lib/size-chart"
-import { STORE_CONTACT } from "@/lib/contact"
+import { buildWhatsAppHref } from "@/lib/contact"
 
 export { SIZE_CHART_DATA, type SizeMeasurement }
 
 interface SizeChartModalProps {
   isOpen: boolean
   onClose: () => void
+  whatsappNumber?: string
 }
 
-export function SizeChartModal({ isOpen, onClose }: SizeChartModalProps) {
+export function SizeChartModal({ isOpen, onClose, whatsappNumber }: SizeChartModalProps) {
+  const whatsappHref = buildWhatsAppHref(whatsappNumber)
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-xl max-w-[calc(100%-2rem)] p-0 bg-background border border-border overflow-hidden">
@@ -107,20 +109,22 @@ export function SizeChartModal({ isOpen, onClose }: SizeChartModalProps) {
               </li>
             </ul>
 
-            <div className="rounded-md bg-muted/40 border border-border/40 p-3 mt-3">
-              <p className="text-xs text-muted-foreground">
-                Between two sizes?{" "}
-                <a
-                  href={STORE_CONTACT.whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
-                >
-                  Message us on WhatsApp at {STORE_CONTACT.whatsapp}
-                </a>{" "}
-                and we will help you choose.
-              </p>
-            </div>
+            {whatsappHref && (
+              <div className="rounded-md bg-muted/40 border border-border/40 p-3 mt-3">
+                <p className="text-xs text-muted-foreground">
+                  Between two sizes?{" "}
+                  <a
+                    href={whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+                  >
+                    Message us on WhatsApp at {whatsappNumber}
+                  </a>{" "}
+                  and we will help you choose.
+                </p>
+              </div>
+            )}
           </div>
         </ScrollArea>
       </DialogContent>

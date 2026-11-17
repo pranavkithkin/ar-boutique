@@ -1,5 +1,5 @@
 import { test, expect } from "vitest"
-import { STORE_CONTACT } from "@/lib/contact"
+import { buildWhatsAppHref } from "@/lib/contact"
 
 test("Variant availability calculation adheres to ADR-026 and security rules", () => {
   function computeAvailability(onHand: number, reserved: number) {
@@ -94,7 +94,7 @@ test("Size picker only displays interactive chips when colourway has more than 1
   expect(soldOutSizes[0].name).toBe("L")
 })
 
-test("PDP WhatsApp inquiry URL format and social contact links", () => {
+test("PDP WhatsApp inquiry URL format and dynamic contact builder", () => {
   // 1. Verify WhatsApp inquiry URL formation with exact product details
   const product = { name: "Embroidered Silk Kurta Set", sku: "JAA25DR01112" }
   const colourName = "Emerald Green"
@@ -102,9 +102,7 @@ test("PDP WhatsApp inquiry URL format and social contact links", () => {
 
   const selectedSizeText = sizeName && sizeName !== "One Size" ? `, Size: ${sizeName}` : ""
   const whatsappInquiryText = `Hello AR Boutique Concierge, I would like to inquire about "${product.name}" (SKU: ${product.sku}, Colour: ${colourName}${selectedSizeText}). Is this piece currently available?`
-  const whatsappInquiryHref = `${STORE_CONTACT.whatsappHref}?text=${encodeURIComponent(
-    whatsappInquiryText
-  )}`
+  const whatsappInquiryHref = buildWhatsAppHref("971502736767", whatsappInquiryText)
 
   expect(whatsappInquiryHref).toContain("https://wa.me/971502736767")
   expect(whatsappInquiryHref).toContain("Embroidered%20Silk%20Kurta%20Set")
@@ -112,9 +110,8 @@ test("PDP WhatsApp inquiry URL format and social contact links", () => {
   expect(whatsappInquiryHref).toContain("Emerald%20Green")
   expect(whatsappInquiryHref).toContain("Size%3A%20M")
 
-  // 2. Verify centralized social links
-  expect(STORE_CONTACT.instagram).toBe("@arboutique.ae")
-  expect(STORE_CONTACT.instagramHref).toBe("https://instagram.com/arboutique.ae")
-  expect(STORE_CONTACT.facebookHref).toBe("https://facebook.com/arboutique.ae")
+  // 2. Verify fallback behavior when phone is missing
+  expect(buildWhatsAppHref(null)).toBeNull()
+  expect(buildWhatsAppHref("")).toBeNull()
 })
 

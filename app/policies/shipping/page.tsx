@@ -33,7 +33,6 @@ import {
 } from "lucide-react"
 import { toAED, STANDARD_DELIVERY_FEE_FILS, FREE_DELIVERY_THRESHOLD_FILS } from "@/lib/money"
 import { getStoreSettings } from "@/features/admin/settings/actions"
-import { STORE_CONTACT } from "@/lib/contact"
 import { AnimatedSection, FadeIn } from "@/components/store/AnimatedSection"
 
 export const metadata: Metadata = {
@@ -74,11 +73,11 @@ export default async function ShippingPage() {
   const settings = await getStoreSettings()
   const deliveryFee = toAED(settings.delivery_fee_fils ?? STANDARD_DELIVERY_FEE_FILS)
   const freeDeliveryMin = toAED(settings.free_delivery_over_fils ?? FREE_DELIVERY_THRESHOLD_FILS)
-  const storeEmail = settings.store_email || STORE_CONTACT.email
-  const storePhone = settings.store_phone || STORE_CONTACT.phone
-  const cleanPhone = storePhone.replace(/[^0-9]/g, "")
-  const whatsappHref = `https://wa.me/${cleanPhone}`
-  const emailHref = `mailto:${storeEmail}`
+  const storeEmail = settings.store_email || ""
+  const whatsappNumber = (settings.whatsapp_number || settings.store_phone || "").trim()
+  const cleanPhone = whatsappNumber.replace(/[^0-9]/g, "")
+  const whatsappHref = cleanPhone ? `https://wa.me/${cleanPhone}` : "/contact"
+  const emailHref = storeEmail ? `mailto:${storeEmail}` : "/contact"
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -335,23 +334,33 @@ export default async function ShippingPage() {
                     </div>
 
                     <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                      If your order has not arrived within the delivery time, or something is missing, message us on WhatsApp at{" "}
-                      <a
-                        href={whatsappHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
-                      >
-                        {storePhone}
-                      </a>{" "}
-                      or email{" "}
-                      <a
-                        href={emailHref}
-                        className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
-                      >
-                        {storeEmail}
-                      </a>{" "}
-                      with your order number. We will get back to you within 1 working day.
+                      If your order has not arrived within the delivery time, or something is missing,
+                      {whatsappNumber && (
+                        <>
+                          {" "}message us on WhatsApp at{" "}
+                          <a
+                            href={whatsappHref}
+                            target={whatsappHref.startsWith("http") ? "_blank" : undefined}
+                            rel={whatsappHref.startsWith("http") ? "noopener noreferrer" : undefined}
+                            className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
+                          >
+                            {whatsappNumber}
+                          </a>
+                        </>
+                      )}
+                      {whatsappNumber && storeEmail ? " or" : ""}
+                      {storeEmail && (
+                        <>
+                          {" "}email{" "}
+                          <a
+                            href={emailHref}
+                            className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
+                          >
+                            {storeEmail}
+                          </a>
+                        </>
+                      )}
+                      {" "}with your order number. We will get back to you within 1 working day.
                     </p>
 
                     <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-4 sm:p-5 flex items-start gap-3.5">

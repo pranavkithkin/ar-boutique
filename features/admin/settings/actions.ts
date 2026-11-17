@@ -24,11 +24,16 @@ export async function getStoreSettings(): Promise<StoreSettings> {
     }
 
     // Map database columns to StoreSettings
+    const raw = data as Record<string, unknown>
     return {
       store_name: data.store_name || DEFAULT_SETTINGS.store_name,
       store_email: data.store_email || DEFAULT_SETTINGS.store_email,
       store_phone: data.store_phone || DEFAULT_SETTINGS.store_phone,
       store_address: data.store_address || DEFAULT_SETTINGS.store_address,
+      whatsapp_number: typeof raw.whatsapp_number === "string" ? raw.whatsapp_number : "",
+      google_maps_url: typeof raw.google_maps_url === "string" ? raw.google_maps_url : "",
+      instagram_url: typeof raw.instagram_url === "string" ? raw.instagram_url : "",
+      facebook_url: typeof raw.facebook_url === "string" ? raw.facebook_url : "",
       trn: data.trn || "",
       vat_enabled: typeof data.vat_enabled === "boolean" ? data.vat_enabled : false,
       vat_rate_pct: data.vat_rate_bps ? Math.round(data.vat_rate_bps / 100) : 5,
@@ -94,6 +99,10 @@ export async function updateStoreSettingsAction(
     if (data.store_email !== undefined) dbPayload.store_email = data.store_email
     if (data.store_phone !== undefined) dbPayload.store_phone = data.store_phone
     if (data.store_address !== undefined) dbPayload.store_address = data.store_address
+    if (data.whatsapp_number !== undefined) dbPayload.whatsapp_number = data.whatsapp_number.trim()
+    if (data.google_maps_url !== undefined) dbPayload.google_maps_url = data.google_maps_url.trim()
+    if (data.instagram_url !== undefined) dbPayload.instagram_url = data.instagram_url.trim()
+    if (data.facebook_url !== undefined) dbPayload.facebook_url = data.facebook_url.trim()
     if (data.trn !== undefined) dbPayload.trn = data.trn
     if (data.vat_enabled !== undefined) dbPayload.vat_enabled = data.vat_enabled
     if (data.vat_rate_pct !== undefined) dbPayload.vat_rate_bps = data.vat_rate_pct * 100
@@ -141,9 +150,22 @@ export async function updateStoreSettingsAction(
       dbPayload.faqs = data.faqs
     }
 
-    const { error } = await adminDb
+    let { error } = await adminDb
       .from("settings")
       .upsert(dbPayload, { onConflict: "id" })
+
+    // If new columns are not yet applied in DB schema (code 42703), retry with core fields
+    if (error && error.code === "42703") {
+      console.warn("New social/map columns not yet in DB schema. Falling back to core columns.")
+      delete dbPayload.whatsapp_number
+      delete dbPayload.google_maps_url
+      delete dbPayload.instagram_url
+      delete dbPayload.facebook_url
+      const retryResult = await adminDb
+        .from("settings")
+        .upsert(dbPayload, { onConflict: "id" })
+      error = retryResult.error
+    }
 
     if (error) {
       console.error("Failed to update store settings in DB:", error)

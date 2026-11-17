@@ -12,7 +12,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { getStoreSettings } from "@/features/admin/settings/actions"
-import { STORE_CONTACT } from "@/lib/contact"
 
 export const metadata: Metadata = {
   title: "Privacy Policy | AR Boutique",
@@ -22,7 +21,7 @@ export const metadata: Metadata = {
 export default async function PrivacyPage() {
   const settings = await getStoreSettings()
   const storeName = settings.store_name || "AR Boutique"
-  const storeEmail = settings.store_email || STORE_CONTACT.email
+  const storeEmail = settings.store_email || ""
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">

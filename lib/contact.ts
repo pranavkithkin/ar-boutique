@@ -1,18 +1,44 @@
 /**
  * Storefront contact details for AR Boutique concierge.
- * Centralized for Contact, Policies, and Customer Care pages.
+ * Centralized fallback structure.
+ * Values default to empty so only genuine details saved in Admin Settings are used.
  */
 export const STORE_CONTACT = {
-  phone: "+971 50 273 6767",
-  phoneHref: "tel:+971502736767",
-  whatsapp: "+971 50 273 6767",
-  whatsappHref: "https://wa.me/971502736767",
-  email: "hello@arboutique.ae",
-  emailHref: "mailto:hello@arboutique.ae",
-  atelier: "Dubai Design District (d3), UAE",
-  atelierHref: "https://maps.google.com/?q=Dubai+Design+District",
-  instagram: "@arboutique.ae",
-  instagramHref: "https://instagram.com/arboutique.ae",
-  facebook: "AR Boutique UAE",
-  facebookHref: "https://facebook.com/arboutique.ae",
+  phone: "",
+  phoneHref: "",
+  whatsapp: "",
+  whatsappHref: "",
+  email: "",
+  emailHref: "",
+  atelier: "",
+  atelierHref: "",
+  instagram: "",
+  instagramHref: "",
+  facebook: "",
+  facebookHref: "",
 } as const
+
+/**
+ * Builds a direct WhatsApp chat URL with optional pre-filled inquiry text.
+ * Strips out non-digit characters from the input phone/WhatsApp number.
+ */
+export function buildWhatsAppHref(phoneOrNumber?: string | null, text?: string): string | null {
+  if (!phoneOrNumber) return null
+  const clean = phoneOrNumber.replace(/[^0-9]/g, "")
+  if (!clean) return null
+  const base = `https://wa.me/${clean}`
+  return text ? `${base}?text=${encodeURIComponent(text)}` : base
+}
+
+/**
+ * Normalizes an address or Google Maps URL into an executable link.
+ */
+export function buildGoogleMapsHref(addressOrUrl?: string | null): string | null {
+  if (!addressOrUrl) return null
+  const trimmed = addressOrUrl.trim()
+  if (!trimmed) return null
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed
+  }
+  return `https://maps.google.com/?q=${encodeURIComponent(trimmed)}`
+}

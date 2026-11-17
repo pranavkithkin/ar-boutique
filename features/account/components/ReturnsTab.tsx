@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { STORE_CONTACT } from "@/lib/contact"
+import { buildWhatsAppHref } from "@/lib/contact"
 import { StoreButton } from "@/components/store/StoreButton"
 import { formatAED } from "@/lib/money"
 import {
@@ -28,6 +28,7 @@ interface ReturnsTabProps {
   preselectedOrderId?: string
   onClearPreselectedOrder?: () => void
   returnWindowDays?: number
+  whatsappNumber?: string
 }
 
 export function ReturnsTab({
@@ -36,6 +37,7 @@ export function ReturnsTab({
   preselectedOrderId,
   onClearPreselectedOrder,
   returnWindowDays = 7,
+  whatsappNumber,
 }: ReturnsTabProps) {
   const [returnsList, setReturnsList] = React.useState<CustomerReturnRequest[]>([])
   const [isLoadingReturns, setIsLoadingReturns] = React.useState(false)
@@ -102,9 +104,11 @@ export function ReturnsTab({
     return orders.filter((o) => o.status === "delivered")
   }, [orders])
 
-  const returnWhatsappUrl = `${STORE_CONTACT.whatsappHref}?text=${encodeURIComponent(
-    "Hello AR Boutique Concierge, I would like to inquire about a garment exchange or return."
-  )}`
+  const returnWhatsappUrl =
+    buildWhatsAppHref(
+      whatsappNumber,
+      "Hello AR Boutique Concierge, I would like to inquire about a garment exchange or return."
+    ) || "/contact"
 
   return (
     <div className="space-y-8">
@@ -341,8 +345,8 @@ export function ReturnsTab({
 
           <a
             href={returnWhatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            target={returnWhatsappUrl.startsWith("http") ? "_blank" : undefined}
+            rel={returnWhatsappUrl.startsWith("http") ? "noopener noreferrer" : undefined}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background font-medium text-xs uppercase tracking-wider rounded-none hover:bg-foreground/90 transition-colors shrink-0"
           >
             <MessageCircle className="h-4 w-4 text-emerald-400" />

@@ -74,6 +74,7 @@ export default async function ProductPage({
             product={product}
             initialColourSlug={colour}
             reviewSummary={reviewsData.breakdown}
+            whatsappNumber={settings.whatsapp_number || settings.store_phone || ""}
           />
 
           {/* Client Reviews & Ratings with Boutique Moderation */}

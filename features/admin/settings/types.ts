@@ -24,6 +24,12 @@ export interface StoreSettings {
   return_expiry_days: number // days before approved return expires
   return_instructions: string
 
+  // Channels & Social
+  whatsapp_number: string
+  google_maps_url: string
+  instagram_url: string
+  facebook_url: string
+
   // Storefront
   announcement_bar_text: string
   announcement_bar_enabled: boolean
@@ -82,8 +88,12 @@ export const DEFAULT_FAQS: FAQItem[] = [
 export const DEFAULT_SETTINGS: StoreSettings = {
   store_name: "AR Boutique",
   store_email: "",
-  store_phone: "+971 50 273 6767",
+  store_phone: "",
   store_address: "",
+  whatsapp_number: "",
+  google_maps_url: "",
+  instagram_url: "",
+  facebook_url: "",
   trn: "",
   vat_enabled: false,
   vat_rate_pct: 5,

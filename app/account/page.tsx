@@ -87,6 +87,7 @@ export default async function AccountPage() {
   let initialOrders: AccountOrder[] = []
   let initialAddresses: AccountAddress[] = []
   let returnWindowDays = 7
+  let whatsappNumber = ""
 
   try {
     const [accountData, settings] = await Promise.all([
@@ -98,8 +99,11 @@ export default async function AccountPage() {
       if (accountData.orders) initialOrders = accountData.orders
       if (accountData.addresses) initialAddresses = accountData.addresses
     }
-    if (settings && typeof settings.return_window_days === "number") {
-      returnWindowDays = settings.return_window_days
+    if (settings) {
+      if (typeof settings.return_window_days === "number") {
+        returnWindowDays = settings.return_window_days
+      }
+      whatsappNumber = (settings.whatsapp_number || settings.store_phone || "").trim()
     }
   } catch (err) {
     console.error("Failed to load customer account data on server:", err)
@@ -143,6 +147,7 @@ export default async function AccountPage() {
           initialOrders={initialOrders}
           initialAddresses={initialAddresses}
           returnWindowDays={returnWindowDays}
+          whatsappNumber={whatsappNumber}
         />
       </main>
 

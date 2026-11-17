@@ -32,7 +32,6 @@ import {
   HelpCircle,
   FileText,
 } from "lucide-react"
-import { STORE_CONTACT } from "@/lib/contact"
 import { AnimatedSection, FadeIn } from "@/components/store/AnimatedSection"
 
 export const metadata: Metadata = {
@@ -48,25 +47,7 @@ const RETURN_CONDITIONS = [
   "No alterations, tailoring, or cosmetic blemishes",
 ]
 
-const RETURN_STEPS = [
-  {
-    step: "1",
-    title: "Initiate Your Request",
-    description: `Message our concierge team on WhatsApp at ${STORE_CONTACT.whatsapp} or email ${STORE_CONTACT.email} with your order number and the item(s) you wish to return or exchange.`,
-  },
-  {
-    step: "2",
-    title: "Courier Collection",
-    description:
-      "Our team will confirm eligibility and arrange a convenient courier pickup from your delivery address.",
-  },
-  {
-    step: "3",
-    title: "Inspection & Refund",
-    description:
-      "Upon receipt at our atelier, pieces are inspected. Refunds are issued to your original payment method within 5 to 10 working days.",
-  },
-]
+
 
 const RETURN_FAQS = [
   {
@@ -90,11 +71,31 @@ export default async function ReturnsPage() {
   const settings = await getStoreSettings()
   const days = settings.return_window_days ?? 14
   const windowLabel = `${days} ${days === 1 ? "day" : "days"}`
-  const storeEmail = settings.store_email || STORE_CONTACT.email
-  const storePhone = settings.store_phone || STORE_CONTACT.phone
-  const cleanPhone = storePhone.replace(/[^0-9]/g, "")
-  const whatsappHref = `https://wa.me/${cleanPhone}`
-  const emailHref = `mailto:${storeEmail}`
+  const storeEmail = settings.store_email || ""
+  const whatsappNumber = (settings.whatsapp_number || settings.store_phone || "").trim()
+  const cleanPhone = whatsappNumber.replace(/[^0-9]/g, "")
+  const whatsappHref = cleanPhone ? `https://wa.me/${cleanPhone}` : "/contact"
+  const emailHref = storeEmail ? `mailto:${storeEmail}` : "/contact"
+
+  const returnSteps = [
+    {
+      step: "1",
+      title: "Initiate Your Request",
+      description: `Message our concierge team on WhatsApp${whatsappNumber ? ` at ${whatsappNumber}` : ""}${storeEmail ? ` or email ${storeEmail}` : ""} with your order number and the item(s) you wish to return or exchange.`,
+    },
+    {
+      step: "2",
+      title: "Courier Collection",
+      description:
+        "Our team will confirm eligibility and arrange a convenient courier pickup from your delivery address.",
+    },
+    {
+      step: "3",
+      title: "Inspection & Refund",
+      description:
+        "Upon receipt at our atelier, pieces are inspected. Refunds are issued to your original payment method within 5 to 10 working days.",
+    },
+  ]
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <AnnouncementBar />
@@ -277,27 +278,36 @@ export default async function ReturnsPage() {
                     </div>
 
                     <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                      Message us on WhatsApp at{" "}
-                      <a
-                        href={whatsappHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
-                      >
-                        {storePhone}
-                      </a>{" "}
-                      or email{" "}
-                      <a
-                        href={emailHref}
-                        className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
-                      >
-                        {storeEmail}
-                      </a>{" "}
-                      with your order number and the item. We will share the next steps.
+                      {whatsappNumber && (
+                        <>
+                          Message us on WhatsApp at{" "}
+                          <a
+                            href={whatsappHref}
+                            target={whatsappHref.startsWith("http") ? "_blank" : undefined}
+                            rel={whatsappHref.startsWith("http") ? "noopener noreferrer" : undefined}
+                            className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
+                          >
+                            {whatsappNumber}
+                          </a>
+                        </>
+                      )}
+                      {whatsappNumber && storeEmail ? " or " : ""}
+                      {storeEmail && (
+                        <>
+                          email{" "}
+                          <a
+                            href={emailHref}
+                            className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
+                          >
+                            {storeEmail}
+                          </a>
+                        </>
+                      )}
+                      {" "}with your order number and the item. We will share the next steps.
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                      {RETURN_STEPS.map((step) => (
+                      {returnSteps.map((step) => (
                         <div
                           key={step.step}
                           className="rounded-lg border border-border/60 bg-muted/20 p-5 space-y-2.5"

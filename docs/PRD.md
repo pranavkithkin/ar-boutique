@@ -181,6 +181,10 @@ Order emails show each line's colour photo, colour, size and SKU.
 20. **Cash on delivery:** signed-in customers only, orders up to AED 1,000, one open COD order per customer, confirmed by phone or WhatsApp within 24 hours or cancelled automatically, and blocked after 2 refused parcels (per account and per phone number). The admin can turn COD off for one customer. These are defaults until the client answers Q35 to Q39, and all are settings.
 21. **Refused COD parcels** come back as Returned to sender and are restocked by hand (rule 13).
 
+## Offer campaigns (approved 20 Nov 2026)
+
+Admins create percentage/fixed AED/free-delivery offers for all products, categories or selected products, set dates and limits, preview the campaign, and link it from a homepage banner (ADR-042). The best eligible offer applies automatically as shoppers add qualifying products and is reflected in cart/checkout. Discounts do not stack with coupons; invoices and returns retain the amount actually paid. Buy/get and bundle deals remain a later expansion. No cron is included.
+
 ## Out of Scope (v1)
 - Augmented reality or virtual try-on
 - Arabic website or right-to-left layout (only invoices are bilingual)
@@ -188,7 +192,7 @@ Order emails show each line's colour photo, colour, size and SKU.
 - Delivery partner integration, shipping labels, live tracking (the admin types the courier and tracking number)
 - Shipping outside the UAE, currencies other than AED
 - Exchanges (Q5), store credit, gift cards
-- Discount codes (Q8)
+- Buy X/get Y and bundle pricing (later offer expansion)
 - Wishlist, reviews, loyalty, newsletters (Q25)
 - Site search (Q22)
 - Instagram feed (Q25)
@@ -249,7 +253,7 @@ Each question has a default. If there's no answer, build the default and record 
 | Q5 | Exchanges, or refunds only? | Refunds only |
 | Q6 | Delivery fee: flat, free over a threshold, or always free? | Flat fee + optional free-delivery threshold, editable |
 | Q7 | Is the delivery fee refunded on returns? | Only for Damaged or Wrong item |
-| Q8 | Discount codes in v1? | No |
+| Q8 | Discount codes in v1? | Added after the original MVP: percentage, fixed AED and free delivery coupons. Banner-linked offer campaigns approved 20 Nov 2026 (ADR-042). |
 | Q9 | Is the same stock sold anywhere else (shop, Instagram, WhatsApp)? | The website is the source of truth; the admin logs offline sales as stock changes |
 | Q10 | Can the price differ by colour or size? (Photos per colour is decided: ADR-024) | Answered by the sheet (7 Oct 2026): price per SKU, as in the sheet. Today each style has one price for all its sizes |
 | Q11 | Which categories? One per product? Subcategories? | Admin-managed flat list, one category per product, named by the client in the Category column (Q41). Package Contains stays a detail |

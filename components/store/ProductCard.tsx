@@ -8,6 +8,8 @@ import { QuickAddModal } from "./QuickAddModal"
 import { WishlistButton } from "@/features/wishlist/components/WishlistButton"
 
 import type { ProductVariantSize } from "@/lib/products"
+import type { ProductOfferTag } from "@/features/offers/types"
+import { OfferTagLink } from "./OfferTagLink"
 
 export interface ProductCardProps {
   name: string
@@ -18,6 +20,7 @@ export interface ProductCardProps {
   compareAtPrice?: string
   sizes?: ProductVariantSize[]
   sku?: string
+  offerTags?: ProductOfferTag[]
 }
 
 export function ProductCard({
@@ -29,6 +32,7 @@ export function ProductCard({
   compareAtPrice,
   sizes,
   sku,
+  offerTags = [],
 }: ProductCardProps) {
   const [isModalOpen, setIsModalOpen] = React.useState(false)
 
@@ -68,6 +72,13 @@ export function ProductCard({
               <span className="inline-flex items-center px-2 py-0.5 text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider bg-destructive text-destructive-foreground rounded-xs shadow-xs">
                 {discountPercent ? `Sale -${discountPercent}%` : "Sale"}
               </span>
+            </div>
+          )}
+
+          {offerTags.length > 0 && (
+            <div className="absolute bottom-2.5 right-2.5 z-20 flex max-w-[75%] flex-col items-end gap-1 sm:bottom-3 sm:right-3">
+              {offerTags.slice(0, 2).map(tag => <OfferTagLink key={tag.slug} tag={tag} />)}
+              {offerTags.length > 2 && <span className="bg-background/95 px-2 py-0.5 text-xs text-foreground">+{offerTags.length - 2} offers</span>}
             </div>
           )}
 

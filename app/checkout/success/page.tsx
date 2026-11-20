@@ -134,7 +134,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
 
   const isPaid =
     order?.payment_status === "paid" ||
-    (isSessionVerified && stripePaymentStatus === "paid")
+    (isSessionVerified && (stripePaymentStatus === "paid" || (stripePaymentStatus === "no_payment_required" && order?.total_fils === 0)))
 
   const isCod = order?.payment_method === "cod"
 

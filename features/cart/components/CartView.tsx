@@ -20,6 +20,8 @@ import {
   calculateDeliveryEstimate,
 } from "@/lib/money"
 import { StoreButton } from "@/components/store/StoreButton"
+import { useOfferQuote } from "@/features/offers/components/use-offer-quote"
+import { OfferSummary } from "@/features/offers/components/OfferSummary"
 import {
   getCartStockAvailabilityAction,
   getCartSettingsAction,
@@ -32,6 +34,7 @@ interface CartViewProps {
 }
 
 export function CartView({ initialConfig }: CartViewProps) {
+  const offerResult = useOfferQuote()
   const {
     items,
     updateQuantity,
@@ -86,16 +89,19 @@ export function CartView({ initialConfig }: CartViewProps) {
     )
   }
 
-  const subtotalFils = getSubtotalFils()
+  const subtotalFils = offerResult.quote?.subtotal_fils ?? getSubtotalFils()
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-  const { isFreeShipping, deliveryFeeFils, remainingFils, progressPercent } =
+  const deliveryEstimate =
     calculateDeliveryEstimate(
       subtotalFils,
       items.length > 0,
       config.freeDeliveryThresholdFils,
       config.deliveryFeeFils
     )
-  const estimatedTotalFils = subtotalFils + deliveryFeeFils
+  const { remainingFils, progressPercent } = deliveryEstimate
+  const deliveryFeeFils = offerResult.quote?.delivery_fee_fils ?? deliveryEstimate.deliveryFeeFils
+  const isFreeShipping = deliveryFeeFils === 0
+  const estimatedTotalFils = subtotalFils - (offerResult.quote?.discount_fils ?? 0) + deliveryFeeFils
   const vatPortionFils = config.vatEnabled ? calculateVatPortion(estimatedTotalFils) : 0
   const freeDeliveryMinimumLabel = `${formatAED(config.freeDeliveryThresholdFils)} or more`
 
@@ -285,6 +291,7 @@ export function CartView({ initialConfig }: CartViewProps) {
         <h3 className="font-heading text-2xl text-foreground font-normal pb-4 border-b border-border/80">
           Order Summary
         </h3>
+        <OfferSummary offer={offerResult.offer} quote={offerResult.quote} error={offerResult.error} pending={offerResult.pending} />
 
         {/* Free Shipping Progress Indicator */}
         <div className="bg-secondary/40 p-4 rounded-xs border border-border/40 space-y-2">
@@ -314,6 +321,7 @@ export function CartView({ initialConfig }: CartViewProps) {
 
         {/* Pricing breakdown */}
         <div className="space-y-3.5">
+          {Boolean(offerResult.quote?.discount_fils) && <div className="flex justify-between text-sm"><span>Offer savings</span><span>−{formatAED(offerResult.quote!.discount_fils)}</span></div>}
           <div className="flex justify-between items-baseline text-xs">
             <span className="font-medium uppercase tracking-[0.08em] text-muted-foreground">
               Bag Subtotal

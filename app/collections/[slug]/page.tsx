@@ -17,6 +17,7 @@ import { ProductReviewsSection } from "@/components/store/reviews/ProductReviews
 import { getProductBySlug } from "@/lib/product-detail"
 import { getProductsPage } from "@/lib/products"
 import { getProductReviewsAction } from "@/features/reviews/actions"
+import { getStorefrontOfferTags } from "@/features/offers/service"
 
 export default async function ProductPage({
   params,
@@ -34,7 +35,10 @@ export default async function ProductPage({
   }
 
   // Fetch approved customer reviews and summary
-  const reviewsData = await getProductReviewsAction(slug)
+  const [reviewsData, productOfferTags] = await Promise.all([
+    getProductReviewsAction(slug),
+    getStorefrontOfferTags([product.id]),
+  ])
 
   // Recommended products: fetch next 5 items from the database
   const { products: recommended } = await getProductsPage({ limit: 5 })
@@ -72,6 +76,7 @@ export default async function ProductPage({
           <ProductDetailView
             returnWindowDays={settings.return_window_days}
             product={product}
+            offerTags={productOfferTags[product.id] ?? []}
             initialColourSlug={colour}
             reviewSummary={reviewsData.breakdown}
             whatsappNumber={settings.whatsapp_number || settings.store_phone || ""}
@@ -102,6 +107,7 @@ export default async function ProductPage({
                     imageSrc={item.imageSrc}
                     href={`/collections/${item.slug}`}
                     sizes={item.sizes}
+                    offerTags={item.offerTags}
                   />
                 ))}
               </div>

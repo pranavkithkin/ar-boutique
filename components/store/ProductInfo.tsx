@@ -32,6 +32,8 @@ import { useCartStore } from "@/features/cart/store"
 import { formatAED } from "@/lib/money"
 import { StarRating } from "./reviews/StarRating"
 import type { ProductDetail, ProductColourway, ProductVariantSize } from "@/lib/product-detail"
+import type { ProductOfferTag } from "@/features/offers/types"
+import { OfferTagLink } from "./OfferTagLink"
 
 export interface ProductType {
   id: string
@@ -68,6 +70,7 @@ interface ProductInfoProps {
     totalCount: number
   }
   whatsappNumber?: string
+  offerTags?: ProductOfferTag[]
 }
 
 export function ProductInfo({
@@ -78,6 +81,7 @@ export function ProductInfo({
   onSelectColourway,
   reviewSummary,
   whatsappNumber,
+  offerTags = [],
 }: ProductInfoProps) {
   const colourways = (product as ProductDetail).colourways || []
   const hasMultipleColours = colourways.length > 1
@@ -212,6 +216,7 @@ export function ProductInfo({
       <h1 className="font-sans font-semibold text-2xl sm:text-3xl lg:text-[32px] text-foreground leading-snug tracking-tight mb-2">
         {title}
       </h1>
+      {offerTags.length > 0 && <div className="mb-3 flex flex-wrap gap-2">{offerTags.map(tag => <OfferTagLink key={tag.slug} tag={tag} />)}</div>}
 
       {/* Meta Bar: Brand, SKU, and single Colour label if only 1 colour exists */}
       <div className="flex flex-wrap items-center gap-y-1 mb-4 text-[13px] sm:text-sm text-muted-foreground">

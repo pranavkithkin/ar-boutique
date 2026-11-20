@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { searchProductsAction } from "@/features/search/actions"
 import type { SearchResultItem } from "@/features/search/types"
+import { OfferTagLink } from "./OfferTagLink"
 
 interface SearchModalProps {
   isOpen: boolean
@@ -182,6 +183,7 @@ function SearchModalContent({ onClose }: { onClose: () => void }) {
                           Style: {item.styleCode}
                         </span>
                       )}
+                      {item.offerTags?.slice(0, 1).map(tag => <OfferTagLink key={tag.slug} tag={tag} className="shrink-0" onClick={event => { event.stopPropagation(); onClose() }} />)}
                     </div>
                     <h4 className="text-sm font-sans font-medium text-foreground group-hover:text-primary transition-colors truncate">
                       {item.name}

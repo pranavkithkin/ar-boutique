@@ -1,5 +1,7 @@
 # Tasks
 
+TASK-131 refinement (20 Nov 2026): generated new homepage campaign photos using two supplied dress references, retaining the garments' print and silhouette while creating new models/poses/scenes. No original product photos are displayed in the sections. Reduced lifestyle section/card footprint and story layout dimensions. A follow-up corrected portrait framing with top aligned object-fit in both homepage sections so model heads and neckline remain in view.
+
 > Never ask the AI to build the whole app in one prompt. One task at a time:
 > TASK -> Implement -> Test -> Review -> Mark complete -> next TASK.
 > Each phase is a vertical slice that ends with a flow working end to end.
@@ -163,9 +165,27 @@ Done when: a received return is refunded through Stripe, with a credit note when
 - [ ] TASK-125 E2E: a COD order placed, confirmed, shipped and delivered with cash and an invoice; a refused parcel; an auto-cancel; card checkout unchanged
 
 ## Phase 11: Content
+- [x] TASK-131 Homepage lifestyle and storytelling (20 Nov 2026): two model-led editorial panels after categories, a brand story after New Arrivals using existing About copy, two new campaign photographs, accessible collection/About links, responsive 375/768/1440 layouts and lazy-loaded imagery. No dependencies or catalogue changes.
 Done when: the admin changes banners, publishes posts, and policy pages are live.
 - [x] TASK-090 Banners admin: placement (hero or promo), eyebrow, title, text, button, desktop + mobile image, order, on/off; Cloudinary upload integration, device live previews (desktop 8:3 vs mobile 4:5), reordering, status toggles, Supabase database synchronization (storefront kept on static images per user direction)
 - [x] TASK-091 Home page per `docs/DESIGN.md`: hero, shop by category, new arrivals, trust strip, promo banner, latest posts
+- [x] TASK-129 Offer campaign implementation (20 Nov 2026, ADR-042/043): admin management/preview, public offer pages, hero/promo destination selection, automatic best-offer eligibility, percentage/fixed/free-delivery targeting, atomic stock and usage transactions for card/COD, exact line snapshots and partial-return caps. Migration and concurrency tests run against local PostgreSQL; rollout remains below.
+- [x] TASK-129 layout follow-up (20 Nov 2026): set explicit full width/min-width on the offer create/edit form to prevent shrink-to-fit in the admin flex container. Offer-rendering tests and targeted ESLint passed; live visual verification blocked by browser connection failure.
+- [x] TASK-129 input follow-up (20 Nov 2026): retain shadcn offer controls and blur number inputs on mouse-wheel so scrolling cannot accidentally change offer values. Targeted ESLint passed; no tests run.
+- [x] TASK-129 loading follow-up (20 Nov 2026): add separate responsive shadcn skeleton loaders for the offers list and new-offer form, matching each page's structure.
+- [x] TASK-129 style-code selection follow-up (20 Nov 2026): allow offer admins to upload CSV/XLSX files with exact style codes and add matching published products to the selection; unmatched codes are reported without changing catalogue data.
+- [x] TASK-129 date-picker follow-up (20 Nov 2026): replace native offer start/end datetime picker with the existing shadcn Calendar and a separate UAE-time input; allow clearing the date.
+- [x] TASK-129 number-input follow-up (20 Nov 2026): replace native number inputs in offer rules with shadcn text inputs using numeric/decimal input modes, removing browser spinner arrows while preserving numeric form values.
+- [x] TASK-129 storefront tag follow-up (20 Nov 2026): show links with active offer discounts on eligible product cards, details, search results, and wishlists; keep offers dynamic and link tags to their campaign pages.
+- [x] TASK-129 schedule follow-up (20 Nov 2026): allow setting the UAE time independently before choosing a date, preserve it when clearing a date, and document that a time alone does not schedule the offer. Existing `/admin/offers/[id]` supports editing saved offers.
+- [x] TASK-129 optional limit fields follow-up (20 Nov 2026): keep total usage and per-email limits explicitly blank by default and map empty controlled input values to null so unlimited doesn't trigger positive-number validation.
+- [x] TASK-129 storefront tag label follow-up (20 Nov 2026): show the campaign title on offer tags instead of the discount amount.
+- [x] TASK-129 offer page cleanup follow-up (20 Nov 2026): keep the campaign title and description, remove the extra promo label, back link, schedule/limit/terms copy and activation helper text; retain the eligible product list.
+- [x] TASK-129 automatic offers follow-up (20 Nov 2026, ADR-043): choose the highest-saving qualifying active campaign from cart contents and a valid checkout email; show its discount in cart/checkout totals, remove activation/removal controls, avoid sending partial email input to offer checks, and preserve no stacking with promo codes. No tests run.
+- [x] TASK-133 Quick Add size-loading follow-up (20 Nov 2026): keep Add to Bag disabled until the selected product's size options have loaded; guard the click handler too, and keep the action disabled with a clear message if size loading fails. No tests run.
+- [x] TASK-129 public offer page follow-up (20 Nov 2026): upgraded the offer-route loading skeleton to match its storefront header, campaign text and product grid; fixed the `total is not defined` render error by restoring the pagination prop. Local route returned HTTP 200 and the offer content without an error boundary.
+- [ ] TASK-130 Offer rollout: migration `20261120085420_offer_campaigns.sql` applied and schema/privileges verified in AR Boutique Supabase on 20 Nov 2026. Full browser and actual Stripe sandbox checkout verification and code deployment remain. No cron.
+- [x] TASK-131 homepage brand story headline (20 Nov 2026): replaced country-specific headline with “Heritage-Inspired. Made for Every Story.” to welcome customers across cultures while retaining the heritage-led brand tone.
 - [x] TASK-092 Blog admin: Tiptap editor with EditorCN toolbar, cover image Cloudinary upload, reading time calculation, SEO metadata fields, Draft/Published/Archived lifecycle management, and admin sidebar integration (`/admin/blog`, `/admin/blog/new`, `/admin/blog/[id]`).
 - [x] TASK-093 Blog list and post pages: footer Journal discovery, existing editorial articles and category filters, article detail/related stories, page-matched responsive skeleton and loading/error/not-found states. Static content for this storefront stage; admin publishing remains TASK-092.
 - [ ] TASK-094 Pages: About, Contact, Terms, Privacy, Returns & Refunds, Shipping & Delivery (Privacy Policy simplified and Terms page implemented on 6 Nov 2026; company identity added from trade licence; client/legal approval pending)
@@ -197,6 +217,7 @@ Done when: every check in `docs/TEST_PLAN.md` and `docs/SECURITY.md` passes on a
 
 ## Phase 15: Launch
 Done when: a live order is placed and refunded on production.
+- [x] TASK-132 AR-1060 sandbox order cleanup (20 Nov 2026): after user confirmation, removed only the test order from Supabase, released its stock reservation and offer redemption, and retained an audit entry. Stripe sandbox payment remains as a test record; no refund was issued.
 - [ ] TASK-109 Production setup: Supabase project, Clerk production instance, Stripe live keys and webhook, Resend domain (SPF, DKIM, DMARC), Cloudinary production account, Sentry production environment and alert email, Vercel environment variables
 - [ ] TASK-110 Domain and SSL on Vercel, `www` redirect, Google Search Console with the sitemap
 - [ ] TASK-111 Production QA from `docs/TEST_PLAN.md`, including one live order and refund

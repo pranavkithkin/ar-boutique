@@ -18,6 +18,8 @@ import { placeCheckoutOrderAction } from "../actions"
 import { getCheckoutAttempt } from "../checkout-key"
 import { validateCouponAction } from "@/features/coupons/actions"
 import type { ValidateCouponResult } from "@/features/coupons/types"
+import { useOfferQuote } from "@/features/offers/components/use-offer-quote"
+import { OfferSummary } from "@/features/offers/components/OfferSummary"
 import type { CheckoutConfig, CustomerCheckoutContext, SavedAddressCandidate } from "../types"
 import {
   CreditCard,
@@ -92,6 +94,14 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
   })
 
   const currentPaymentMethod = watch("paymentMethod")
+  const offerResult = useOfferQuote(watch("email"))
+
+  React.useEffect(() => {
+    if (offerResult.offer && appliedCoupon) {
+      setAppliedCoupon(null)
+      setCouponError(null)
+    }
+  }, [offerResult.offer, appliedCoupon])
 
   // Load saved addresses from localStorage on mount (synced from Account page as fallback)
   React.useEffect(() => {
@@ -157,13 +167,14 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
   }
 
   // Calculate pricing breakdown
-  const subtotalFils = React.useMemo(() => {
+  const cartSubtotalFils = React.useMemo(() => {
     return cartItems.reduce((acc, item) => acc + item.priceFils * item.quantity, 0)
   }, [cartItems])
 
-  const couponDiscountFils = appliedCoupon && appliedCoupon.valid ? appliedCoupon.discountFils || 0 : 0
-  const isFreeDelivery = subtotalFils >= config.freeDeliveryThresholdFils || appliedCoupon?.freeShipping === true
-  const deliveryFeeFils = isFreeDelivery ? 0 : config.deliveryFeeFils
+  const subtotalFils = offerResult.quote?.subtotal_fils ?? cartSubtotalFils
+  const couponDiscountFils = offerResult.offer ? offerResult.quote?.discount_fils ?? 0 : appliedCoupon && appliedCoupon.valid ? appliedCoupon.discountFils || 0 : 0
+  const isFreeDelivery = offerResult.quote ? offerResult.quote.delivery_fee_fils === 0 : subtotalFils >= config.freeDeliveryThresholdFils || appliedCoupon?.freeShipping === true
+  const deliveryFeeFils = offerResult.quote?.delivery_fee_fils ?? (isFreeDelivery ? 0 : config.deliveryFeeFils)
   const isCodSelected = currentPaymentMethod === "cod"
   const codFeeFils = isCodSelected ? config.codFeeFils : 0
   const estimatedTotalFils = Math.max(0, subtotalFils - couponDiscountFils) + deliveryFeeFils + codFeeFils
@@ -216,6 +227,10 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
 
   const onSubmit = async (values: CheckoutFormValues) => {
     setSubmitError(null)
+    if (offerResult.pending || offerResult.error) {
+      setSubmitError(offerResult.error || "Please wait while eligible offers are checked.")
+      return
+    }
 
     // Check payment method availability before submitting
     if (values.paymentMethod === "card" && !isCardAvailable) {
@@ -236,14 +251,14 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
     }
 
     try {
-      const fingerprint = JSON.stringify({ values, items: cartItems.map(({ variantId, sku, quantity }) => ({ variantId, sku, quantity })), coupon: appliedCoupon?.code })
+      const fingerprint = JSON.stringify({ values, items: cartItems.map(({ variantId, sku, quantity }) => ({ variantId, sku, quantity })), coupon: offerResult.offer ? undefined : appliedCoupon?.code, offer: offerResult.offer })
       let previous = checkoutAttempt.current
       if (!previous) {
         try { previous = JSON.parse(sessionStorage.getItem("ar_checkout_attempt") || "null") } catch { /* Storage may be unavailable. */ }
       }
       checkoutAttempt.current = getCheckoutAttempt(fingerprint, previous, () => crypto.randomUUID())
       try { sessionStorage.setItem("ar_checkout_attempt", JSON.stringify(checkoutAttempt.current)) } catch { /* Keep the in-memory key for retries. */ }
-      const result = await placeCheckoutOrderAction(values, cartItems, appliedCoupon?.code, checkoutAttempt.current.key)
+      const result = await placeCheckoutOrderAction(values, cartItems, offerResult.offer ? undefined : appliedCoupon?.code, checkoutAttempt.current.key, offerResult.offer?.slug)
 
       if (!result.success || !result.redirectUrl) {
         setSubmitError(result.error || "Failed to complete checkout. Please review your details.")
@@ -734,7 +749,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
             <div>
               <StoreButton
                 type="submit"
-                disabled={isSubmitting || (!isCardAvailable && !isCodAvailable)}
+                disabled={isSubmitting || (!isCardAvailable && !isCodAvailable) || Boolean(offerResult.offer && (offerResult.pending || !offerResult.quote || offerResult.error))}
                 className="w-full h-13 uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-sm font-semibold"
               >
                 {isSubmitting ? (
@@ -810,7 +825,8 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
               </div>
 
               {/* Promo Code Input & Display */}
-              <div className="pt-2 border-t border-border/60">
+      <OfferSummary offer={offerResult.offer} quote={offerResult.quote} error={offerResult.error} pending={offerResult.pending} />
+              {!offerResult.offer && <div className="pt-2 border-t border-border/60">
                 {appliedCoupon && appliedCoupon.valid ? (
                   <div className="p-2.5 rounded-xs bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs animate-in fade-in">
                     <div className="flex items-center gap-2">
@@ -873,8 +889,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                     )}
                   </div>
                 )}
-              </div>
-
+              </div>}
               {/* Price Calculation Breakdown */}
               <div className="border-t border-border/60 pt-4 space-y-2.5 text-xs">
                 <div className="flex justify-between items-baseline">
@@ -888,7 +903,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                   <div className="flex justify-between items-baseline text-emerald-600 dark:text-emerald-400">
                     <span className="flex items-center gap-1.5 font-medium">
                       <Tag className="w-3.5 h-3.5" />
-                      <span>Promo Discount ({appliedCoupon?.code})</span>
+                      <span>{offerResult.offer ? "Offer discount" : `Promo Discount (${appliedCoupon?.code})`}</span>
                     </span>
                     <span className="font-semibold tabular-nums">
                       -{formatAED(couponDiscountFils)}

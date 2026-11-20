@@ -2,7 +2,17 @@
 
 > ARCHITECTURE = HOW the app works. What and why are in `PRD.md`; the reasons behind each choice are in `DECISIONS.md`.
 
+## Offer campaigns (ADR-042, 20 Nov 2026)
+- `/admin/offers`, `/admin/offers/new`, `/admin/offers/[id]` and protected `/admin/offers/[id]/preview`: existing admin shell, shadcn form controls and React Hook Form/Zod. Banner forms select a published offer or retain a custom destination URL.
+- `/offers/[slug]`: public campaign details and paginated eligible published products. Draft pages are private; disabled/expired/scheduled pages explain availability. Campaign links do not activate an offer; the best eligible offer is selected automatically from the cart.
+- `features/offers/service.ts` owns server-only data access; actions validate input and admin writes call `requireAdmin()`. Private `offers` / `offer_redemptions` tables deny public Data API access. `save_offer()` checks the active admin and writes the campaign/audit in one transaction.
+- `quote_offer()` resolves current catalogue variants and calls `evaluate_offer()` for preview. `place_store_order()` uses the same evaluation under a campaign row lock, reserves stock in variant order, snapshots the campaign, allocates the exact discount to eligible lines, and creates order/items/usage atomically. The established `place_cod_order()` delegates with payment method COD; retries retain the existing request hash format when no campaign is selected.
+- Card offer sessions use snapshotted net line amounts, split across unit prices when indivisible fils require it. Stable parameters, a snapshotted checkout origin and Stripe idempotency recover uncertain network results. `fulfill_offer_order()` guards order-level replay even after shipping. The order trigger commits/releases offer usage; signed Stripe expiry/failure webhooks release holds transactionally. Per the user's 20 Nov instruction, this feature adds no cron or scheduled job. Uncertain gateway results are shown for manual review in Admin Offers and can be recovered by retrying checkout. Missing webhook delivery requires Stripe redelivery or manual review; reservations are retained rather than guessing payment status.
+- Order-line `discount_fils` keeps refund limits tied to actual merchandise paid. A return-item trigger serializes partial returns and caps their quantity/amount; invoices read the saved offer totals/VAT instead of current campaign settings. A 100% offer can produce a no-cost Checkout Session; only a signed, matching zero-total session is fulfilled without a PaymentIntent ([Stripe no-cost orders](https://docs.stripe.com/payments/checkout/no-cost-orders)).
+- Migration `20261120085420_offer_campaigns.sql` was applied to AR Boutique Supabase on 20 Nov 2026. Native local PostgreSQL regression/concurrency tests run through `npm run test:offers:db` with `OFFER_TEST_DATABASE_URL` restricted to localhost. No new dependencies.
+
 ## Stack
+
 | Layer | Choice |
 |---|---|
 | Frontend | Next.js 16 App Router (version >= 16.3.8) + React |
@@ -415,6 +425,9 @@ Every upload must set BOTH `public_id` and `asset_folder` to the exact same path
 - **Strict Transformations:** Turned ON to prevent unlisted size requests and protect bandwidth.
 - **Return Photos:** Uploaded as type `authenticated`. Admins view them through `privateUrl` which strips metadata.
 - **Banners & Promo Artwork:** Managed via `/admin/banners`. Uploads separate desktop (8:3, max 2400px) and mobile (4:5, max 1200px) keys to `{folder}/banners/{bannerId}/` with real-time device preview simulation. Storefront currently displays static fallback images until promoted.
+
+## Offer campaigns
+Public campaign pages link eligible products into the shopping bag. Active campaigns are evaluated automatically against the current cart and, when valid, the checkout email. The cart and checkout use server-generated offer quotes; the single qualifying offer with the greatest discount plus delivery savings is displayed in the order summary. If savings tie, the newer campaign wins. Offers take precedence over promo codes and cannot stack with them. Final eligibility, prices, usage limits and the discount are rechecked by `place_store_order()` before the order is created. No customer activation or removal control is used.
 
 ## Routes
 - **Storefront:** `/`, `/shop` (filters as query params: `?size=`, `?colour=`, `?sort=`, `?sale=1`), `/shop/[category]`, `/products/[slug]` (`?colour=<slug>` opens a colour), `/cart`, `/checkout` (delivery details and payment choice), `/checkout/success`, `/checkout/cancelled`, `/checkout/received/[orderNumber]` (COD, signed in), `/sign-in`, `/sign-up`, `/account/orders`, `/account/orders/[orderNumber]`, `/account/orders/[orderNumber]/return`, `/account/returns/[returnNumber]`, `/blog`, `/blog/[slug]`, `/about`, `/contact`, `/policies/[slug]`

@@ -6,6 +6,8 @@ import { isClerkConfigured } from "@/lib/clerk"
 import { getCurrentCustomerAction } from "@/features/auth/actions"
 import { createAdminClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import type { ProductOfferTag } from "@/features/offers/types"
+import { getStorefrontOfferTags } from "@/features/offers/service"
 
 export interface DatabaseWishlistItem {
   id: string
@@ -16,6 +18,7 @@ export interface DatabaseWishlistItem {
   imageSrc: string | null
   colourName: string | null
   createdAt: string
+  offerTags?: ProductOfferTag[]
 }
 
 export interface WishlistActionResult {
@@ -24,6 +27,7 @@ export interface WishlistActionResult {
   items?: DatabaseWishlistItem[]
   isInWishlist?: boolean
   requiresAuth?: boolean
+  offerTags?: ProductOfferTag[]
 }
 
 /**
@@ -86,6 +90,7 @@ export async function getCustomerWishlistAction(): Promise<WishlistActionResult>
       return { success: false, error: error.message, items: [] }
     }
 
+    const offerTags = await getStorefrontOfferTags((data || []).map(row => row.product_id).filter((id): id is string => Boolean(id)))
     const items: DatabaseWishlistItem[] = (data || []).map((row) => ({
       id: row.id,
       productId: row.product_id,
@@ -95,6 +100,7 @@ export async function getCustomerWishlistAction(): Promise<WishlistActionResult>
       imageSrc: row.image_src,
       colourName: row.colour_name,
       createdAt: row.created_at,
+      offerTags: row.product_id ? offerTags[row.product_id] ?? [] : [],
     }))
 
     return { success: true, items }
@@ -173,7 +179,8 @@ export async function addToWishlistAction(payload: {
     }
 
     revalidatePath("/account")
-    return { success: true, isInWishlist: true }
+    const offerTags = resolvedProductId ? await getStorefrontOfferTags([resolvedProductId]) : {}
+    return { success: true, isInWishlist: true, offerTags: resolvedProductId ? offerTags[resolvedProductId] ?? [] : [] }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to add to wishlist"
     return { success: false, error: msg }

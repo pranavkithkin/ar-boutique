@@ -10,6 +10,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "cn"
+import { BannerOfferSelect } from "@/features/offers/components/BannerOfferSelect"
 import {
   ArrowLeft,
   UploadCloud,
@@ -360,6 +361,8 @@ export function BannerForm({ mode, initialBanner, existingPromoId }: BannerFormP
               2. Hero Image Click Link
             </h2>
 
+            <BannerOfferSelect value={buttonLink} onChange={setButtonLink} />
+
             <div>
               <label className="block text-xs font-medium text-foreground mb-1">
                 Destination Link URL *
@@ -515,6 +518,7 @@ export function BannerForm({ mode, initialBanner, existingPromoId }: BannerFormP
                 />
               </div>
 
+              <BannerOfferSelect value={buttonLink} onChange={setButtonLink} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
                   <label className="block text-xs font-medium text-foreground mb-1">

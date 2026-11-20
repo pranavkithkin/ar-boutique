@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Stripe Checkout Requirement: verify payment_status before fulfillment
-        if (session.payment_status === "paid") {
+        if (session.payment_status === "paid" || session.payment_status === "no_payment_required") {
           console.log(`[Stripe Webhook] Payment confirmed for order ${orderId}, session ${session.id}`)
           await fulfillOrderPayment(supabase, session, orderId)
         } else {
@@ -317,7 +317,7 @@ async function fulfillOrderPayment(
   // Fetch current order
   const { data: order, error: orderFetchErr } = await supabase
     .from("orders")
-    .select("id, status, payment_status, order_number, email, clerk_user_id, discount_fils")
+    .select("id, status, payment_status, order_number, email, clerk_user_id, discount_fils, offer_id, total_fils")
     .eq("id", orderId)
     .maybeSingle()
 
@@ -327,6 +327,10 @@ async function fulfillOrderPayment(
   }
 
   // Avoid re-processing if already confirmed and paid
+  if (session.payment_status === "no_payment_required" && (!order.offer_id || order.total_fils !== 0 || session.amount_total !== 0)) {
+    throw new Error("A zero-payment session does not match the order total")
+  }
+  if (order.offer_id && session.amount_total !== order.total_fils) throw new Error("Stripe amount does not match the offer order total")
   if (order.status === "confirmed" && order.payment_status === "paid") {
     console.log(`[Stripe Webhook] Order ${orderId} is already confirmed and paid.`)
     return
@@ -337,13 +341,14 @@ async function fulfillOrderPayment(
       ? session.payment_intent
       : session.payment_intent?.id || null
 
-  const { data: fulfilled, error: fulfillError } = await supabase.rpc("fulfill_card_order", {
+  const { data: fulfilled, error: fulfillError } = await supabase.rpc(order.offer_id ? "fulfill_offer_order" : "fulfill_card_order", {
     p_order_id: orderId,
     p_stripe_session_id: session.id,
     p_stripe_payment_intent_id: paymentIntentId,
   })
 
   if (fulfillError) {
+    if (order.offer_id) await supabase.from("orders").update({ offer_payment_note: "Payment fulfillment needs review. Check the Stripe session before changing this order." }).eq("id", orderId)
     throw new Error(`Atomic order fulfilment failed: ${fulfillError.message}`)
   }
 
@@ -414,10 +419,15 @@ async function releaseOrderStockAndCancel(
 ) {
   const { data: order } = await supabase
     .from("orders")
-    .select("id, status")
+    .select("id, status, offer_id")
     .eq("id", orderId)
     .maybeSingle()
 
+  if (order?.offer_id) {
+    const { error } = await supabase.rpc("cancel_offer_checkout", { p_order_id: orderId })
+    if (error) throw new Error("Offer checkout could not be cancelled")
+    return
+  }
   if (order && order.status === "pending") {
     // Release reserved stock hold
     const { data: items } = await supabase

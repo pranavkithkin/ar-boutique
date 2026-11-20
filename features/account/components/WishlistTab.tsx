@@ -7,6 +7,7 @@ import { Heart, Trash2, ShoppingBag, ArrowRight } from "lucide-react"
 import { useWishlistStore } from "@/features/wishlist/store"
 import { useCartStore } from "@/features/cart/store"
 import { StoreButton } from "@/components/store/StoreButton"
+import { OfferTagLink } from "@/components/store/OfferTagLink"
 
 export function WishlistTab() {
   const [mounted, setMounted] = React.useState(false)
@@ -100,6 +101,8 @@ export function WishlistTab() {
                   Boutique Piece
                 </div>
               )}
+
+              {item.offerTags?.slice(0, 1).map(tag => <OfferTagLink key={tag.slug} tag={tag} className="absolute bottom-2 left-2 z-10" />)}
 
               {/* Remove Heart Trigger */}
               <button

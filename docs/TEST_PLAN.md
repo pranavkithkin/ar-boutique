@@ -26,7 +26,14 @@ After every task: typecheck -> lint -> tokens -> unit -> DB -> integration -> E2
   - `4000 0000 0000 5126`: refund fails
 - Local webhooks: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
 
+## Offer campaigns
+- Unit/rendered checks: valid campaign types/targets, invalid schedules/amounts, UAE date conversion, immutable offer links, guest denial for admin mutations, browser-price stripping, exact Stripe unit splits, partial-return fils and COD email replay.
+- Database: `npm run test:offers:db`. Set `OFFER_TEST_DATABASE_URL` to a local PostgreSQL maintenance DB. The runner rejects remote hosts, creates an isolated database from the local schema contract and payment migration, applies the new offer migration, runs rollback assertions, checks two concurrent final-redemption attempts and simultaneous same-key retries, then drops only its generated test database.
+- Cover mixed eligible/ineligible lines, category targeting, minimum spend, caps, scheduling/expiry/disable, stock-failure rollback, reserved versus redeemed usage, cancellation, active-admin auditing, RPC/table privileges, exact line allocations, repeat fulfillment after shipment and partial-return ceilings.
+- Before production rollout: apply the migration in a test environment; verify admin creation/edit/draft preview, copy link/banner click, activation/removal, mobile/desktop layouts, actual sandbox Stripe checkout/expiry and COD shipping/cancellation. Do not run a build without the user's permission. No live payments or emails are part of automated tests.
+
 ## Customer Accounts
+
 - Customer can sign up, verify their email and sign in
 - Wrong password shows an error
 - Logged-out users can't open `/account/*`

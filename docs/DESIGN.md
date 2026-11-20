@@ -105,6 +105,11 @@ Monochrome, like the final logo (pure black on white, received 7 Oct 2026): one 
 Left out from the reference: wishlist hearts, the search icon, the newsletter box and the Instagram gallery (out of scope, Q25). Prices are always AED.
 
 ## Components
+### Homepage lifestyle and story additions (TASK-131, approved 20 Nov 2026)
+- After categories, "Style for Every Moment" pairs two model-led photographs with Everyday Elegance and Dressed for Celebration captions. The panels are staggered on desktop and stacked on mobile; text sits outside the images and each panel links to `/collections`.
+- After New Arrivals, "Heritage-Inspired. Made for Every Story." pairs a portrait crop with the existing About introduction and three commitments: Curated Style, Quality & Comfort, and Fashion for Every Moment. A semantic "Discover Our Story" link opens `/about`.
+- Use the local campaign imagery in `public/images/`, `next/image` with reserved aspect ratios, lazy loading and `unoptimized`. These are editorial visuals, not product purchase links or evidence of in-house manufacturing. Keep the existing tokens, square corners and fonts; hover motion respects reduced-motion preferences.
+
 Lyra components are compact: a default Button is 32px tall and `lg` is 36px. The storefront gets its larger sizes through `className` or small wrappers in `src/components/store/` (for example `StoreButton`), never by editing `src/components/ui/`. The admin uses the shadcn sizes as they are.
 
 ### Buttons

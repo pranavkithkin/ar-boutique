@@ -1,5 +1,7 @@
 "use server"
 
+import { returnLineAmount } from "@/features/offers/pricing"
+
 import "server-only"
 import { revalidatePath } from "next/cache"
 import crypto from "crypto"
@@ -212,7 +214,7 @@ export async function getCustomerReturnsAction(
       }))
 
       const totalRefundFils = items.reduce(
-        (sum, it) => sum + (it.refundAmountFils || it.unitPriceFils * it.quantity),
+        (sum, it) => sum + (it.refundAmountFils ?? it.unitPriceFils * it.quantity),
         0
       )
 
@@ -358,7 +360,7 @@ export async function getCustomerReturnDetailsAction(
     }))
 
     const totalRefundFils = items.reduce(
-      (sum, it) => sum + (it.refundAmountFils || it.unitPriceFils * it.quantity),
+      (sum, it) => sum + (it.refundAmountFils ?? it.unitPriceFils * it.quantity),
       0
     )
 
@@ -578,6 +580,8 @@ export async function submitCustomerReturnAction(
           quantity,
           unit_price_fils,
           is_final_sale,
+          total_fils,
+          discount_fils,
           media_key
         )
       `
@@ -709,19 +713,24 @@ export async function submitCustomerReturnAction(
     const returnItemsToInsert = payload.items.map((it) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const original = orderItemsMap.get(it.orderItemId) as any
-      const refundAmountFils = it.unitPriceFils * it.quantity
+      const returnedQuantity = existingReturnedItems
+        .filter(r => r.orderItemId === it.orderItemId && !["rejected", "cancelled"].includes(r.status))
+        .reduce((sum, r) => sum + r.quantity, 0)
+      const refundAmountFils = original?.discount_fils > 0
+        ? returnLineAmount(original.total_fils - original.discount_fils, original.quantity, returnedQuantity, it.quantity)
+        : original.unit_price_fils * it.quantity
 
       return {
         return_id: returnId,
         order_item_id: it.orderItemId,
-        variant_id: it.variantId || original?.variant_id || null,
-        product_name: it.productName,
-        colour_name: it.colourName,
-        style_code: it.styleCode || original?.style_code || null,
-        size_label: it.sizeLabel,
-        sku: it.sku,
-        media_key: it.mediaKey || original?.media_key || null,
-        unit_price_fils: it.unitPriceFils,
+        variant_id: original.variant_id || null,
+        product_name: original.product_name,
+        colour_name: original.colour_name,
+        style_code: original.style_code || null,
+        size_label: original.size_label,
+        sku: original.sku,
+        media_key: original.media_key || null,
+        unit_price_fils: original.unit_price_fils,
         quantity: it.quantity,
         reason: it.reason,
         refund_amount_fils: refundAmountFils,

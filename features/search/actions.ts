@@ -2,6 +2,7 @@
 
 import { formatAED } from "@/lib/money"
 import type { SearchResultItem, SearchProductsResponse } from "./types"
+import { getStorefrontOfferTags } from "@/features/offers/service"
 
 interface RawProductData {
   id: string
@@ -164,10 +165,12 @@ export async function searchProductsAction(query: string): Promise<SearchProduct
     // Sort descending by match score, limit to top 8 items
     results.sort((a, b) => b.score - a.score)
     const topResults = results.slice(0, 8).map((r) => r.item)
+    const offerTags = await getStorefrontOfferTags(topResults.map(item => item.id))
+    const taggedResults = topResults.map(item => ({ ...item, offerTags: offerTags[item.id] ?? [] }))
 
     return {
       success: true,
-      data: topResults,
+      data: taggedResults,
       query: sanitizedQuery,
     }
   } catch (err: unknown) {

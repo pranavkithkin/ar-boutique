@@ -147,7 +147,7 @@ export async function getInvoiceData(orderId: string): Promise<InvoiceData | nul
       day: "numeric",
     })
 
-    const vatRatePct = settings.vat_rate_pct || 5
+    const vatRatePct = order.offer_id ? (order.vat_rate_bps || 0) / 100 : settings.vat_rate_pct || 5
     const deliveryFeeFils = order.delivery_fee_fils || 0
     const totalGrossFils = order.total_fils || 0
 
@@ -162,19 +162,22 @@ export async function getInvoiceData(orderId: string): Promise<InvoiceData | nul
       sku?: string | null
       quantity?: number | null
       price_fils?: number | null
+      unit_price_fils?: number | null
+      total_fils?: number | null
+      discount_fils?: number | null
     }>
     const items: InvoiceLineItem[] = rawItems.map((it) => {
-      const grossTotal = (it.price_fils || 0) * (it.quantity || 1)
-      const vat = calculateVatPortion(grossTotal)
+      const grossTotal = order.offer_id ? (it.total_fils || 0) - (it.discount_fils || 0) : (it.price_fils || 0) * (it.quantity || 1)
+      const vat = order.offer_id ? Math.round(grossTotal * vatRatePct / (100 + vatRatePct)) : calculateVatPortion(grossTotal)
       const netTotal = grossTotal - vat
-      const unitGross = it.price_fils || 0
+      const unitGross = order.offer_id ? it.unit_price_fils || 0 : it.price_fils || 0
       const unitNet = Math.round((unitGross * 100) / (100 + vatRatePct))
 
       return {
         id: it.id,
         productName: it.product_name || "Boutique Garment",
         colourName: it.colour_name || "Standard",
-        sizeLabel: it.size_name || null,
+        sizeLabel: it.size_label || it.size_name || null,
         styleCode: it.style_code || null,
         sku: it.sku || null,
         quantity: it.quantity || 1,
@@ -186,7 +189,7 @@ export async function getInvoiceData(orderId: string): Promise<InvoiceData | nul
       }
     })
 
-    const totalVatFils = calculateVatPortion(totalGrossFils)
+    const totalVatFils = order.offer_id ? order.vat_fils || 0 : calculateVatPortion(totalGrossFils)
     const subtotalNetFils = totalGrossFils - deliveryFeeFils - totalVatFils
 
     return {

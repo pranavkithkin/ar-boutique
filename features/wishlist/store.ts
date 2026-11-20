@@ -29,6 +29,7 @@ export const useWishlistStore = create<WishlistStore>()(
               price: it.priceText,
               imageSrc: it.imageSrc || "",
               colourName: it.colourName || undefined,
+              offerTags: it.offerTags ?? [],
               addedAt: it.createdAt,
             }))
             set({ items: mapped, isInitialized: true, isLoading: false })
@@ -66,6 +67,7 @@ export const useWishlistStore = create<WishlistStore>()(
         if (res.success) {
           const newItem: WishlistItem = {
             ...item,
+            offerTags: res.offerTags ?? item.offerTags ?? [],
             addedAt: new Date().toISOString(),
           }
           set((state) => ({ items: [newItem, ...state.items] }))

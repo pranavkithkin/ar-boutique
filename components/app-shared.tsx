@@ -103,6 +103,7 @@ export const navGroups: SidebarNavGroup[] = [
 				path: "/admin/coupons",
 				icon: <TicketPercentIcon />,
 			},
+			{ title: "Offers", path: "/admin/offers", icon: <TicketPercentIcon /> },
 			{
 				title: "Payment Methods",
 				path: "/admin/payments",

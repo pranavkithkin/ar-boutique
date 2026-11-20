@@ -15,6 +15,9 @@ import {
   getStorefrontHeroSlides,
 } from "@/features/admin/banners/actions"
 import { JOURNAL_HOME_ENABLED } from "@/lib/journal"
+import { LifestyleSection } from "@/features/home/components/LifestyleSection"
+import { BrandStorySection } from "@/features/home/components/BrandStorySection"
+import { lifestyleContent, brandStoryContent } from "@/features/home/content"
 import {
   AnimatedSection,
   AnimatedDiv,
@@ -104,6 +107,8 @@ export default async function Home() {
           </StaggerContainer>
         </AnimatedSection>
 
+        <LifestyleSection content={lifestyleContent} />
+
         {/* New Arrivals Section */}
         <AnimatedSection delay={0.05} className="py-6 md:py-8 mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
           <SectionHeading className="mb-8 md:mb-12">New Arrivals</SectionHeading>
@@ -131,6 +136,7 @@ export default async function Home() {
                         imageSrc={prod.imageSrc}
                         href={`/collections/${prod.slug}`}
                         sizes={prod.sizes}
+                        offerTags={prod.offerTags}
                       />
                     </CarouselItem>
                   ))}
@@ -151,6 +157,8 @@ export default async function Home() {
             </Link>
           </AnimatedDiv>
         </AnimatedSection>
+
+        <BrandStorySection content={brandStoryContent} />
 
         {/* Promo Banner Section: dynamically connected to admin panel */}
         {promoBanners.length > 0 && (

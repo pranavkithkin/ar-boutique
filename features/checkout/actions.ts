@@ -220,12 +220,14 @@ async function generateOrderNumber(supabase: ReturnType<typeof createAdminClient
  */
 import { calculateCouponDiscount } from "@/features/coupons/service"
 import type { Coupon } from "@/features/coupons/types"
+import { placeOfferOrder } from "@/features/offers/checkout-service"
 
 export async function placeCheckoutOrderAction(
   formData: CheckoutFormValues,
   cartItems: CartItem[],
   couponCode?: string,
   checkoutKey?: string,
+  offerSlug?: string,
 ): Promise<PlaceOrderResult> {
   try {
     if (!cartItems || cartItems.length === 0) {
@@ -255,6 +257,11 @@ export async function placeCheckoutOrderAction(
       }
     } catch {
       // Guest or local session
+    }
+
+    if (offerSlug) {
+      if (couponCode?.trim()) return { success: false, error: "Remove the promo code before applying an offer." }
+      return placeOfferOrder(data, cartItems, clerkUserId, checkoutKey, offerSlug)
     }
 
     // COD pricing, eligibility, items, holds and coupon redemption are one transaction.

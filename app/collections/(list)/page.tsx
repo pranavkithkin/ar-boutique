@@ -254,6 +254,7 @@ export default async function CollectionPage({ searchParams }: CollectionPagePro
                       imageSrc={prod.imageSrc}
                       href={`/collections/${prod.slug}`}
                       sizes={prod.sizes}
+                      offerTags={prod.offerTags}
                     />
                   ))}
                 </div>

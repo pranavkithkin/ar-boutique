@@ -38,6 +38,8 @@ export function QuickAddModal({
 }: QuickAddModalProps) {
   const [product, setProduct] = React.useState<ProductDetail | null>(null)
   const [loading, setLoading] = React.useState(false)
+  const [loadedSizesForSlug, setLoadedSizesForSlug] = React.useState<string | null>(null)
+  const [sizeLoadError, setSizeLoadError] = React.useState(false)
   const [selectedSizeId, setSelectedSizeId] = React.useState<string>(
     initialSizes && initialSizes.length > 0 ? initialSizes[0].id : ""
   )
@@ -46,25 +48,24 @@ export function QuickAddModal({
 
   const addItem = useCartStore((state) => state.addItem)
 
-  // Initialize selected size when initialSizes are supplied
-  React.useEffect(() => {
-    if (initialSizes && initialSizes.length > 0 && !selectedSizeId) {
-      setSelectedSizeId(initialSizes[0].id)
-    }
-  }, [initialSizes, selectedSizeId])
+  // Preloaded size options are ready immediately; otherwise wait for the product response.
+  const hasInitialSizes = Boolean(initialSizes?.length)
+  const sizeOptionsReady = hasInitialSizes || loadedSizesForSlug === slug
+  const sizeOptionsLoading = isOpen && (!sizeOptionsReady || loading) && !sizeLoadError
 
-  // Fetch full details only if initialSizes are not provided or for extra details
+  // Fetch full details for modal content and load size options when they are not preloaded.
   React.useEffect(() => {
     if (!isOpen || !slug) return
 
     let cancelled = false
     setAdded(false)
     setQuantity(1)
+    setProduct(null)
+    setSelectedSizeId(initialSizes?.[0]?.id ?? "")
+    setSizeLoadError(false)
+    if (!initialSizes?.length) setLoadedSizesForSlug(null)
 
-    // If initial sizes already exist, we don't block the UI with loading
-    if (!initialSizes || initialSizes.length === 0) {
-      setLoading(true)
-    }
+    setLoading(!initialSizes?.length)
 
     fetch(`/api/products/${slug}`)
       .then((res) => {
@@ -74,13 +75,13 @@ export function QuickAddModal({
       .then((data: ProductDetail) => {
         if (!cancelled && data) {
           setProduct(data)
-          if (!selectedSizeId && data.sizes && data.sizes.length > 0) {
-            setSelectedSizeId(data.sizes[0].id)
-          }
+          setLoadedSizesForSlug(slug)
+          setSelectedSizeId(current => current || data.sizes?.[0]?.id || "")
         }
       })
       .catch((err) => {
         console.error("Error fetching product modal data:", err)
+        if (!cancelled && !initialSizes?.length) setSizeLoadError(true)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -89,7 +90,7 @@ export function QuickAddModal({
     return () => {
       cancelled = true
     }
-  }, [isOpen, slug, initialSizes, selectedSizeId])
+  }, [isOpen, slug, initialSizes])
 
   // Available sizes from either full product or initial preloaded sizes
   const availableSizes =
@@ -106,6 +107,8 @@ export function QuickAddModal({
   const priceFils = selectedSize?.priceFils || (initialSizes?.[0]?.priceFils ?? 9000)
 
   const handleAddToCart = () => {
+    if (!sizeOptionsReady || loading) return
+
     const itemSku = currentSku || slug
     const itemName = product?.name || initialName || "Product"
     const itemImage = product?.images?.[0] || initialImageSrc || "/images/placeholder.jpg"
@@ -215,7 +218,7 @@ export function QuickAddModal({
                   <span className="text-foreground font-medium">Select Size:</span>
                   {selectedSize ? (
                     <span className="text-muted-foreground">{selectedSize.name}</span>
-                  ) : loading ? (
+                  ) : sizeOptionsLoading ? (
                     <span className="text-muted-foreground text-[11px] flex items-center gap-1">
                       <Loader2 className="w-3 h-3 animate-spin" /> Loading sizes...
                     </span>
@@ -242,11 +245,13 @@ export function QuickAddModal({
                       )
                     })}
                   </div>
-                ) : loading ? (
+                ) : sizeOptionsLoading ? (
                   <div className="flex gap-2 animate-pulse">
                     <div className="h-9 w-14 bg-muted rounded-xs" />
                     <div className="h-9 w-14 bg-muted rounded-xs" />
                   </div>
+                ) : sizeLoadError ? (
+                  <p role="status" className="text-xs text-destructive">Sizes couldn’t be loaded. Close and reopen to try again.</p>
                 ) : (
                   <div className="text-xs text-muted-foreground">Standard Fit (One Size)</div>
                 )}
@@ -313,6 +318,7 @@ export function QuickAddModal({
               <div className="space-y-2.5 pt-3 border-t border-border/40 sm:border-t-0">
                 <StoreButton
                   onClick={handleAddToCart}
+                  disabled={!sizeOptionsReady || loading}
                   className="w-full h-11 sm:h-12 uppercase tracking-widest text-xs flex items-center justify-center gap-2"
                 >
                   {added ? (

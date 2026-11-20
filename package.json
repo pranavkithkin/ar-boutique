@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "test:offers:db": "node scripts/test-offers-db.mjs",
     "test:watch": "vitest"
   },
   "dependencies": {

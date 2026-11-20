@@ -13,9 +13,12 @@ import {
 import { useCartStore } from "../store"
 import { formatAED } from "@/lib/money"
 import { StoreButton } from "@/components/store/StoreButton"
+import { OfferSummary } from "@/features/offers/components/OfferSummary"
+import { useOfferQuote } from "@/features/offers/components/use-offer-quote"
 import { getCartStockAvailabilityAction, type CartStockMap } from "../actions"
 
 export function CartDrawer() {
+  const offerResult = useOfferQuote()
   const {
     items,
     isOpen,
@@ -213,6 +216,7 @@ export function CartDrawer() {
 
             {/* Footer with subtotal and checkout */}
             <div className="p-6 border-t border-border bg-card/40 flex flex-col gap-4">
+              <OfferSummary offer={offerResult.offer} quote={offerResult.quote} error={offerResult.error} pending={offerResult.pending} />
               {items.some((i) => stockMap[i.sku]?.isSoldOut) && (
                 <div className="p-2.5 bg-destructive/10 border border-destructive/20 text-destructive text-[11px] font-medium leading-tight">
                   One or more items in your bag are currently sold out. Please remove them to proceed.

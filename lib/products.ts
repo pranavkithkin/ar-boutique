@@ -1,3 +1,7 @@
+import "server-only"
+import { getStorefrontOfferTags } from "@/features/offers/service"
+import type { ProductOfferTag } from "@/features/offers/types"
+
 export interface ProductVariantSize {
   id: string
   name: string
@@ -18,6 +22,7 @@ export interface ProductListItem {
   mediaKey: string
   imageSrc: string
   sizes?: ProductVariantSize[]
+  offerTags?: ProductOfferTag[]
 }
 
 export interface ProductsPageResult {
@@ -188,8 +193,10 @@ export async function getProductsPage({
     }
   })
 
+  const offerTags = await getStorefrontOfferTags(products.map(product => product.id))
+
   return {
-    products,
+    products: products.map(product => ({ ...product, offerTags: offerTags[product.id] ?? [] })),
     total,
     page: safePage,
     limit: safeLimit,

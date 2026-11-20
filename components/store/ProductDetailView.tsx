@@ -5,6 +5,7 @@ import { ProductDetail, ProductColourway } from "@/lib/product-detail"
 import { SyncScrollLayout } from "./SyncScrollLayout"
 import { ProductGallery } from "./ProductGallery"
 import { ProductInfo } from "./ProductInfo"
+import type { ProductOfferTag } from "@/features/offers/types"
 
 interface ProductDetailViewProps {
   returnWindowDays: number
@@ -15,6 +16,7 @@ interface ProductDetailViewProps {
     totalCount: number
   }
   whatsappNumber?: string
+  offerTags?: ProductOfferTag[]
 }
 
 export function ProductDetailView({
@@ -23,6 +25,7 @@ export function ProductDetailView({
   initialColourSlug,
   reviewSummary,
   whatsappNumber,
+  offerTags = [],
 }: ProductDetailViewProps) {
   // Find matching initial colourway or default to first
   const initialColourway = React.useMemo(() => {
@@ -77,6 +80,7 @@ export function ProductDetailView({
           onSelectColourway={handleSelectColourway}
           reviewSummary={reviewSummary}
           whatsappNumber={whatsappNumber}
+          offerTags={offerTags}
         />
       }
     />

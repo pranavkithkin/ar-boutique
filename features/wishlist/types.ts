@@ -1,3 +1,5 @@
+import type { ProductOfferTag } from "@/features/offers/types"
+
 export interface WishlistItem {
   productId: string
   slug: string
@@ -5,6 +7,7 @@ export interface WishlistItem {
   price: string
   imageSrc: string
   colourName?: string
+  offerTags?: ProductOfferTag[]
   addedAt: string
 }
 

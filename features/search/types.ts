@@ -1,3 +1,5 @@
+import type { ProductOfferTag } from "@/features/offers/types"
+
 export interface SearchResultItem {
   id: string
   name: string
@@ -10,6 +12,7 @@ export interface SearchResultItem {
   mediaKey: string
   imageSrc: string
   href: string
+  offerTags?: ProductOfferTag[]
 }
 
 export interface SearchProductsResponse {

@@ -1,5 +1,17 @@
 # Architecture Decisions
 
+## ADR-042: Banner-linked offer campaigns
+**Status:** Replaced by ADR-043, 20 Nov 2026.
+**Decision:** Add percentage, fixed fils and free-delivery campaigns scoped to all products, selected products or selected categories. Each campaign has a stable `/offers/[slug]` page, draft/published/disabled state, UAE scheduling, optional minimum eligible spend, discount cap and usage limits. Customers explicitly activate one offer, carried in their cart; it cannot stack with a promo code. Existing selling prices, including sale prices, are the base. Free delivery does not waive COD fees. Buy/get and bundle pricing remain a follow-up.
+**Implementation:** Reuse the existing coupon discount semantics in a shared order transaction. `place_cod_order()` keeps its public signature and delegates to the shared server-only transaction; campaign card checkout uses that transaction too. Private offer/redemption tables have RLS with no public grants. Verified active admins manage offers through the existing admin authorization helper; writes recheck the active admin row and audit atomically. Usage is reserved for card checkout, committed on payment, and released on failed/cancelled orders; COD usage is redeemed at placement and released on unpaid cancellation. Snapshots and integer-fils allocations preserve historical invoices and partial-return limits. The checkout email identifies the customer for redemption limits; this is not verified per-person identity.
+**Reason:** Campaign pages give banners a stable shopping destination while server-side pricing and row locks protect totals, stock and redemption limits. These rules extend the later coupon implementation and supersede original PRD Q8.
+**Follow-up instruction:** The user explicitly excluded cron on 20 Nov. Offer reservations are released by signed Stripe expiry/failure webhooks or a definitive checkout error; uncertain gateway outcomes remain reserved for checkout retry or manual review. This feature adds no scheduled job or cron configuration.
+
+## ADR-043: Automatically apply the best eligible offer
+**Status:** Accepted, 20 Nov 2026. Replaces the customer-activation rule in ADR-042.
+**Decision:** Automatically evaluate published, currently active campaigns against the cart and checkout email. Apply the single qualifying campaign that gives the customer the greatest combined merchandise discount and delivery savings; break ties in favour of the newer campaign. Do not show an activation or removal button. Keep the no-stacking rule for promo codes; an automatically selected offer takes precedence over a promo code. Continue to verify final eligibility, prices and limits server-side when placing the order.
+**Reason:** Customers should receive an eligible campaign by adding qualifying pieces to their bag, without a separate activation step. A single best offer avoids stacking discounts while making overlapping campaigns predictable.
+
 ## ADR-041: Allow multiple open COD orders per customer
 **Status:** Accepted by the user, 11 Nov 2026.
 **Decision:** Do not reject a new COD order because the customer already has pending, confirmed, packed or shipped COD orders. Supersedes the open-order limit in ADR-033. Preserve stock checks, configured COD availability/value limits, customer/refusal restrictions and idempotency for retries of the same checkout attempt.

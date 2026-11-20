@@ -12,8 +12,49 @@ import { useWishlistStore } from "@/features/wishlist/store"
 import { CategoryMenu, useMenuCategories } from "@/components/store/CategoryMenu"
 import { SearchModal } from "@/components/store/SearchModal"
 import { SignOutDialog } from "@/components/store/SignOutDialog"
+import { useUser } from "@clerk/nextjs"
+import { isClerkConfigured } from "@/lib/clerk"
+import { getCurrentCustomerAction } from "@/features/auth/actions"
 
 const subscribeToHydration = () => () => {}
+
+function CustomerSessionStatus({ onChange }: { onChange: (isSignedIn: boolean) => void }) {
+  return isClerkConfigured()
+    ? <ClerkCustomerSessionStatus onChange={onChange} />
+    : <SupabaseCustomerSessionStatus onChange={onChange} />
+}
+
+function ClerkCustomerSessionStatus({ onChange }: { onChange: (isSignedIn: boolean) => void }) {
+  const { isLoaded, isSignedIn } = useUser()
+
+  React.useEffect(() => {
+    if (!isLoaded) return
+    if (isSignedIn) {
+      onChange(true)
+      return
+    }
+
+    let active = true
+    void getCurrentCustomerAction()
+      .then(session => { if (active) onChange(Boolean(session)) })
+      .catch(() => { if (active) onChange(false) })
+    return () => { active = false }
+  }, [isLoaded, isSignedIn, onChange])
+
+  return null
+}
+
+function SupabaseCustomerSessionStatus({ onChange }: { onChange: (isSignedIn: boolean) => void }) {
+  React.useEffect(() => {
+    let active = true
+    void getCurrentCustomerAction()
+      .then(session => { if (active) onChange(Boolean(session)) })
+      .catch(() => { if (active) onChange(false) })
+    return () => { active = false }
+  }, [onChange])
+
+  return null
+}
 
 export function StoreHeader() {
   const pathname = usePathname()
@@ -24,6 +65,7 @@ export function StoreHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
   const [isSearchOpen, setIsSearchOpen] = React.useState(false)
   const [isSignOutOpen, setIsSignOutOpen] = React.useState(false)
+  const [isCustomerSignedIn, setIsCustomerSignedIn] = React.useState<boolean | null>(null)
 
   const categories = useMenuCategories()
   const handleMobileMenu = (open: boolean) => {
@@ -39,6 +81,7 @@ export function StoreHeader() {
   const syncWithDatabase = useWishlistStore((state) => state.syncWithDatabase)
   const isWishlistInitialized = useWishlistStore((state) => state.isInitialized)
   const mounted = React.useSyncExternalStore(subscribeToHydration, () => true, () => false)
+  const updateCustomerSession = React.useCallback((signedIn: boolean) => setIsCustomerSignedIn(signedIn), [])
 
   React.useEffect(() => {
     if (!isWishlistInitialized) {
@@ -112,19 +155,24 @@ export function StoreHeader() {
                     <Heart className="h-5 w-5" strokeWidth={1.5} />
                     <span>My Wishlist {mounted && wishlistCount > 0 ? `(${wishlistCount})` : ""}</span>
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMobileMenuOpen(false)
-                      setTimeout(() => {
-                        setIsSignOutOpen(true)
-                      }, 150)
-                    }}
-                    className="flex items-center gap-3 text-muted-foreground hover:text-destructive transition-colors text-left font-sans cursor-pointer"
-                  >
-                    <LogOut className="h-5 w-5" strokeWidth={1.5} />
-                    <span>Sign Out</span>
-                  </button>
+                  {isCustomerSignedIn === true ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false)
+                        setTimeout(() => setIsSignOutOpen(true), 150)
+                      }}
+                      className="flex items-center gap-3 text-muted-foreground hover:text-destructive transition-colors text-left font-sans cursor-pointer"
+                    >
+                      <LogOut className="h-5 w-5" strokeWidth={1.5} />
+                      <span>Sign Out</span>
+                    </button>
+                  ) : isCustomerSignedIn === false ? (
+                    <Link href="/sign-in" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-muted-foreground hover:text-foreground">
+                      <User className="h-5 w-5" strokeWidth={1.5} />
+                      <span>Sign In</span>
+                    </Link>
+                  ) : null}
                 </div>
               </div>
             </SheetContent>
@@ -232,6 +280,7 @@ export function StoreHeader() {
       </div>
       <CartDrawer />
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <CustomerSessionStatus onChange={updateCustomerSession} />
       <SignOutDialog open={isSignOutOpen} onOpenChange={setIsSignOutOpen} />
     </header>
   )

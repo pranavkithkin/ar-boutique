@@ -35,6 +35,20 @@ export function ProductCard({
   offerTags = [],
 }: ProductCardProps) {
   const [isModalOpen, setIsModalOpen] = React.useState(false)
+  const [activeBadgeIndex, setActiveBadgeIndex] = React.useState(0)
+  const saleBadgeCount = compareAtPrice ? 1 : 0
+  const badgeCount = saleBadgeCount + offerTags.length
+  const displayedBadgeIndex = badgeCount ? activeBadgeIndex % badgeCount : 0
+
+  React.useEffect(() => {
+    if (badgeCount < 2) return
+
+    const timer = window.setInterval(() => {
+      setActiveBadgeIndex(index => (index + 1) % badgeCount)
+    }, 4000)
+
+    return () => window.clearInterval(timer)
+  }, [badgeCount])
 
   // Extract slug from href e.g. /collections/dress-j0395 -> dress-j0395
   const slug = href.replace(/^\/collections\//, "").replace(/^\//, "")
@@ -66,19 +80,22 @@ export function ProductCard({
             />
           </div>
 
-          {/* Red Sale Badge */}
-          {compareAtPrice && (
-            <div className="absolute bottom-2.5 left-2.5 sm:bottom-3 sm:left-3 z-10 pointer-events-none">
-              <span className="inline-flex items-center px-2 py-0.5 text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider bg-destructive text-destructive-foreground rounded-xs shadow-xs">
-                {discountPercent ? `Sale -${discountPercent}%` : "Sale"}
-              </span>
-            </div>
-          )}
-
-          {offerTags.length > 0 && (
-            <div className="absolute bottom-2.5 right-2.5 z-20 flex max-w-[75%] flex-col items-end gap-1 sm:bottom-3 sm:right-3">
-              {offerTags.slice(0, 2).map(tag => <OfferTagLink key={tag.slug} tag={tag} />)}
-              {offerTags.length > 2 && <span className="bg-background/95 px-2 py-0.5 text-xs text-foreground">+{offerTags.length - 2} offers</span>}
+          {badgeCount > 0 && (
+            <div className="absolute bottom-2.5 left-2.5 z-20 max-w-[calc(100%-1.25rem)] sm:bottom-3 sm:left-3">
+              {compareAtPrice && displayedBadgeIndex === 0 ? (
+                <span
+                  key="sale-badge"
+                  className="inline-flex max-w-full items-center px-2 py-0.5 text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-wider bg-destructive text-destructive-foreground rounded-xs shadow-xs animate-in fade-in-0 slide-in-from-bottom-1 duration-300 motion-reduce:animate-none"
+                >
+                  {discountPercent ? `Sale -${discountPercent}%` : "Sale"}
+                </span>
+              ) : offerTags[displayedBadgeIndex - saleBadgeCount] ? (
+                <OfferTagLink
+                  key={offerTags[displayedBadgeIndex - saleBadgeCount].slug}
+                  tag={offerTags[displayedBadgeIndex - saleBadgeCount]}
+                  className="block max-w-full min-w-0 animate-in fade-in-0 slide-in-from-bottom-1 duration-300 motion-reduce:animate-none"
+                />
+              ) : null}
             </div>
           )}
 

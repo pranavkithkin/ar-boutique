@@ -602,7 +602,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                 control={control}
                 render={({ field }) => (
                   <div className="space-y-3">
-                    {/* Option 1: Card, Apple Pay, Google Pay */}
+                    {/* Option 1: Card and Apple Pay */}
                     <label
                       className={`block p-4 rounded-xs border transition-all ${
                         !isCardAvailable
@@ -624,7 +624,7 @@ export function CheckoutView({ config, customerContext }: CheckoutViewProps) {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-semibold text-foreground">
-                                Card, Apple Pay or Google Pay
+                                Card or Apple Pay
                               </span>
                               {!isCardAvailable && (
                                 <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20">

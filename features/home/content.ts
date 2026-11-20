@@ -21,7 +21,7 @@ export const lifestyleContent = {
   ],
 }
 export const brandStoryContent = {
-  title: "Heritage-Inspired. Made for Every Story.",
+  title: "Made for Every Story.",
   description:
     "At The AR Boutique, we carefully curate styles that help you look and feel your best, whether you're dressing for a festive celebration, a special occasion, a casual outing, or your everyday moments.",
   image: "/images/homepage-lifestyle-teal-paisley.png",

@@ -171,7 +171,7 @@ Colours down, sizes across (a colourway without sizes has one "No size" column).
 Not in the reference; it follows the same style.
 - **Desktop:** two columns. Left: Delivery details (full name, UAE mobile with +971, emirate select, area, street and building, flat or villa, landmark optional), then Payment. Right: order summary (lines with photo, colour and size, subtotal, delivery, COD fee when chosen, VAT note, total), sticky.
 - **Mobile:** a collapsible order summary at the top showing the total, then the form.
-- **Payment:** two radio cards, "Card, Apple Pay or Google Pay" and "Cash on delivery" (helper text: "Pay in cash when your order arrives. We'll call or WhatsApp you to confirm."). When COD isn't available, its card is disabled with the reason underneath ("Sign in to pay with cash on delivery", "Cash on delivery is available for orders up to AED 1,000").
+- **Payment:** two radio cards, "Card or Apple Pay" and "Cash on delivery" (helper text: "Pay in cash when your order arrives. We'll call or WhatsApp you to confirm."). When COD isn't available, its card is disabled with the reason underneath ("Sign in to pay with cash on delivery", "Cash on delivery is available for orders up to AED 1,000").
 - **Button:** "Continue to Payment" for card (goes to Stripe), "Place Order" for COD.
 
 ### COD order received page

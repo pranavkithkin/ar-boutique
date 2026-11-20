@@ -300,3 +300,9 @@ Build dedicated `/cart` page with server re-validation (TASK-049) or setup check
 
 20 Nov 2026: Quick Add modal now disables Add to Bag until the selected product's size options are ready. Preloaded sizes are immediately ready; otherwise the product-size fetch must finish successfully. The handler also guards against early adds, and failed size loading leaves the action disabled with an explanation. No automated tests run.
 20 Nov 2026: Updated the homepage brand story headline to “Made for Every Story.” at the user's request. Updated stale offer tests for the automatic offer API and summary component after manual activation was removed.
+
+20 Nov 2026: Changed mobile product-card labels from a stacked pair to a single badge position that cycles between the sale and campaign labels every four seconds with a subtle slide/fade transition. The transition respects reduced-motion preferences.
+
+20 Nov 2026: Removed Google Pay from the storefront's card payment-method label. This changes only storefront copy; Stripe Checkout's available wallet methods are still controlled by the Stripe payment-method configuration.
+
+20 Nov 2026: Fixed the mobile menu's unconditional Sign Out button. It now checks the configured Clerk session, falls back to the existing Supabase customer session, shows Sign In for visitors, and renders no auth action until status is known.

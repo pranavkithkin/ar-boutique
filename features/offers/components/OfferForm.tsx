@@ -47,7 +47,7 @@ export function OfferForm({ offer, products, categories }: { offer?: Offer; prod
     <Card><CardHeader><CardTitle>Campaign details</CardTitle><CardDescription>Create the page customers open from your banner.</CardDescription></CardHeader><CardContent>
       <FieldGroup>
         <Field><FieldLabel htmlFor="offer-title">Title</FieldLabel><Input id="offer-title" defaultValue={offer?.title ?? ""} {...register("title")} aria-invalid={!!errors.title} /></Field>
-        <Field><FieldLabel htmlFor="offer-slug">Offer link: /offers/</FieldLabel><Input id="offer-slug" defaultValue={offer?.slug ?? ""} readOnly={!!offer} placeholder="festive-sale" {...register("slug")} aria-invalid={!!errors.slug} /></Field>
+        <Field><FieldLabel htmlFor="offer-slug">Offer link: /offers/</FieldLabel><Input id="offer-slug" defaultValue={offer?.slug ?? ""} placeholder="festive-sale" {...register("slug")} aria-invalid={!!errors.slug} /><p className="text-sm text-muted-foreground">Use lowercase words separated by hyphens. If you change this link, update banners using the old link.</p></Field>
         <Field><FieldLabel htmlFor="offer-description">Description</FieldLabel><Textarea id="offer-description" defaultValue={offer?.description ?? ""} {...register("description")} /></Field>
         <Field><FieldLabel htmlFor="offer-terms">Additional terms</FieldLabel><Textarea id="offer-terms" defaultValue={offer?.terms ?? ""} {...register("terms")} /></Field>
         <Field><FieldLabel htmlFor="offer-status">Status</FieldLabel><Controller name="status" control={control} render={({ field }) => <Select value={field.value} onValueChange={field.onChange}>

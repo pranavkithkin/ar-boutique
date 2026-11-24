@@ -261,3 +261,6 @@ es.cloudinary.com).
 **Status:** Accepted, 16 Oct 2026. Amends ADR-035 and PRD Q39
 **Decision:** When a customer requests a return for a Cash on Delivery (COD) order, the return submission form allows them to provide their UAE bank transfer details (Bank Name, Account Holder / Beneficiary Name, and UAE IBAN). These details are stored in `public.return_requests` and presented to administrators on `/admin/returns/[id]` to facilitate direct bank transfer execution when processing the refund.
 **Reason:** Seamless customer experience. Directly collecting the customer's IBAN during return submission eliminates manual back-and-forth communication over email/WhatsApp, accelerating claim resolution. Admins can verify the details and record the bank transfer reference in one unified workflow.
+
+## Offer campaign link editing amendment (24 Nov 2026)
+At the user request, campaign links may be edited after creation. This amends the original stable-link restriction for offer campaigns. Slugs remain unique and validated, and changes retain the existing admin authorization and audit trail. Admins must update existing banner links after renaming; old URLs do not redirect.

@@ -17,10 +17,10 @@ it("renders a labelled draft campaign form with UAE scheduling and no generated 
   expect(html).toContain("Offers cannot stack with coupons")
   expect(html).toContain("Save offer")
 })
-it("keeps an existing campaign link immutable in the edit form", () => {
+it("allows editing an existing campaign link", () => {
   const offer = { ...offerSchema.parse({ title: "Offer test", slug: "offer-test", description: "", terms: "", status: "published", discount_type: "free_shipping", discount_value: 0, scope: "all", product_ids: [], category_ids: [], min_order_fils: 0, max_discount_fils: null, usage_limit: null, per_customer_limit: null, starts_at: null, expires_at: null }), id: "be7da261-1489-4137-92e9-8bd95750eeb2", created_at: "2026-11-20T00:00:00Z" }
   const html = renderToStaticMarkup(createElement(OfferForm, { offer, products: [], categories: [] }))
-  expect(html).toContain('readOnly=""')
+  expect(html).not.toContain('readOnly=""')
   expect(html).toContain('value="offer-test"')
 })
 it("shows an automatically applied offer summary without an activation control", () => {

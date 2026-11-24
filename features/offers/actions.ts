@@ -18,6 +18,10 @@ export async function saveOfferAction(id: string | null, input: unknown) {
   const result = await saveOffer(id, parsed.data.discount_type === "free_shipping" ? { ...parsed.data, discount_value: 0, max_discount_fils: null } : parsed.data, admin.id)
   if (result.success) {
     revalidatePath("/admin/offers")
+    if (id) revalidatePath(`/admin/offers/${id}`)
+    revalidatePath("/offers/[slug]", "page")
+    if (id) revalidatePath(`/admin/offers/${id}`)
+    revalidatePath("/offers/[slug]", "page")
     revalidatePath(`/offers/${parsed.data.slug}`)
   }
   return result

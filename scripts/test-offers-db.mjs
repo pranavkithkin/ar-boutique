@@ -27,7 +27,7 @@ const items = JSON.stringify([{ variant_id: '01581467-7bb3-4717-96d4-298132d8a06
 const checkout = (key, slug, email) => `SELECT public.place_store_order('${key}','${customer(email)}','${items}',NULL,NULL,'${slug}');`
 try {
   run(parsed.href, ['-c', `CREATE DATABASE "${database}"`])
-  run(testUrl.href, ['-f', 'tests/fixtures/offers-schema.sql', '-f', 'supabase/migrations/20261111_payment_concurrency.sql', '-f', 'supabase/migrations/20261120085420_offer_campaigns.sql', '-f', 'supabase/tests/offer_campaigns.sql'])
+  run(testUrl.href, ['-f', 'tests/fixtures/offers-schema.sql', '-f', 'supabase/migrations/20261111_payment_concurrency.sql', '-f', 'supabase/migrations/20261120085420_offer_campaigns.sql', '-f', 'supabase/migrations/20261124041120_editable_offer_links.sql', '-f', 'supabase/tests/offer_campaigns.sql'])
   console.log('Migration and transaction/permissions/partial-return assertions passed.')
   run(testUrl.href, ['-c', "INSERT INTO public.offers(slug,title,status,discount_type,discount_value,usage_limit) VALUES('race-test','Race test','published','percentage',10,1),('retry-test','Retry test','published','percentage',10,1)"])
   const first = asyncQuery(`BEGIN; ${checkout(randomUUID(), 'race-test', 'race-one@example.test')} SELECT pg_sleep(1); COMMIT;`)

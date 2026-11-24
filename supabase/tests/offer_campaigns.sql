@@ -91,7 +91,13 @@ BEGIN
     'discount_type','percentage','discount_value',10,'product_ids','[]'::jsonb,'category_ids','[]'::jsonb,'min_order_fils',0);
   another := public.save_offer(NULL,q,'00000000-0000-4000-8000-000000000001');
   IF NOT EXISTS(SELECT 1 FROM public.audit_log WHERE entity_id=another AND action='offer_created') THEN RAISE EXCEPTION 'Missing offer audit'; END IF;
-  BEGIN PERFORM public.save_offer(another,q||'{"slug":"changed-link"}','00000000-0000-4000-8000-000000000001'); RAISE EXCEPTION 'expected immutable slug' USING ERRCODE='XX000'; EXCEPTION WHEN SQLSTATE 'P0001' THEN NULL; END;
+  PERFORM public.save_offer(another,q||'{"slug":"changed-link"}','00000000-0000-4000-8000-000000000001');
+  IF NOT EXISTS(SELECT 1 FROM public.offers WHERE id=another AND slug='changed-link') THEN RAISE EXCEPTION 'Offer link was not updated'; END IF;
+  IF NOT EXISTS(SELECT 1 FROM public.audit_log WHERE entity_id=another AND action='offer_updated' AND before_data->>'slug'='admin-save-test' AND after_data->>'slug'='changed-link') THEN RAISE EXCEPTION 'Missing offer rename audit'; END IF;
+  BEGIN
+    PERFORM public.save_offer(NULL,q||'{"slug":"changed-link"}','00000000-0000-4000-8000-000000000001');
+    RAISE EXCEPTION 'expected duplicate slug rejection' USING ERRCODE='XX000';
+  EXCEPTION WHEN unique_violation THEN NULL; END;
   UPDATE public.admin_users SET is_active=false WHERE user_id='00000000-0000-4000-8000-000000000001';
   BEGIN PERFORM public.save_offer(another,q,'00000000-0000-4000-8000-000000000001'); RAISE EXCEPTION 'expected inactive admin denial' USING ERRCODE='XX000'; EXCEPTION WHEN SQLSTATE 'P0001' THEN NULL; END;
   RAISE NOTICE 'Offer transaction assertions passed';

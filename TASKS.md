@@ -27,14 +27,18 @@ Done when: an empty app builds, CI is green, a Vercel preview deploys and a test
 - [x] TASK-001 Scaffold Next.js 16 (>= 16.3.8) with TypeScript, Tailwind, ESLint, App Router and `src/`. Do this before copying in these docs: `create-next-app` refuses a folder that already has a `README.md`
 - [x] TASK-002 Strict TypeScript, Prettier, `@/` path alias and the npm scripts listed in `README.md`
 - [x] TASK-003 Create the folder structure from `docs/ARCHITECTURE.md`
-- [x] TASK-004 shadcn/ui: `npx shadcn@latest init` with a preset close to `docs/DESIGN.md` (square corners), then set the exact tokens, radius and fonts from `docs/DESIGN.md`; fonts in `src/lib/fonts.ts`; `success` and `warning` in `src/styles/brand.css`; record the preset code in `docs/DESIGN.md`; try one `apply --only theme,font` to prove a re-theme needs no code changes
+- [x] TASK-004 shadcn/ui: 
+px shadcn@latest init` with a preset close to `docs/DESIGN.md` (square corners), then set the exact tokens, radius and fonts from `docs/DESIGN.md`; fonts in `src/lib/fonts.ts`; `success` and `warning` in `src/styles/brand.css`; record the preset code in `docs/DESIGN.md`; try one `apply --only theme,font` to prove a re-theme needs no code changes
 - [x] TASK-005 `src/lib/env.ts`: validate every environment variable with Zod; keep `.env.example` in sync
-- [ ] TASK-006 Supabase CLI: local project, first migration, generated types (`npm run db:types`)
+- [ ] TASK-006 Supabase CLI: local project, first migration, generated types (
+pm run db:types`)
 - [ ] TASK-007 Vitest and Playwright set up with one passing test each
-- [ ] TASK-008 GitHub repo, protected `main`, GitHub Actions for typecheck, lint, unit tests, build and `npm run check:tokens` (no hard-coded colours or font names in components)
+- [ ] TASK-008 GitHub repo, protected `main`, GitHub Actions for typecheck, lint, unit tests, build and 
+pm run check:tokens` (no hard-coded colours or font names in components)
 - [ ] TASK-009 Vercel project with preview deployments and staging environment variables
 - [ ] TASK-010 `src/lib/money.ts`: fils helpers, `formatAED()`, VAT split (5/105), with unit tests
-- [ ] TASK-011 Sentry: `npx @sentry/wizard@latest -i nextjs`, then match "Sentry" in `docs/ARCHITECTURE.md` (sample rates, PII scrubbing, Replay on errors only and not on `/admin`, tunnel route, source maps and environments on Vercel); delete the example page; add `/api/health`; a test error from preview reaches Sentry
+- [ ] TASK-011 Sentry: 
+px @sentry/wizard@latest -i nextjs`, then match "Sentry" in `docs/ARCHITECTURE.md` (sample rates, PII scrubbing, Replay on errors only and not on `/admin`, tunnel route, source maps and environments on Vercel); delete the example page; add `/api/health`; a test error from preview reaches Sentry
 
 ## Phase 2: Database Foundation
 Done when: core tables exist with RLS and the RLS tests run in CI.
@@ -189,6 +193,7 @@ Done when: the admin changes banners, publishes posts, and policy pages are live
 - [x] TASK-129 mobile product-card badges (20 Nov 2026): show sale and campaign labels in one badge position and cycle between them with a subtle, reduced-motion-aware transition so they remain distinct on narrow cards.
 - [x] TASK-134 checkout payment copy (20 Nov 2026): remove Google Pay from the storefront payment-method label as requested; Stripe-hosted available wallet methods remain controlled by Stripe payment settings.
 - [x] TASK-135 mobile menu authentication label (20 Nov 2026): show Sign Out only after confirming a Clerk or Supabase customer session; show Sign In to visitors and keep the action area empty while auth loads.
+- [x] TASK-136 storefront WhatsApp shortcut (24 Nov 2026): show a fixed accessible icon on storefront pages, use configured WhatsApp number/store phone when available (otherwise link to Contact), and move it above the cookie banner when they overlap.
 - [x] TASK-092 Blog admin: Tiptap editor with EditorCN toolbar, cover image Cloudinary upload, reading time calculation, SEO metadata fields, Draft/Published/Archived lifecycle management, and admin sidebar integration (`/admin/blog`, `/admin/blog/new`, `/admin/blog/[id]`).
 - [x] TASK-093 Blog list and post pages: footer Journal discovery, existing editorial articles and category filters, article detail/related stories, page-matched responsive skeleton and loading/error/not-found states. Static content for this storefront stage; admin publishing remains TASK-092.
 - [ ] TASK-094 Pages: About, Contact, Terms, Privacy, Returns & Refunds, Shipping & Delivery (Privacy Policy simplified and Terms page implemented on 6 Nov 2026; company identity added from trade licence; client/legal approval pending)
@@ -203,7 +208,8 @@ Done when: the admin sees today's numbers and can change store settings without 
 ## Phase 13: SEO, Analytics and Monitoring
 Done when: pages are indexable, ecommerce events fire once, and alerts reach the team.
 - [ ] TASK-097 `generateMetadata`, canonical URLs (product pages drop `?colour=`), Open Graph images
-- [ ] TASK-098 `sitemap.ts`, `robots.ts`, `noindex` on admin, account, cart and checkout
+- [ ] TASK-098 `sitemap.ts`, `robots.ts`, 
+oindex` on admin, account, cart and checkout
 - [ ] TASK-099 Structured data: ProductGroup with a Product per SKU (colour, size, SKU, price, availability), BreadcrumbList, Organization, Article
 - [ ] TASK-100 GA4 + GTM ecommerce events per Pranav's SOP (`purchase` once per order, with `payment_type` card or cash on delivery, sent at payment for card and at confirmation for COD: check against the SOP; colour and size sent as `item_variant`)
 - [ ] TASK-101 PostHog (inputs masked)
@@ -225,3 +231,7 @@ Done when: a live order is placed and refunded on production.
 - [ ] TASK-110 Domain and SSL on Vercel, `www` redirect, Google Search Console with the sitemap
 - [ ] TASK-111 Production QA from `docs/TEST_PLAN.md`, including one live order and refund
 - [ ] TASK-112 Go-live, monitoring check in Sentry, 2 weeks of hypercare; update `docs/MEMORY.md`
+
+- [x] TASK-137 Editable offer links (24 Nov 2026): allow admins to change a campaign slug, preserve validation and duplicate-link protection, invalidate public offer pages, and apply the database migration.
+
+- [x] TASK-138 Offer feature checks (24 Nov 2026): ran 18 focused tests, verified real database quote minimums, current public page, automatic cart/checkout totals and below-minimum removal in the browser. Admin save UI, real payment and full local DB suite remain unverified; see MEMORY.

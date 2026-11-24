@@ -110,6 +110,9 @@ Left out from the reference: wishlist hearts, the search icon, the newsletter bo
 - After New Arrivals, "Made for Every Story." pairs a portrait crop with the existing About introduction and three commitments: Curated Style, Quality & Comfort, and Fashion for Every Moment. A semantic "Discover Our Story" link opens `/about`.
 - Use the local campaign imagery in `public/images/`, `next/image` with reserved aspect ratios, lazy loading and `unoptimized`. These are editorial visuals, not product purchase links or evidence of in-house manufacturing. Keep the existing tokens, square corners and fonts; hover motion respects reduced-motion preferences.
 
+### WhatsApp concierge shortcut (TASK-136, 24 Nov 2026)
+- Show a fixed, round WhatsApp icon on storefront pages. Use the configured WhatsApp number or store phone for the `wa.me` link; if neither is configured, link to Contact. Place it above mobile sticky checkout controls and the cookie banner when they overlap, use the success colour tokens, and open the configured chat in a new tab.
+
 Lyra components are compact: a default Button is 32px tall and `lg` is 36px. The storefront gets its larger sizes through `className` or small wrappers in `src/components/store/` (for example `StoreButton`), never by editing `src/components/ui/`. The admin uses the shadcn sizes as they are.
 
 ### Buttons

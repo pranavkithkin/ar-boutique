@@ -4,6 +4,36 @@ TASK-131 refinement (20 Nov 2026): generated new homepage campaign photos using 
 
 TASK-131 story section refresh (25 Nov 2026): kept the original teal paisley image, used a short About Us introduction, and added a content-driven "Our Commitment" section with curated style, comfort, and occasions. The commitments remain easy to extend from `features/home/content.ts`. The portrait is slightly narrower than its desktop column and full width on mobile. Targeted ESLint and `npx tsc --noEmit` passed; repo-wide lint has existing unrelated errors.
 
+TASK-131 story visual refinement (25 Nov 2026): retained the approved copy and image; added an offset accent frame and ivory photo caption, balanced the desktop headline, replaced the heavy CTA with a quiet underlined link, and arranged commitments in a light editorial layout with a concise introduction and fine neutral dividers.
+
+TASK-131 story redesign (25 Nov 2026): replaced the split intro plus separate commitment area with a single asymmetric composition. The existing portrait now anchors the right side, while the intro, About link, and concise numbered commitment notes share one warm-toned text column. Copy draws selectively from the client's About Us and Commitment text.
+
+TASK-131 section alignment (25 Nov 2026): removed the promo banner container's extra horizontal inset so it aligns with the story section's max-width edges.
+
+TASK-131 story height adjustment (25 Nov 2026): shortened the portrait crop and tightened content-column typography, padding, and spacing so it tracks the image height more closely. Restored the fuller approved copy after feedback that it had been shortened too much.
+
+TASK-131 story reference layout (25 Nov 2026): rebuilt the story block as a warm collage inspired by the supplied layout, pairing the teal portrait with a secondary yellow floral photo and icon-led commitment points. Preserved the boutique copy and existing theme colours.
+
+TASK-131 story reference layout follow-up (25 Nov 2026): matched the reference composition more closely: primary image, story copy and link on the left; heading, commitment list and secondary image on the right. Replaced the displayed photos with two newly generated dress lifestyle images.
+
+TASK-131 secondary image height (25 Nov 2026): changed the cream floral photo frame to 3:2, reducing its height while retaining its width.
+
+TASK-131 secondary image size (25 Nov 2026): reduced the right-side photo width to 80% and centered it in the column on larger screens to balance the side space; it remains full width on mobile.
+
+TASK-131 image spacing (25 Nov 2026): tightened the gap between the commitment list and secondary photo.
+
+TASK-131 story height adjustment (25 Nov 2026): slightly reduced both collage image heights and tightened the panel spacing without changing text or layout.
+
+TASK-131 story alignment (25 Nov 2026): top-aligned the primary portrait and story copy in the collage panel.
+
+TASK-131 story headline (25 Nov 2026): changed “Your Style, Your Story.” to a single line, with smaller responsive type on narrow screens.
+
+TASK-131 story alignment follow-up (25 Nov 2026): allow the headline to wrap on narrow screens to prevent horizontal overflow; align the narrower secondary photo to the left edge of the right-column copy.
+
+TASK-131 story column spacing (25 Nov 2026): increased the desktop gap to 24 spacing units while preserving the 5:7 column proportions with a two-column grid; mobile spacing is unchanged.
+
+TASK-131 story mobile layout (25 Nov 2026): put the brand heading first, paired the two portrait images, and moved the story copy and commitment list below them. Reduced mobile caption size and image height for a cleaner stacked layout.
+
 > Never ask the AI to build the whole app in one prompt. One task at a time:
 > TASK -> Implement -> Test -> Review -> Mark complete -> next TASK.
 > Each phase is a vertical slice that ends with a flow working end to end.

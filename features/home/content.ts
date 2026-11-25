@@ -21,26 +21,27 @@ export const lifestyleContent = {
   ],
 }
 export const brandStoryContent = {
-  title: "Made for Every Story.",
+  eyebrow: "The AR Boutique",
+  title: "Your Style, Your Story.",
   description:
-    "At The AR Boutique, we carefully curate styles that help you look and feel your best, whether you're dressing for a festive celebration, a special occasion, a casual outing, or your everyday moments.",
+    "Indian heritage meets contemporary style in our thoughtfully curated collection, from elegant outfits and versatile tunics to easy co-ords. Discover looks for celebrations and everyday moments alike.",
   image: "/images/homepage-lifestyle-teal-paisley.png",
   alt: "A model wearing an AR Boutique teal paisley dress in a heritage courtyard",
-  caption: "Your Style, Your Story.",
+  caption: "Made to be worn your way.",
   values: [
     {
-      title: "Curated Style",
-      description: "Bringing together distinctive designs that balance timeless elegance with modern trends.",
+      title: "Curated style",
+      description: "Distinctive designs bring traditional details and modern fashion together.",
     },
     {
-      title: "Quality & Comfort",
-      description: "Prioritizing styles that look beautiful and feel comfortable to wear.",
+      title: "Comfort and confidence",
+      description: "Styles chosen to look beautiful and feel comfortable.",
     },
     {
-      title: "Fashion for Every Moment",
-      description: "Offering versatile collections for celebrations, everyday elegance, and everything in between.",
+      title: "For every moment",
+      description: "From festive celebrations to casual days and everyday wear.",
     },
   ],
   href: "/about",
-  linkText: "Discover Our Story",
+  linkText: "About The AR Boutique",
 }

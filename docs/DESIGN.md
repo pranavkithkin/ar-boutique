@@ -107,7 +107,7 @@ Left out from the reference: wishlist hearts, the search icon, the newsletter bo
 ## Components
 ### Homepage lifestyle and story additions (TASK-131, approved 20 Nov 2026)
 - After categories, "Style for Every Moment" pairs two model-led photographs with Everyday Elegance and Dressed for Celebration captions. The panels are staggered on desktop and stacked on mobile; text sits outside the images and each panel links to `/collections`.
-- After New Arrivals, "Made for Every Story." pairs a portrait crop with the existing About introduction and three commitments: Curated Style, Quality & Comfort, and Fashion for Every Moment. A semantic "Discover Our Story" link opens `/about`.
+- After New Arrivals, "Your Style, Your Story." pairs the original teal paisley portrait with a short brand introduction and an "Our Commitment" section. The portrait is slightly inset within its desktop column and remains full width on mobile. Commitment points are content-driven and sit side by side on wide screens, then stack on smaller screens. A semantic About link opens `/about`.
 - Use the local campaign imagery in `public/images/`, `next/image` with reserved aspect ratios, lazy loading and `unoptimized`. These are editorial visuals, not product purchase links or evidence of in-house manufacturing. Keep the existing tokens, square corners and fonts; hover motion respects reduced-motion preferences.
 
 ### WhatsApp concierge shortcut (TASK-136, 24 Nov 2026)

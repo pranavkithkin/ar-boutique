@@ -2,6 +2,8 @@
 
 TASK-131 refinement (20 Nov 2026): generated new homepage campaign photos using two supplied dress references, retaining the garments' print and silhouette while creating new models/poses/scenes. No original product photos are displayed in the sections. Reduced lifestyle section/card footprint and story layout dimensions. A follow-up corrected portrait framing with top aligned object-fit in both homepage sections so model heads and neckline remain in view.
 
+TASK-131 story section refresh (25 Nov 2026): kept the original teal paisley image, used a short About Us introduction, and added a content-driven "Our Commitment" section with curated style, comfort, and occasions. The commitments remain easy to extend from `features/home/content.ts`. The portrait is slightly narrower than its desktop column and full width on mobile. Targeted ESLint and `npx tsc --noEmit` passed; repo-wide lint has existing unrelated errors.
+
 > Never ask the AI to build the whole app in one prompt. One task at a time:
 > TASK -> Implement -> Test -> Review -> Mark complete -> next TASK.
 > Each phase is a vertical slice that ends with a flow working end to end.

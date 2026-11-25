@@ -1,5 +1,7 @@
 # Project Memory
 
+25 Nov 2026: Refreshed the homepage brand story using concise copy from the client's About Us and Our Commitment content. Preserved the teal paisley photo; added an "Our Commitment" heading and three content-driven points about curated style, comfort and confidence, and occasions. The points stack on narrow screens and align in columns on wider screens, and can be edited in `features/home/content.ts`. Slightly reduced the image width within its desktop column; mobile remains full width. Targeted ESLint and `npx tsc --noEmit` passed; repo-wide lint reports unrelated existing issues. No commit or push.
+
 20 Nov 2026: Increased the BrandStorySection image card height by changing its aspect ratio from 4:3 to 3:4, keeping the same column width and object-top framing.
 
 20 Nov 2026: TASK-131 completed after approval of the homepage plan. Added `features/home/content.ts` and two server-rendered sections: LifestyleSection after categories (Everyday Elegance / Dressed for Celebration) and BrandStorySection after New Arrivals (Made for Every Story.). Reused the client's About introduction and commitment copy, SectionHeading, and shadcn button variants on a semantic Next Link. Added two local editorial photographs; no product photography, new dependencies, database writes or catalogue edits. Images reserve their aspect ratios and lazy-load; hover motion respects reduced motion. Updated DESIGN and TASKS.

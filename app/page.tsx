@@ -162,7 +162,7 @@ export default async function Home() {
 
         {/* Promo Banner Section: dynamically connected to admin panel */}
         {promoBanners.length > 0 && (
-          <AnimatedSection delay={0.08} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 mb-6 md:mt-10 md:mb-8">
+          <AnimatedSection delay={0.08} className="mx-auto max-w-7xl mt-8 mb-6 md:mt-10 md:mb-8">
             <div className="flex flex-col w-full gap-4 md:gap-6">
               {promoBanners.map((banner) => (
                 <PromoBanner

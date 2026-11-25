@@ -2,6 +2,28 @@
 
 25 Nov 2026: Refreshed the homepage brand story using concise copy from the client's About Us and Our Commitment content. Preserved the teal paisley photo; added an "Our Commitment" heading and three content-driven points about curated style, comfort and confidence, and occasions. The points stack on narrow screens and align in columns on wider screens, and can be edited in `features/home/content.ts`. Slightly reduced the image width within its desktop column; mobile remains full width. Targeted ESLint and `npx tsc --noEmit` passed; repo-wide lint reports unrelated existing issues. No commit or push.
 
+25 Nov 2026: Refined the story section for a more premium look without changing its approved content: added an offset accent frame and ivory photo caption, balanced the headline width, changed the CTA to a quiet underlined link, and arranged the commitments in a light editorial layout. Replaced the dark band with a short commitment introduction and fine neutral dividers. No commit or push.
+
+25 Nov 2026: Reworked the homepage story after feedback that the earlier refinement still looked too similar. The story is now one asymmetric photo-led composition: portrait on the right, brand introduction and About link on the left, and three compact numbered commitment notes integrated below the story copy. Removed the separate commitment strip and used concise wording from the client's About Us content. No commit or push.
+
+25 Nov 2026: Aligned the following homepage promo banner with the story section by removing the promo container's extra horizontal padding. The two sections now share the same max-width edges. No commit or push.
+
+25 Nov 2026: Reduced the homepage story height by shortening the portrait crop and tightening typography and vertical spacing. Restored the fuller selected story and commitment copy after feedback; retained the compact layout spacing. No commit or push.
+
+25 Nov 2026: Rebuilt the homepage story based on the supplied photo-collage reference. Kept the teal portrait and existing copy; added the existing yellow floral photo and icon-led commitment points in a warm secondary panel. No commit or push.
+
+25 Nov 2026: Generated two new boutique lifestyle photos from the supplied garment references and added them to `public/images/`. Updated the story block to place the primary portrait, story paragraph and link on the left, with the headline, commitment points and secondary photo on the right, following the client's collage layout. The supplied garment photos are used only as generation references. No commit or push.
+
+25 Nov 2026: Reduced the secondary cream floral story image height with a 3:2 frame; its width and section layout remain unchanged. No commit or push.
+
+25 Nov 2026: Reduced the right-side story photo to 80% width and centered it within its column on larger screens, balancing the remaining side space while keeping it full width on mobile. No commit or push.
+
+25 Nov 2026: Reduced the vertical spacing between the commitment list and secondary story photo. No commit or push.
+
+25 Nov 2026: Slightly shortened the homepage story collage by adjusting both image aspect ratios and reducing panel gap and padding. Copy and layout remain unchanged. No commit or push.
+
+25 Nov 2026: Fixed the homepage story collage alignment by aligning the portrait to the top of the text column instead of vertically centering it. No commit or push.
+
 20 Nov 2026: Increased the BrandStorySection image card height by changing its aspect ratio from 4:3 to 3:4, keeping the same column width and object-top framing.
 
 20 Nov 2026: TASK-131 completed after approval of the homepage plan. Added `features/home/content.ts` and two server-rendered sections: LifestyleSection after categories (Everyday Elegance / Dressed for Celebration) and BrandStorySection after New Arrivals (Made for Every Story.). Reused the client's About introduction and commitment copy, SectionHeading, and shadcn button variants on a semantic Next Link. Added two local editorial photographs; no product photography, new dependencies, database writes or catalogue edits. Images reserve their aspect ratios and lazy-load; hover motion respects reduced motion. Updated DESIGN and TASKS.
@@ -357,3 +379,11 @@ px tsc --noEmit`) and all 25 Vitest test suites (132 passing tests).
 24 Nov 2026: Offer feature verification: 18 offer-specific tests passed (schema, scheduling, pricing, automatic selection, form, authorization and mocked Stripe/COD checkout). Read-only Supabase quote checks confirmed welcome-offer-10 discounts AED 316 by AED 31.60 and rejects AED 158 below its AED 200 eligible-spend minimum. Local browser confirmed current offer page and product campaign tags, automatic bag/cart/checkout savings and AED 284.40 total; reducing quantity removed savings and restored AED 25 delivery (AED 183 total). Guest COD is disabled. Removed only the browser test cart item afterward; no order/payment was created. Admin browser session was signed out, so admin save UI was not tested. Full local database suite remains blocked by missing local PostgreSQL test credentials. No application code changes, commit or push.
 
 24 Nov 2026: Additional real Supabase offer transaction test passed: created a temporary percentage campaign through save_offer, edited its slug, quoted AED 31.60 off AED 316, placed a card order with AED 284.40 total and matching line discounts, verified stock reservation, retried the same key without creating a duplicate, cancelled and verified stock/offer usage release. Rolled the transaction back. No Stripe session/payment or email was triggered. Admin browser saves and real payment remain unverified. No code changes, commit or push.
+
+25 Nov 2026: Set the homepage brand story headline “Your Style, Your Story.” on one line and adjusted its type size responsively to fit narrow screens. No tests run; no commit or push.
+
+25 Nov 2026: Fixed homepage story alignment by allowing the heading to wrap on narrow screens and left-aligning the reduced secondary photo with the right-column text on larger screens. No tests run; no commit or push.
+
+25 Nov 2026: Increased desktop column spacing in the homepage brand story to 24 spacing units. Replaced the 12-track grid with two desktop columns in the same 5:7 proportion so the larger center gap doesn't consume width from many empty tracks; mobile spacing remains unchanged. No tests run; no commit or push.
+
+25 Nov 2026: Reworked the homepage brand story for mobile. The brand heading now leads, both images sit together in a paired portrait row, and the story copy plus commitment list follow below. Used the same content and images, with smaller mobile captions. No tests run; no commit or push.

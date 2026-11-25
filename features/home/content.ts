@@ -25,21 +25,27 @@ export const brandStoryContent = {
   title: "Your Style, Your Story.",
   description:
     "Indian heritage meets contemporary style in our thoughtfully curated collection, from elegant outfits and versatile tunics to easy co-ords. Discover looks for celebrations and everyday moments alike.",
-  image: "/images/homepage-lifestyle-teal-paisley.png",
-  alt: "A model wearing an AR Boutique teal paisley dress in a heritage courtyard",
+  image: "/images/homepage-story-teal-dress.png",
+  alt: "A model wearing the AR Boutique teal floral kurta set in a sunlit courtyard",
   caption: "Made to be worn your way.",
+  detailImage: "/images/homepage-story-cream-floral.png",
+  detailImageAlt: "A model wearing the AR Boutique cream floral kurta set in a bright courtyard",
+  commitmentEyebrow: "Our promise",
+  commitmentTitle: "Our Commitment",
+  commitmentIntro:
+    "Style that celebrates individuality and self-expression.",
   values: [
     {
       title: "Curated style",
-      description: "Distinctive designs bring traditional details and modern fashion together.",
+      description: "Distinctive designs balancing timeless elegance with contemporary fashion.",
     },
     {
-      title: "Comfort and confidence",
-      description: "Styles chosen to look beautiful and feel comfortable.",
+      title: "Quality & comfort",
+      description: "Thoughtful pieces selected to look beautiful and feel good to wear.",
     },
     {
       title: "For every moment",
-      description: "From festive celebrations to casual days and everyday wear.",
+      description: "Versatile styles for celebrations, everyday elegance, and everything between.",
     },
   ],
   href: "/about",
